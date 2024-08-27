@@ -18,5 +18,9 @@ bool LandData::isAABBInLand(BlockPos const& pos1, BlockPos const& pos2) const {
     );
 }
 
+bool LandData::is3DLand() const { return mIs3DLand; }
+
+LandPos const& LandData::getLandPos() const { return mPos; }
+
 
 } // namespace land
