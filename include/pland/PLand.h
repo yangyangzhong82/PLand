@@ -3,6 +3,7 @@
 #include "mc/world/level/BlockPos.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
+#include <cstdint>
 #include <memory>
 #include <unordered_map>
 #include <utility>
@@ -29,6 +30,11 @@ public:
     static PLand& getInstance();
 
     bool init();
+    bool save();
+
+    bool isOperator(UUIDs const& uuid) const;
+    bool addOperator(UUIDs const& uuid);
+    bool removeOperator(UUIDs const& uuid);
 
     bool addLand(LandDataPtr land);
 
@@ -38,15 +44,13 @@ public:
 
     LandDataPtr getLand(LandID id) const;
 
+    LandPermType getPermType(UUIDs const& uuid, LandID id = 0, bool ignoreOperator = false) const;
+
     LandDataPtr              getLandAt(BlockPos const& pos) const;
     std::vector<LandDataPtr> getLandAt(BlockPos const& center, int radius) const;         // 半径内的领地
     std::vector<LandDataPtr> getLandAt(BlockPos const& pos1, BlockPos const& pos2) const; // 矩形内的领地
 
-    bool isOperator(UUIDs const& uuid) const;
-    bool addOperator(UUIDs const& uuid);
-    bool removeOperator(UUIDs const& uuid);
-
-    LandPermType getPermType(UUIDs const& uuid, LandID id = 0, bool ignoreOperator = false) const;
+    LandID generateLandID();
 
     static ChunkID             getChunkID(int x, int z);
     static std::pair<int, int> parseChunkID(ChunkID id);

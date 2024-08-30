@@ -1,6 +1,6 @@
 #pragma once
-#include "pland/LandPos.h"
 #include "pland/Global.h"
+#include "pland/LandPos.h"
 
 
 namespace land {
@@ -85,24 +85,27 @@ struct LandPermTable {
 using LandDataPtr = std::shared_ptr<class LandData>;
 class LandData {
 public:
-    LandPos            mPos;           // 领地对角坐标
-    LandID             mLandID;        // 领地唯一ID
-    LandDim            mLandDim;       // 领地所在维度
-    bool               mIs3DLand;      // 是否为3D领地
-    LandPermTable      mLandPermTable; // 领地权限
-    UUIDs              mLandOwner;     // 领地主人
-    std::vector<UUIDs> mLandMembers;   // 领地成员
-    std::string        mLandName;      // 领地名称
-    std::string        mLandDescribe;  // 领地描述
-
+    LandPos            mPos;              // 领地对角坐标
+    LandID             mLandID{-1};       // 领地唯一ID
+    LandDim            mLandDim;          // 领地所在维度
+    bool               mIs3DLand;         // 是否为3D领地
+    LandPermTable      mLandPermTable;    // 领地权限
+    UUIDs              mLandOwner;        // 领地主人
+    std::vector<UUIDs> mLandMembers;      // 领地成员
+    std::string        mLandName;         // 领地名称
+    std::string        mLandDescribe;     // 领地描述
+    bool               mIsSaleing{false}; // 是否正在出售
+    int                mSalePrice{0};     // 出售价格
 
     // LandDataPtr make(BlockPos const& po1, BlockPos const& pos2, LandDim dim, bool is3D);
 
+    // getters
     LandPos const& getLandPos() const;
     LandID         getLandID() const;
     LandDim        getLandDim() const;
+    int            getSalePrice() const;
 
-    LandPermTable&       getLandPermTable() const;
+    LandPermTable&       getLandPermTable();
     LandPermTable const& getLandPermTableConst() const;
 
     UUIDs const&              getLandOwner() const;
@@ -110,12 +113,12 @@ public:
     std::string const&        getLandName() const;
     std::string const&        getLandDescribe() const;
 
-    bool is3DLand() const;
-    bool isLandOwner(UUIDs const& uuid) const;
-    bool isLandMember(UUIDs const& uuid) const;
 
+    // setters
+    bool setSaleing(bool isSaleing);
     bool setIs3DLand(bool is3D);
     bool setLandOwner(UUIDs const& uuid);
+    bool setSalePrice(int price);
 
     bool setLandName(std::string const& name);
     bool setLandDescribe(std::string const& describe);
@@ -124,10 +127,17 @@ public:
     bool addLandMember(UUIDs const& uuid);
     bool removeLandMember(UUIDs const& uuid);
 
-    LandPermType getPermType(UUIDs const& uuid, bool ignoreOperator = true) const;
+
+    // others
+    bool is3DLand() const;
+    bool isLandOwner(UUIDs const& uuid) const;
+    bool isLandMember(UUIDs const& uuid) const;
+    bool isSaleing() const;
 
     bool isRadiusInLand(BlockPos const& pos, int radius) const;
     bool isAABBInLand(BlockPos const& pos1, BlockPos const& pos2) const;
+
+    LandPermType getPermType(UUIDs const& uuid) const;
 };
 
 

@@ -13,7 +13,7 @@ enum class LandPermType : int {
     Operator, // 领地操作员（管理）
     Owner,    // 领地主人
     Member,   // 领地成员
-    None,     // 无权限
+    Guest,    // 访客
 };
 
 } // namespace land
