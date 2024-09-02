@@ -1,6 +1,8 @@
 #pragma once
+#include "ll/api/base/StdInt.h"
 #include "pland/Global.h"
 #include "pland/LandPos.h"
+#include <cstdint>
 
 
 namespace land {
@@ -85,17 +87,17 @@ struct LandPermTable {
 using LandDataPtr = std::shared_ptr<class LandData>;
 class LandData {
 public:
-    LandPos            mPos;              // 领地对角坐标
-    LandID             mLandID{-1};       // 领地唯一ID
-    LandDim            mLandDim;          // 领地所在维度
-    bool               mIs3DLand;         // 是否为3D领地
-    LandPermTable      mLandPermTable;    // 领地权限
-    UUIDs              mLandOwner;        // 领地主人
-    std::vector<UUIDs> mLandMembers;      // 领地成员
-    std::string        mLandName;         // 领地名称
-    std::string        mLandDescribe;     // 领地描述
-    bool               mIsSaleing{false}; // 是否正在出售
-    int                mSalePrice{0};     // 出售价格
+    LandPos            mPos;                               // 领地对角坐标
+    LandID             mLandID{static_cast<uint64_t>(-1)}; // 领地唯一ID
+    LandDim            mLandDim;                           // 领地所在维度
+    bool               mIs3DLand;                          // 是否为3D领地
+    LandPermTable      mLandPermTable;                     // 领地权限
+    UUIDs              mLandOwner;                         // 领地主人
+    std::vector<UUIDs> mLandMembers;                       // 领地成员
+    std::string        mLandName;                          // 领地名称
+    std::string        mLandDescribe;                      // 领地描述
+    bool               mIsSaleing{false};                  // 是否正在出售
+    int                mSalePrice{0};                      // 出售价格
 
     // LandDataPtr make(BlockPos const& po1, BlockPos const& pos2, LandDim dim, bool is3D);
 
