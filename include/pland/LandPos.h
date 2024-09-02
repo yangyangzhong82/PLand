@@ -1,6 +1,7 @@
 #pragma once
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/ChunkPos.h"
+#include <memory>
 
 namespace land {
 
@@ -15,9 +16,12 @@ public:
 
 
 // 领地坐标
+using LandPosPtr = std::shared_ptr<class LandPos>;
 class LandPos {
 public:
     PosBase mMin, mMax;
+
+    static LandPosPtr make(BlockPos const& min, BlockPos const& max);
 
     std::string toString() const;
 

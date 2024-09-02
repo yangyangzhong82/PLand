@@ -1,12 +1,15 @@
 #include "pland/LandPos.h"
 #include "fmt/format.h"
+#include "mc/world/level/BlockPos.h"
 
 namespace land {
 
 
 std::string PosBase::toString() const { return fmt::format("({},{},{})", x, y, z); }
 
-
+LandPosPtr LandPos::make(BlockPos const& min, BlockPos const& max) {
+    return std::make_shared<LandPos>(PosBase{min.x, min.y, min.z}, PosBase{max.x, max.y, max.z});
+}
 std::string           LandPos::toString() const { return fmt::format("{} => {}", mMin.toString(), mMax.toString()); }
 std::vector<ChunkPos> LandPos::getChunks() const {
     std::vector<ChunkPos> chunks;
@@ -43,6 +46,12 @@ std::vector<BlockPos> LandPos::getBorder() const {
         border.emplace_back(mMin.x, mMax.y, z);
         border.emplace_back(mMax.x, mMin.y, z);
         border.emplace_back(mMax.x, mMax.y, z);
+    }
+    for (int y = mMin.y; y <= mMax.y; ++y) {
+        border.emplace_back(mMin.x, y, mMin.z);
+        border.emplace_back(mMin.x, y, mMax.z);
+        border.emplace_back(mMax.x, y, mMin.z);
+        border.emplace_back(mMax.x, y, mMax.z);
     }
     return border;
 }

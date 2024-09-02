@@ -23,7 +23,8 @@ target("PLand") -- Change this to your mod name.
         "/w44738",
         "/w45204"
     )
-    add_defines("NOMINMAX", "UNICODE")
+    add_defines("NOMINMAX", "UNICODE", "PLUGIN_NAME=\"[PLand] \"")
+    add_defines("BUILD_TIME=\"" .. os.date('%Y-%m-%d %H:%M:%S') .. "\"")
     add_files("src/**.cpp", "src/**.cc")
     add_includedirs("src", "include")
     add_packages("levilamina")
@@ -31,11 +32,13 @@ target("PLand") -- Change this to your mod name.
     set_exceptions("none") -- To avoid conflicts with /EHa.
     set_kind("shared")
     set_languages("c++20")
-    set_symbols("debug")
 
     if is_mode("debug") then
-	add_defines("DEBUG")
-    end
+        add_defines("DEBUG")
+        set_symbols("debug", "edit")
+    else 
+        set_symbols("debug")
+    end 
 
     after_build(function (target)
         local mod_packer = import("scripts.after_build")

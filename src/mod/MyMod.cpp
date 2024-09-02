@@ -4,6 +4,12 @@
 
 #include "ll/api/mod/RegisterHelper.h"
 
+
+#include "pland/Command.h"
+#include "pland/PLand.h"
+#include "pland/Particle.h"
+
+
 namespace my_mod {
 
 static std::unique_ptr<MyMod> instance;
@@ -12,13 +18,19 @@ MyMod& MyMod::getInstance() { return *instance; }
 
 bool MyMod::load() {
     getSelf().getLogger().debug("Loading...");
-    // Code for loading the mod goes here.
+
+    land::PLand::getInstance().init();
+
     return true;
 }
 
 bool MyMod::enable() {
-    getSelf().getLogger().debug("Enabling...");
-    // Code for enabling the mod goes here.
+    auto& logger = getSelf().getLogger();
+    logger.info("Build Time: {}", BUILD_TIME);
+
+    land::LandCommand::setup();
+    land::LandSelector::getInstance().init();
+
     return true;
 }
 
