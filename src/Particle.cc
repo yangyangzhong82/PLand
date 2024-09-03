@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "pland/Config.h"
 
 namespace land {
 
@@ -42,7 +43,7 @@ bool Particle::draw(Player& player) {
     auto& level = player.getLevel();
     auto& dim   = player.getDimension();
     for (auto& pos : mCalcuatedPos) {
-        level.spawnParticleEffect(mParticle, pos, &dim);
+        level.spawnParticleEffect(Config::cfg.selector.particle, pos, &dim);
     }
 
     return true;
@@ -126,7 +127,7 @@ std::optional<LandSelectorData> LandSelector::getSelector(Player& player) const 
 
     return iter->second;
 }
-bool LandSelector::isSelectTool(ItemStack const& item) const { return item.getTypeName() == this->mTools; }
+bool LandSelector::isSelectTool(ItemStack const& item) const { return item.getTypeName() == Config::cfg.selector.tool; }
 bool LandSelector::isSelecting(Player& player) const {
     auto iter = mSelectors.find(player.getUuid().asString());
     return iter != mSelectors.end() && iter->second.mCanSelect;

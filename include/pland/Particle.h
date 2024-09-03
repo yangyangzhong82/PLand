@@ -14,28 +14,20 @@ namespace land {
 
 class Particle {
 public:
-    BlockPos    mPos1;
-    BlockPos    mPos2;
-    int         mDim;
-    bool        mDraw3D;
-    std::string mParticle;
+    BlockPos mPos1;
+    BlockPos mPos2;
+    int      mDim;
+    bool     mDraw3D;
 
     bool                  mIsInited{false};
     std::vector<BlockPos> mCalcuatedPos;
 
     constexpr Particle() = default;
-    constexpr Particle(
-        BlockPos    pos1,
-        BlockPos    pos2,
-        int         dim,
-        bool        draw3D,
-        std::string particle = "minecraft:villager_happy"
-    )
+    constexpr Particle(BlockPos pos1, BlockPos pos2, int dim, bool draw3D)
     : mPos1(pos1),
       mPos2(pos2),
       mDim(dim),
-      mDraw3D(draw3D),
-      mParticle(particle) {}
+      mDraw3D(draw3D) {}
 
     bool draw(Player& player);
     void fix();
@@ -64,8 +56,6 @@ public:
     LandSelector()                               = default;
     LandSelector(const LandSelector&)            = delete;
     LandSelector& operator=(const LandSelector&) = delete;
-
-    std::string mTools{"minecraft:stick"};
 
     std::unordered_map<UUIDs, LandSelectorData> mSelectors;
 

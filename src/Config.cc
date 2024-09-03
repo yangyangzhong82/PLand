@@ -31,6 +31,6 @@ bool Config::trySave() {
 
 bool Config::tryUpdate() { return trySave(); }
 
-Config::Data Config::cfg; // static
+Config Config::cfg; // static
 
 } // namespace land

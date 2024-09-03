@@ -1,24 +1,25 @@
 #pragma once
+#include <string>
 
 namespace land {
 
+using string = std::string;
 
-class Config {
-    Config()                         = delete;
-    Config(Config&&)                 = delete;
-    Config(const Config&)            = delete;
-    Config& operator=(const Config&) = delete;
-    Config& operator=(Config&&)      = delete;
 
-    static struct Data {
-        int version{1};
-    } cfg;
+struct Config {
+    int version{1};
 
-    static bool tryLoad();
+    struct {
+        string particle{"minecraft:villager_happy"};
+        string tool{"minecraft:stick"};
+    } selector;
 
-    static bool trySave();
 
-    static bool tryUpdate();
+    // Functions
+    static Config cfg;
+    static bool   tryLoad();
+    static bool   trySave();
+    static bool   tryUpdate();
 };
 
 
