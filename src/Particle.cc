@@ -117,7 +117,12 @@ bool                                   LandSelector::init() {
     });
     return true;
 }
-bool LandSelector::uninit() { return ll::event::EventBus::getInstance().removeListener(mPlayerUseItemOn); }
+bool LandSelector::uninit() {
+    mTickScheduler.clear();
+    mStabilized.clear();
+    ll::event::EventBus::getInstance().removeListener(mPlayerUseItemOn);
+    return true;
+}
 
 std::optional<LandSelectorData> LandSelector::getSelector(Player& player) const {
     auto iter = mSelectors.find(player.getUuid().asString());

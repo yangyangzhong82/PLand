@@ -7,6 +7,7 @@
 #include "ll/api/utils/SystemUtils.h"
 
 #include "pland/Command.h"
+#include "pland/Config.h"
 #include "pland/PLand.h"
 #include "pland/Particle.h"
 
@@ -32,6 +33,8 @@ bool MyMod::load() {
     logger.info("Loading...");
 
     ll::i18n::load(getSelf().getLangDir());
+
+    land::Config::tryLoad();
     land::PLand::getInstance().init();
 
     return true;
@@ -48,8 +51,13 @@ bool MyMod::enable() {
 }
 
 bool MyMod::disable() {
-    getSelf().getLogger().debug("Disabling...");
-    // Code for disabling the mod goes here.
+    auto& logger = getSelf().getLogger();
+    logger.info("Saveing...");
+
+    land::PLand::getInstance().save();
+    land::LandSelector::getInstance().uninit();
+
+
     return true;
 }
 
