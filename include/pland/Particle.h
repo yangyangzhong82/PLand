@@ -1,5 +1,6 @@
 #pragma once
 #include "mc/deps/core/common/bedrock/typeid_t.h"
+#include "mc/network/packet/SpawnParticleEffectPacket.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
 #include <vector>
@@ -14,8 +15,9 @@ public:
     int      mDim;
     bool     mDraw3D;
 
-    bool                  mIsInited{false};
-    std::vector<BlockPos> mCalcuatedPos;
+    bool mIsInited{false};
+
+    std::vector<SpawnParticleEffectPacket> mPackets;
 
     constexpr Particle() = default;
     constexpr Particle(BlockPos pos1, BlockPos pos2, int dim, bool draw3D)
