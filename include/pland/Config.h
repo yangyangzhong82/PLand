@@ -46,7 +46,7 @@ struct Config {
                 int max{60000}; // 最大领地范围
             } squareRange;
 
-            std::vector<LandDim> allowDimensions; // 允许的领地维度
+            std::vector<LandDim> allowDimensions{0, 1, 2}; // 允许的领地维度
         } bought;
     } land;
 

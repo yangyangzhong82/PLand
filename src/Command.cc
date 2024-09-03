@@ -53,8 +53,10 @@
 
 #include "magic_enum.hpp"
 
+#include "pland/Config.h"
 #include "pland/GUI.h"
 #include "pland/PLand.h"
+#include "pland/utils/Utils.h"
 
 namespace land {
 
@@ -122,6 +124,10 @@ static auto const Operator = [](CommandOrigin const& ori, CommandOutput& out, Op
 static auto const New = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
+    if (!some(Config::cfg.land.bought.allowDimensions, player.getDimensionId().id)) {
+        mc::sendText(out, "You can't buy land in this dimension"_tr());
+        return;
+    }
     ChooseLandDimensionlAndNew::send(player);
 };
 

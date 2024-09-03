@@ -13,7 +13,7 @@ namespace land {
 
 void ChooseLandDimensionlAndNew::send(Player& player) {
     ModalForm(
-        PLUGIN_NAME + "| Choose Land Dimension"_tr(),
+        PLUGIN_NAME + ("| Choose Land Dimension"_tr()),
         "Please select a territory dimension\n2D: The territory contains the entire Y-axis\n3D: You can set the Y-axis range by yourself"_tr(
         ),
         "2D", // true
