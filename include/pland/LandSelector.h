@@ -21,6 +21,7 @@ struct LandSelectorData {
     bool     mCanDraw{false};  // 能否绘制
     bool     mCanSelect{true}; // 能否选择
 
+    bool     mIsInited{false};
     Particle mParticle;
 
     LandSelectorData() = default;

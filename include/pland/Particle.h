@@ -15,8 +15,6 @@ public:
     int      mDim;
     bool     mDraw3D;
 
-    bool mIsInited{false};
-
     std::vector<SpawnParticleEffectPacket> mPackets;
 
     constexpr Particle() = default;

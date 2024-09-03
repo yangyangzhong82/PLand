@@ -3,6 +3,7 @@
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/ListenerBase.h"
 #include "ll/api/event/player/PlayerInteractBlockEvent.h"
+#include "ll/api/event/player/PlayerLeaveEvent.h"
 #include "ll/api/schedule/Scheduler.h"
 #include "ll/api/schedule/Task.h"
 #include "mc/world/item/registry/ItemStack.h"
@@ -24,11 +25,13 @@ LandSelector& LandSelector::getInstance() {
 }
 
 ll::event::ListenerPtr                 mPlayerUseItemOn;
+ll::event::ListenerPtr                 mPlayerLeave;
 ll::schedule::GameTickScheduler        mTickScheduler;
 std::unordered_map<UUIDm, std::time_t> mStabilized; // 防抖
 bool                                   LandSelector::init() {
-    mPlayerUseItemOn = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerInteractBlockEvent>(
-        [this](ll::event::PlayerInteractBlockEvent const& ev) {
+    auto& bus = ll::event::EventBus::getInstance();
+    mPlayerUseItemOn =
+        bus.emplaceListener<ll::event::PlayerInteractBlockEvent>([this](ll::event::PlayerInteractBlockEvent const& ev) {
             auto& pl = ev.self();
 
             if (!this->isSelectTool(ev.item()) || !this->isSelecting(pl) || this->isSelected(pl)) {
@@ -51,7 +54,7 @@ bool                                   LandSelector::init() {
             if (!this->isSelectedPoint1(pl)) {
                 if (this->trySelectPoint1(pl, ev.clickPos())) {
                     mc::sendText(pl, "Selected point 1 \"{}\""_tr(ev.clickPos().toString()));
-                    mStabilized[pl.getUuid()] = Date::future(40 / 1000).getTime(); // 40ms
+                    mStabilized[pl.getUuid()] = Date::future(50 / 1000).getTime(); // 50ms
                 } else {
                     mc::sendText<mc::LogLevel::Error>(pl, "Selection failed"_tr());
                 }
@@ -63,23 +66,38 @@ bool                                   LandSelector::init() {
                     mc::sendText<mc::LogLevel::Error>(pl, "Selection failed"_tr());
                 }
             }
+        });
+
+    mPlayerLeave = bus.emplaceListener<ll::event::PlayerLeaveEvent>([](ll::event::PlayerLeaveEvent const& ev) {
+        auto iter = LandSelector::getInstance().mSelectors.find(ev.self().getUuid().asString());
+        if (iter != LandSelector::getInstance().mSelectors.end()) {
+            LandSelector::getInstance().mSelectors.erase(iter);
         }
-    );
+    });
 
-    using ll::chrono_literals::operator""_tick;
-    mTickScheduler.add<ll::schedule::RepeatTask>(10_tick, [this]() {
+    using ll::chrono_literals::operator""_tick; // 1s = 20_tick
+    mTickScheduler.add<ll::schedule::RepeatTask>(20_tick, [this]() {
         for (auto& [uuid, data] : mSelectors) {
-            if (!data.mPlayer) {
-                mSelectors.erase(uuid); // 玩家断开连接
-                continue;
-            }
-
-            if (data.mCanDraw) {
-                if (!data.mParticle.mIsInited) {
-                    data.mParticle = Particle(data.mPos1, data.mPos2, data.mDim, data.mDraw3D);
-                    data.mParticle.fix();
+            try {
+                if (data.mPlayer == nullptr) {
+                    mSelectors.erase(uuid); // 玩家断开连接
+                    continue;
                 }
-                data.mParticle.draw(*data.mPlayer);
+
+                if (data.mCanDraw) {
+                    if (!data.mIsInited) {
+                        data.mParticle = Particle(data.mPos1, data.mPos2, data.mDim, data.mDraw3D);
+                        data.mParticle.fix();
+                        data.mIsInited = true;
+                    }
+                    data.mParticle.draw(*data.mPlayer);
+                }
+            } catch (...) {
+                mSelectors.erase(uuid);
+                my_mod::MyMod::getInstance().getSelf().getLogger().warn(
+                    "Exception in LandSelector::mTickScheduler, player leave"
+                );
+                continue;
             }
         }
     });
