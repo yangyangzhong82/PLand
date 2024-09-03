@@ -8,6 +8,7 @@
 
 #include "pland/Command.h"
 #include "pland/Config.h"
+#include "pland/LandSelector.h"
 #include "pland/PLand.h"
 #include "pland/Particle.h"
 
