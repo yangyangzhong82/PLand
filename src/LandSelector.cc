@@ -52,18 +52,18 @@ bool                                   LandSelector::init() {
 #endif
 
             if (!this->isSelectedPoint1(pl)) {
-                if (this->trySelectPoint1(pl, ev.clickPos())) {
-                    mc::sendText(pl, "Selected point 1 \"{}\""_tr(ev.clickPos().toString()));
+                if (this->trySelectPointA(pl, ev.clickPos())) {
+                    mc::sendText(pl, "已选择点A \"{}\""_tr(ev.clickPos().toString()));
                     mStabilized[pl.getUuid()] = Date::future(50 / 1000).getTime(); // 50ms
                 } else {
-                    mc::sendText<mc::LogLevel::Error>(pl, "Selection failed"_tr());
+                    mc::sendText<mc::LogLevel::Error>(pl, "选择失败"_tr());
                 }
 
             } else if (!this->isSelectedPoint2(pl) && this->isSelectedPoint1(pl)) {
-                if (this->trySelectPoint2(pl, ev.clickPos())) {
-                    mc::sendText(pl, "Selected point 2 \"{}\""_tr(ev.clickPos().toString()));
+                if (this->trySelectPointB(pl, ev.clickPos())) {
+                    mc::sendText(pl, "已选择点B \"{}\""_tr(ev.clickPos().toString()));
                 } else {
-                    mc::sendText<mc::LogLevel::Error>(pl, "Selection failed"_tr());
+                    mc::sendText<mc::LogLevel::Error>(pl, "选择失败"_tr());
                 }
             }
         });
@@ -147,7 +147,7 @@ bool LandSelector::tryStartSelect(Player& player, int dim, bool draw3D) {
     mSelectors[UUIDs(uid)] = LandSelectorData(player, dim, draw3D);
     return true;
 }
-bool LandSelector::tryStopSelect(Player& player) {
+bool LandSelector::tryCancelSelect(Player& player) {
     auto uid = player.getUuid().asString();
 
     auto iter = mSelectors.find(uid);
@@ -158,7 +158,7 @@ bool LandSelector::tryStopSelect(Player& player) {
     mSelectors.erase(iter);
     return true;
 }
-bool LandSelector::trySelectPoint1(Player& player, BlockPos pos) {
+bool LandSelector::trySelectPointA(Player& player, BlockPos pos) {
     auto uid = player.getUuid().asString();
 
     auto iter = mSelectors.find(uid);
@@ -170,7 +170,7 @@ bool LandSelector::trySelectPoint1(Player& player, BlockPos pos) {
     iter->second.mPos1           = pos;
     return true;
 }
-bool LandSelector::trySelectPoint2(Player& player, BlockPos pos) {
+bool LandSelector::trySelectPointB(Player& player, BlockPos pos) {
     auto uid = player.getUuid().asString();
 
     auto iter = mSelectors.find(uid);

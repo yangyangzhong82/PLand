@@ -62,7 +62,7 @@ namespace land {
 
 #define CHECK_TYPE(ori, out, type)                                                                                     \
     if (ori.getOriginType() != type) {                                                                                 \
-        mc::sendText(out, "Only \"{}\" can use this command"_tr(magic_enum::enum_name(type)));                         \
+        mc::sendText(out, "此命令仅限 {} 使用!"_tr(magic_enum::enum_name(type)));                                      \
         return;                                                                                                        \
     }
 
@@ -104,17 +104,17 @@ static auto const Operator = [](CommandOrigin const& ori, CommandOutput& out, Op
         auto name = pl->getRealName();
         if (param.type == OperatorType::Op) {
             if (db.isOperator(uid)) {
-                mc::sendText(out, "Player {} is already an operator"_tr(name));
+                mc::sendText(out, "{} 已经是管理员，请不要重复添加"_tr(name));
             } else {
                 db.addOperator(uid);
-                mc::sendText(out, "Player {} is now an operator"_tr(name));
+                mc::sendText(out, "{} 已经被添加为管理员"_tr(name));
             }
         } else {
             if (db.isOperator(uid)) {
                 db.removeOperator(uid);
-                mc::sendText(out, "Player {} is no longer an operator"_tr(name));
+                mc::sendText(out, "{} 已经被移除管理员"_tr(name));
             } else {
-                mc::sendText(out, "Player {} is not an operator"_tr(name));
+                mc::sendText(out, "{} 不是管理员，无需移除"_tr(name));
             }
         }
     }
@@ -125,7 +125,7 @@ static auto const New = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
     if (!some(Config::cfg.land.bought.allowDimensions, player.getDimensionId().id)) {
-        mc::sendText(out, "You can't buy land in this dimension"_tr());
+        mc::sendText(out, "你所在的维度无法购买领地"_tr());
         return;
     }
     ChooseLandDimensionlAndNew::send(player);
@@ -142,23 +142,23 @@ static auto const Set = [](CommandOrigin const& ori, CommandOutput& out, SetPara
     auto& pos      = player.getPosition();
 
     bool status =
-        param.type == SetType::A ? selector.trySelectPoint1(player, pos) : selector.trySelectPoint2(player, pos);
+        param.type == SetType::A ? selector.trySelectPointA(player, pos) : selector.trySelectPointB(player, pos);
 
     if (status) {
-        mc::sendText(out, "Point {} selected"_tr(param.type == SetType::A ? "A" : "B"));
+        mc::sendText(out, "已选择点{}"_tr(param.type == SetType::A ? "A" : "B"));
     } else {
-        mc::sendText<mc::LogLevel::Error>(out, "You are not selecting a land"_tr());
+        mc::sendText<mc::LogLevel::Error>(out, "您还没有开启开启领地选区，请先使用 /pland new 命令"_tr());
     }
 };
 
 static auto const Cancel = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
-    bool  ok     = LandSelector::getInstance().tryStopSelect(player);
+    bool  ok     = LandSelector::getInstance().tryCancelSelect(player);
     if (ok) {
-        mc::sendText(out, "Land selection ended"_tr());
+        mc::sendText(out, "已取消新建领地"_tr());
     } else {
-        mc::sendText<mc::LogLevel::Error>(out, "You are not selecting a land"_tr());
+        mc::sendText<mc::LogLevel::Error>(out, "您还没有开启开启领地选区，没有什么可以取消的哦~"_tr());
     }
 };
 
@@ -173,7 +173,7 @@ static auto const Buy = [](CommandOrigin const& ori, CommandOutput& out) {
 
 
 bool LandCommand::setup() {
-    auto& cmd = ll::command::CommandRegistrar::getInstance().getOrCreateCommand("pland", "PLand System"_tr());
+    auto& cmd = ll::command::CommandRegistrar::getInstance().getOrCreateCommand("pland", "PLand 领地系统"_tr());
 
 
     // pland 领地GUI

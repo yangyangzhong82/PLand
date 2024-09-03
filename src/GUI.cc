@@ -2,9 +2,11 @@
 #include "ll/api/form/CustomForm.h"
 #include "ll/api/form/ModalForm.h"
 #include "ll/api/form/SimpleForm.h"
+#include "pland/Config.h"
 #include "pland/Global.h"
 #include "pland/LandSelector.h"
 #include "pland/utils/MC.h"
+
 
 using namespace ll::form;
 
@@ -13,9 +15,8 @@ namespace land {
 
 void ChooseLandDimensionlAndNew::send(Player& player) {
     ModalForm(
-        PLUGIN_NAME + ("| Choose Land Dimension"_tr()),
-        "Please select a territory dimension\n2D: The territory contains the entire Y-axis\n3D: You can set the Y-axis range by yourself"_tr(
-        ),
+        PLUGIN_NAME + ("| 选择领地维度"_tr()),
+        "请选择领地维度\n\n2D: 领地拥有整个Y轴\n3D: 自行选择Y轴范围"_tr(),
         "2D", // true
         "3D"  // false
     )
@@ -25,7 +26,7 @@ void ChooseLandDimensionlAndNew::send(Player& player) {
             }
 
             LandSelector::getInstance().tryStartSelect(pl, pl.getDimensionId(), !((bool)res.value()));
-            mc::sendText(pl, "Selection is turned on"_tr());
+            mc::sendText(pl, "选区功能已开启，使用命令 /pland set 或使用 {} 来选择ab点"_tr(Config::cfg.selector.tool));
         });
 }
 

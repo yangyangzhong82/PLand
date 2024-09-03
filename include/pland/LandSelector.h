@@ -51,11 +51,11 @@ public:
 
     bool tryStartSelect(Player& player, int dim, bool draw3D);
 
-    bool trySelectPoint1(Player& player, BlockPos pos);
+    bool trySelectPointA(Player& player, BlockPos pos);
 
-    bool trySelectPoint2(Player& player, BlockPos pos);
+    bool trySelectPointB(Player& player, BlockPos pos);
 
-    bool tryStopSelect(Player& player);
+    bool tryCancelSelect(Player& player);
 };
 
 
