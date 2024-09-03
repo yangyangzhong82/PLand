@@ -169,12 +169,23 @@ static auto const Buy = [](CommandOrigin const& ori, CommandOutput& out) {
     LandBuyGui::send(player);
 };
 
+static auto const Reload = [](CommandOrigin const& ori, CommandOutput& out) {
+    CHECK_TYPE(ori, out, CommandOriginType::DedicatedServer);
+    if (Config::tryLoad()) {
+        mc::sendText(out, "领地系统配置已重新加载"_tr());
+    } else {
+        mc::sendText(out, "领地系统配置加载失败，请检查配置文件"_tr());
+    }
+};
+
 }; // namespace Lambda
 
 
 bool LandCommand::setup() {
     auto& cmd = ll::command::CommandRegistrar::getInstance().getOrCreateCommand("pland", "PLand 领地系统"_tr());
 
+    // pland reload
+    cmd.overload().text("reload").execute(Lambda::Reload);
 
     // pland 领地GUI
     cmd.overload().execute(Lambda::Root);
