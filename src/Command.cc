@@ -72,6 +72,7 @@ bool LandCommand::setup() {
     cmd.overload<Selector3DLand>()
         .text("selector")
         .text("start")
+        .optional("is3DLand")
         .execute([](CommandOrigin const& ori, CommandOutput& out, Selector3DLand const& param) {
             CHECK_PLAYER(ori, out);
 
