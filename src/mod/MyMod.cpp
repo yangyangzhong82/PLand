@@ -4,7 +4,7 @@
 
 #include "ll/api/i18n/I18n.h"
 #include "ll/api/mod/RegisterHelper.h"
-
+#include "ll/api/utils/SystemUtils.h"
 
 #include "pland/Command.h"
 #include "pland/PLand.h"
@@ -19,6 +19,9 @@ MyMod& MyMod::getInstance() { return *instance; }
 
 bool MyMod::load() {
     auto& logger = getSelf().getLogger();
+    if (ll::sys_utils::isStdoutSupportAnsi()) {
+        logger.title = fmt::format(fmt::fg(fmt::color::light_green), logger.title);
+    }
     logger.info(R"(  _____   _                        _ )");
     logger.info(R"( |  __ \ | |                      | |)");
     logger.info(R"( | |__) || |      __ _  _ __    __| |)");
