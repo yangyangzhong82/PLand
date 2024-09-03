@@ -56,9 +56,6 @@ struct Config {
         string tool{"minecraft:stick"};              // 工具
     } selector;
 
-    std::vector<UUIDs> operators; // 领地管理员
-
-
     // Functions
     static Config cfg;
     static bool   tryLoad();

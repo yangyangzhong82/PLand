@@ -14,7 +14,7 @@ struct LandSelectorData {
     Player*  mPlayer{nullptr};
     BlockPos mPos1;
     BlockPos mPos2;
-    int      mDim;
+    int      mDim; // 维度
     bool     mDraw3D;
     bool     mSelectedPoint1{false};
     bool     mSelectedPoint2{false};

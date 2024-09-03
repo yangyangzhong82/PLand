@@ -51,12 +51,16 @@
 #include <mc/world/actor/Actor.h>
 #include <mc/world/actor/player/Player.h>
 
+#include "magic_enum.hpp"
+
+#include "pland/GUI.h"
+#include "pland/PLand.h"
 
 namespace land {
 
-#define CHECK_PLAYER(ori, out)                                                                                         \
-    if (ori.getOriginType() != CommandOriginType::Player) {                                                            \
-        mc::sendText(out, "Only players can use this command"_tr());                                                   \
+#define CHECK_TYPE(ori, out, type)                                                                                     \
+    if (ori.getOriginType() != type) {                                                                                 \
+        mc::sendText(out, "Only \"{}\" can use this command"_tr(magic_enum::enum_name(type)));                         \
         return;                                                                                                        \
     }
 
@@ -65,65 +69,131 @@ struct Selector3DLand {
     bool is3DLand{false};
 };
 
+namespace Lambda {
+
+static auto const Root = [](CommandOrigin const& ori, CommandOutput& out) {
+    CHECK_TYPE(ori, out, CommandOriginType::Player);
+    auto& player = *static_cast<Player*>(ori.getEntity());
+    LandMainGui::send(player);
+};
+
+
+static auto const Mgr = [](CommandOrigin const& ori, CommandOutput& out) {
+    CHECK_TYPE(ori, out, CommandOriginType::Player);
+    auto& player = *static_cast<Player*>(ori.getEntity());
+    LandManagerGui::send(player);
+};
+
+
+enum class OperatorType : int { Op, Deop };
+struct OperatorParam {
+    OperatorType            type;
+    CommandSelector<Player> player;
+};
+static auto const Operator = [](CommandOrigin const& ori, CommandOutput& out, OperatorParam const& param) {
+    CHECK_TYPE(ori, out, CommandOriginType::DedicatedServer);
+    auto& db  = PLand::getInstance();
+    auto  pls = param.player.results(ori).data;
+    for (auto& pl : *pls) {
+        if (!pl) {
+            continue;
+        }
+        auto uid  = pl->getUuid().asString();
+        auto name = pl->getRealName();
+        if (param.type == OperatorType::Op) {
+            if (db.isOperator(uid)) {
+                mc::sendText(out, "Player {} is already an operator"_tr(name));
+            } else {
+                db.addOperator(uid);
+                mc::sendText(out, "Player {} is now an operator"_tr(name));
+            }
+        } else {
+            if (db.isOperator(uid)) {
+                db.removeOperator(uid);
+                mc::sendText(out, "Player {} is no longer an operator"_tr(name));
+            } else {
+                mc::sendText(out, "Player {} is not an operator"_tr(name));
+            }
+        }
+    }
+};
+
+
+static auto const New = [](CommandOrigin const& ori, CommandOutput& out) {
+    CHECK_TYPE(ori, out, CommandOriginType::Player);
+    auto& player = *static_cast<Player*>(ori.getEntity());
+    ChooseLandDimensionlAndNew::send(player);
+};
+
+enum class SetType : int { A, B };
+struct SetParam {
+    SetType type;
+};
+static auto const Set = [](CommandOrigin const& ori, CommandOutput& out, SetParam const& param) {
+    CHECK_TYPE(ori, out, CommandOriginType::Player);
+    auto& player   = *static_cast<Player*>(ori.getEntity());
+    auto& selector = LandSelector::getInstance();
+    auto& pos      = player.getPosition();
+
+    bool status =
+        param.type == SetType::A ? selector.trySelectPoint1(player, pos) : selector.trySelectPoint2(player, pos);
+
+    if (status) {
+        mc::sendText(out, "Point {} selected"_tr(param.type == SetType::A ? "A" : "B"));
+    } else {
+        mc::sendText<mc::LogLevel::Error>(out, "You are not selecting a land"_tr());
+    }
+};
+
+static auto const Cancel = [](CommandOrigin const& ori, CommandOutput& out) {
+    CHECK_TYPE(ori, out, CommandOriginType::Player);
+    auto& player = *static_cast<Player*>(ori.getEntity());
+    bool  ok     = LandSelector::getInstance().tryStopSelect(player);
+    if (ok) {
+        mc::sendText(out, "Land selection ended"_tr());
+    } else {
+        mc::sendText<mc::LogLevel::Error>(out, "You are not selecting a land"_tr());
+    }
+};
+
+
+static auto const Buy = [](CommandOrigin const& ori, CommandOutput& out) {
+    CHECK_TYPE(ori, out, CommandOriginType::Player);
+    auto& player = *static_cast<Player*>(ori.getEntity());
+    LandBuyGui::send(player);
+};
+
+}; // namespace Lambda
+
 
 bool LandCommand::setup() {
     auto& cmd = ll::command::CommandRegistrar::getInstance().getOrCreateCommand("pland", "PLand System"_tr());
 
-    // pland selector start [Selector3DLand]
-    cmd.overload<Selector3DLand>()
-        .text("selector")
-        .text("start")
-        .optional("is3DLand")
-        .execute([](CommandOrigin const& ori, CommandOutput& out, Selector3DLand const& param) {
-            CHECK_PLAYER(ori, out);
 
-            auto& player = *static_cast<Player*>(ori.getEntity());
-            bool  ok     = LandSelector::getInstance().tryStartSelect(player, player.getDimensionId(), param.is3DLand);
-            if (ok) {
-                mc::sendText(out, "Selecting land"_tr());
-            } else {
-                mc::sendText<mc::LogLevel::Error>(out, "You are already selecting a land"_tr());
-            }
-        });
+    // pland 领地GUI
+    cmd.overload().execute(Lambda::Root);
 
-    // pland selector pos1
-    cmd.overload().text("selector").text("pos1").execute([](CommandOrigin const& ori, CommandOutput& out) {
-        CHECK_PLAYER(ori, out);
+    // pland gui 领地管理GUI
+    cmd.overload().text("gui").execute(Lambda::Root);
 
-        auto& player = *static_cast<Player*>(ori.getEntity());
-        bool  ok     = LandSelector::getInstance().trySelectPoint1(player, player.getPosition());
-        if (ok) {
-            mc::sendText(out, "Selected pos1"_tr());
-        } else {
-            mc::sendText<mc::LogLevel::Error>(out, "You are not selecting a land"_tr());
-        }
-    });
+    // pland mgr 领地管理GUI
+    cmd.overload().text("mgr").execute(Lambda::Mgr);
 
-    // pland selector pos2
-    cmd.overload().text("selector").text("pos2").execute([](CommandOrigin const& ori, CommandOutput& out) {
-        CHECK_PLAYER(ori, out);
+    // pland <op/deop> <player> 添加/移除管理员
+    cmd.overload<Lambda::OperatorParam>().required("type").required("player").execute(Lambda::Operator);
 
-        auto& player = *static_cast<Player*>(ori.getEntity());
-        bool  ok     = LandSelector::getInstance().trySelectPoint2(player, player.getPosition());
-        if (ok) {
-            mc::sendText(out, "Selected pos2"_tr());
-        } else {
-            mc::sendText<mc::LogLevel::Error>(out, "You are not selecting a land"_tr());
-        }
-    });
+    // pland new 新建一个领地
+    cmd.overload().text("new").execute(Lambda::New);
 
-    // pland selector stop
-    cmd.overload().text("selector").text("stop").execute([](CommandOrigin const& ori, CommandOutput& out) {
-        CHECK_PLAYER(ori, out);
+    // pland set <a/b> 选点a/b
+    cmd.overload<Lambda::SetParam>().text("set").required("type").execute(Lambda::Set);
 
-        auto& player = *static_cast<Player*>(ori.getEntity());
-        bool  ok     = LandSelector::getInstance().tryStopSelect(player);
-        if (ok) {
-            mc::sendText(out, "Land selection ended"_tr());
-        } else {
-            mc::sendText<mc::LogLevel::Error>(out, "You are not selecting a land"_tr());
-        }
-    });
+    // pland cancel 取消新建
+    cmd.overload().text("cancel").execute(Lambda::Cancel);
+
+    // pland buy 购买
+    cmd.overload().text("buy").execute(Lambda::Buy);
+
     return true;
 }
 
