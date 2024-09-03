@@ -61,18 +61,28 @@ using ll::command::CommandRegistrar;
 
 namespace land {
 
+
+struct Selector3DLand {
+    bool is3DLand{false};
+};
+
+
+
 bool LandCommand::setup() {
     auto& cmd = ll::command::CommandRegistrar::getInstance().getOrCreateCommand("pland", "PLand System");
 
-    // pland selector start
-    cmd.overload().text("selector").text("start").execute([](CommandOrigin const& ori, CommandOutput& out) {
+    // pland selector start [Selector3DLand]
+    cmd.overload<Selector3DLand>()
+        .text("selector")
+        .text("start")
+        .execute([](CommandOrigin const& ori, CommandOutput& out, Selector3DLand const& param) {
         if (ori.getOriginType() != CommandOriginType::Player) {
             mc::sendText(out, "Only players can use this command");
             return;
         }
 
         auto& player = *static_cast<Player*>(ori.getEntity());
-        bool  ok     = LandSelector::getInstance().tryStartSelect(player, player.getDimensionId(), true);
+        bool  ok     = LandSelector::getInstance().tryStartSelect(player, player.getDimensionId(), param.is3DLand);
         if (ok) {
             mc::sendText(out, "Selecting land");
         } else {
