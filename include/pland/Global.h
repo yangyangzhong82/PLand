@@ -1,5 +1,7 @@
 #pragma once
+#include "ll/api/i18n/I18n.h"
 #include "mc/world/ActorUniqueID.h"
+
 
 namespace land {
 
@@ -15,5 +17,10 @@ enum class LandPermType : int {
     Member,   // 领地成员
     Guest,    // 访客
 };
+
+
+// Using
+using string = std::string;
+using ll::i18n_literals::operator""_tr;
 
 } // namespace land

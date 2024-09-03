@@ -1,10 +1,7 @@
 #pragma once
-#include <string>
+#include "Global.h"
 
 namespace land {
-
-using string = std::string;
-
 
 struct Config {
     int version{1};

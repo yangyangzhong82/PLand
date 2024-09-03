@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include "ll/api/i18n/I18n.h"
 #include "ll/api/mod/RegisterHelper.h"
 
 
@@ -17,8 +18,17 @@ static std::unique_ptr<MyMod> instance;
 MyMod& MyMod::getInstance() { return *instance; }
 
 bool MyMod::load() {
-    getSelf().getLogger().debug("Loading...");
+    auto& logger = getSelf().getLogger();
+    logger.info(R"(  _____   _                        _ )");
+    logger.info(R"( |  __ \ | |                      | |)");
+    logger.info(R"( | |__) || |      __ _  _ __    __| |)");
+    logger.info(R"( |  ___/ | |     / _` || '_ \  / _` |)");
+    logger.info(R"( | |     | |____| (_| || | | || (_| |)");
+    logger.info(R"( |_|     |______|\__,_||_| |_| \__,_|)");
+    logger.info(R"(                                     )");
+    logger.info("Loading...");
 
+    ll::i18n::load(getSelf().getLangDir());
     land::PLand::getInstance().init();
 
     return true;

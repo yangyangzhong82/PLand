@@ -34,7 +34,7 @@ target("PLand") -- Change this to your mod name.
     set_languages("c++20")
 
     if is_mode("debug") then
-        add_defines("DEBUG")
+        add_defines("DEBUG", "LL_I18N_COLLECT_STRINGS")
         set_symbols("debug", "edit")
     else 
         set_symbols("debug")
