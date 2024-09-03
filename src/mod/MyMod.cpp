@@ -6,6 +6,7 @@
 #include "ll/api/mod/RegisterHelper.h"
 #include "ll/api/utils/SystemUtils.h"
 
+#include "pland/Calculate.h"
 #include "pland/Command.h"
 #include "pland/Config.h"
 #include "pland/LandSelector.h"

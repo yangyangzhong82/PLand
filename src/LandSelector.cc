@@ -84,7 +84,7 @@ bool                                   LandSelector::init() {
                     continue;
                 }
 
-                if (data.mCanDraw) {
+                if (data.mCanDraw && Config::cfg.selector.drawParticle) {
                     if (!data.mIsInited) {
                         data.mParticle = Particle(data.mPos1, data.mPos2, data.mDim, data.mDraw3D);
                         data.mParticle.fix();
