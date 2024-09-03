@@ -7,8 +7,16 @@ namespace land {
 
 std::string PosBase::toString() const { return fmt::format("({},{},{})", x, y, z); }
 
+
+void LandPos::fix() {
+    if (mMin.x > mMax.x) std::swap(mMin.x, mMax.x);
+    if (mMin.y > mMax.y) std::swap(mMin.y, mMax.y);
+    if (mMin.z > mMax.z) std::swap(mMin.z, mMax.z);
+}
 LandPosPtr LandPos::make(BlockPos const& min, BlockPos const& max) {
-    return std::make_shared<LandPos>(PosBase{min.x, min.y, min.z}, PosBase{max.x, max.y, max.z});
+    auto ptr = std::make_shared<LandPos>(PosBase{min.x, min.y, min.z}, PosBase{max.x, max.y, max.z});
+    ptr->fix();
+    return ptr;
 }
 std::string           LandPos::toString() const { return fmt::format("{} => {}", mMin.toString(), mMax.toString()); }
 std::vector<ChunkPos> LandPos::getChunks() const {

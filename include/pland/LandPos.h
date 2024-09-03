@@ -23,6 +23,8 @@ public:
 
     static LandPosPtr make(BlockPos const& min, BlockPos const& max);
 
+    void fix();
+
     std::string toString() const;
 
     std::vector<ChunkPos> getChunks() const;
