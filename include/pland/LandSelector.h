@@ -46,8 +46,8 @@ public:
     bool isSelectTool(ItemStack const& item) const;
     bool isSelecting(Player& player) const;
     bool isSelected(Player& player) const;
-    bool isSelectedPoint1(Player& player) const;
-    bool isSelectedPoint2(Player& player) const;
+    bool isSelectedPointA(Player& player) const;
+    bool isSelectedPointB(Player& player) const;
 
     bool tryStartSelect(Player& player, int dim, bool draw3D);
 

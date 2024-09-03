@@ -51,7 +51,7 @@ bool                                   LandSelector::init() {
             );
 #endif
 
-            if (!this->isSelectedPoint1(pl)) {
+            if (!this->isSelectedPointA(pl)) {
                 if (this->trySelectPointA(pl, ev.clickPos())) {
                     mc::sendText(pl, "已选择点A \"{}\""_tr(ev.clickPos().toString()));
                     mStabilized[pl.getUuid()] = Date::future(50 / 1000).getTime(); // 50ms
@@ -59,7 +59,7 @@ bool                                   LandSelector::init() {
                     mc::sendText<mc::LogLevel::Error>(pl, "选择失败"_tr());
                 }
 
-            } else if (!this->isSelectedPoint2(pl) && this->isSelectedPoint1(pl)) {
+            } else if (!this->isSelectedPointB(pl) && this->isSelectedPointA(pl)) {
                 if (this->trySelectPointB(pl, ev.clickPos())) {
                     mc::sendText(pl, "已选择点B \"{}\""_tr(ev.clickPos().toString()));
                 } else {
@@ -127,11 +127,11 @@ bool LandSelector::isSelected(Player& player) const {
     auto iter = mSelectors.find(player.getUuid().asString());
     return iter != mSelectors.end() && !iter->second.mCanSelect;
 }
-bool LandSelector::isSelectedPoint1(Player& player) const {
+bool LandSelector::isSelectedPointA(Player& player) const {
     auto iter = mSelectors.find(player.getUuid().asString());
     return iter != mSelectors.end() && iter->second.mSelectedPoint1;
 }
-bool LandSelector::isSelectedPoint2(Player& player) const {
+bool LandSelector::isSelectedPointB(Player& player) const {
     auto iter = mSelectors.find(player.getUuid().asString());
     return iter != mSelectors.end() && iter->second.mSelectedPoint2;
 }
