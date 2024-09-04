@@ -19,6 +19,7 @@ public:
     PLand(const PLand&)            = delete;
     PLand& operator=(const PLand&) = delete;
 
+
     std::unique_ptr<ll::data::KeyValueDB> mDB;
 
     //                 维度                         区块            领地
@@ -32,6 +33,10 @@ public:
     bool init();
     bool save();
     bool _initCache(); // private
+
+    bool mThreadCanRun{true};
+    void _startThread(); // private
+    void _stopThread();  // private
 
     bool isOperator(UUIDs const& uuid) const;
     bool addOperator(UUIDs const& uuid);
