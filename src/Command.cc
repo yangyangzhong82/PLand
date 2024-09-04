@@ -128,7 +128,7 @@ static auto const New = [](CommandOrigin const& ori, CommandOutput& out) {
         mc::sendText(out, "你所在的维度无法购买领地"_tr());
         return;
     }
-    ChooseLandDimidensionlAndNew::send(player);
+    ChooseLandDimAndNewLand::send(player);
 };
 
 enum class SetType : int { A, B };

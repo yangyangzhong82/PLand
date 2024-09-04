@@ -1,30 +1,29 @@
 #pragma once
 #include "mc/world/actor/player/Player.h"
+#include "pland/wrapper/FormEx.h"
 
 namespace land {
+using namespace wrapper;
 
 
-// 选择领地维度(2D/3D)
-class ChooseLandDimidensionlAndNew {
+class LandMainGui : public FormWrapper<LandMainGui> {
 public:
-    static void send(Player& player);
+    static void impl(Player& player);
 };
 
-
-// 领地GUI入口
-class LandMainGui {
+class ChooseLandDimAndNewLand : public FormWrapper<ChooseLandDimAndNewLand> {
 public:
-    static void send(Player& player);
+    static void impl(Player& player);
 };
 
-class LandManagerGui {
+class LandManagerGui : public FormWrapper<LandManagerGui> {
 public:
-    static void send(Player& player);
+    static void impl(Player& player);
 };
 
-class LandBuyGui {
+class LandBuyGui : public FormWrapper<LandBuyGui> {
 public:
-    static void send(Player& player);
+    static void impl(Player& player);
 };
 
 

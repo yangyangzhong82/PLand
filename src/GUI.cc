@@ -13,7 +13,7 @@ using namespace ll::form;
 
 namespace land {
 
-void ChooseLandDimidensionlAndNew::send(Player& player) {
+void ChooseLandDimAndNewLand::impl(Player& player) {
     ModalForm(
         PLUGIN_NAME + ("| 选择领地维度"_tr()),
         "请选择领地维度\n\n2D: 领地拥有整个Y轴\n3D: 自行选择Y轴范围"_tr(),
@@ -31,15 +31,15 @@ void ChooseLandDimidensionlAndNew::send(Player& player) {
 }
 
 
-void LandMainGui::send(Player& player) {
+void LandMainGui::impl(Player& player) {
     // TODO
 }
-void LandManagerGui::send(Player& player) {
+void LandManagerGui::impl(Player& player) {
     // TODO
 }
 
 
-void LandBuyGui::send(Player& player) {
+void LandBuyGui::impl(Player& player) {
     // TODO
 }
 
