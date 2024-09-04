@@ -17,15 +17,11 @@
 
 namespace land {
 
-namespace fs = std::filesystem;
 #define DB_DIR_NAME      "db"
 #define DB_KEY_OPERATORS "operators"
 
 bool PLand::init() {
     auto dir = my_mod::MyMod::getInstance().getSelf().getDataDir() / DB_DIR_NAME;
-    if (!fs::exists(dir)) {
-        fs::create_directory(dir);
-    }
 
     if (!mDB) {
         mDB = std::make_unique<ll::data::KeyValueDB>(dir);
