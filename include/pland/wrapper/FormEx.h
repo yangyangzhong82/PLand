@@ -114,6 +114,9 @@ public:
 
 protected:
     static SimpleFormEx createForm() {
+        if constexpr (std::is_same_v<ParentForm, void>) {
+            return SimpleFormEx{}; // 没有父表单
+        }
         return SimpleFormEx{
             [](Player& p) {
                 if constexpr (!std::is_same_v<ParentForm, void>) {
