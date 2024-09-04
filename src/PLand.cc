@@ -59,10 +59,10 @@ bool PLand::init() {
     return _initCache();
 }
 bool PLand::save() {
-    mDB->set(DB_KEY_OPERATORS, JSON::structToJsonString(mLandOperators));
+    mDB->set(DB_KEY_OPERATORS, JSON::stringify(JSON::structTojson(mLandOperators)));
 
     for (auto& [id, land] : mLandCache) {
-        mDB->set(std::to_string(land->mLandID), JSON::structToJsonString(*land));
+        mDB->set(std::to_string(land->mLandID), JSON::stringify(JSON::structTojson(*land)));
     }
 
     return true;

@@ -28,23 +28,22 @@ public:
     static nlohmann::json parse(std::string_view const& str) { return nlohmann::json::parse(str); }
     static std::string    stringify(nlohmann::json const& j, int indent = -1) { return j.dump(indent); }
 
+    // class/vector/struct -> json
     template <class T>
     static nlohmann::ordered_json structTojson(T& obj) {
         return ll::reflection::serialize<nlohmann::ordered_json>(obj).value();
     }
 
-    template <class T>
-    static std::string structToJsonString(T& obj, int indent = -1) {
-        return structToJson(obj).dump(indent);
-    }
 
+    // 直接反序列化
     template <class T, class J = nlohmann::ordered_json>
     static void jsonToStructNoMerge(J& j, T& obj) {
         ll::reflection::deserialize(obj, j).value();
     }
 
+    // 尝试合并patch再反序列化
     template <HasVersion T, class J = nlohmann::ordered_json, class F = bool(T&, J&)>
-    static void jsonToStruct(J& j, T& obj, F&& fixer = tryMergePatch<T, J>) {
+    static void jsonToStruct(J& j, T& obj, F&& fixer = _tryMergePatch<T, J>) {
         bool noNeedMerge = true;
         if (!j.contains("version") || (int64)(j["version"]) != obj.version) {
             noNeedMerge = false;
@@ -55,7 +54,7 @@ public:
     }
 
     template <HasVersion T, class J>
-    static bool tryMergePatch(T& obj, J& data) {
+    static bool _tryMergePatch(T& obj, J& data) {
         data.erase("version");
         auto patch = ll::reflection::serialize<J>(obj);
         patch.value().merge_patch(data);
