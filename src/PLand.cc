@@ -120,8 +120,9 @@ bool PLand::addLand(LandDataPtr land) {
         return false; // land already added
     }
     land->mLandID = generateLandID();
-    mLandCache.emplace(land->mLandID, land);
+    mLandCache.emplace(land->mLandID, land); // 添加到缓存
 
+    // 添加映射表
     auto chs = land->mPos.getChunks();
     for (auto& c : chs) {
         auto& ls   = mLandMap[land->mLandDimid][getChunkID(c.x, c.z)];
@@ -136,20 +137,23 @@ bool PLand::addLand(LandDataPtr land) {
     return true;
 }
 bool PLand::removeLand(LandID landId) {
-    auto landIt = mLandCache.find(landId);
-    if (landIt == mLandCache.end()) {
+    auto landIter = mLandCache.find(landId);
+    if (landIter == mLandCache.end()) {
         return false;
     }
-    auto land = landIt->second;
 
-    for (auto& c : land->mPos.getChunks()) {
-        auto& ls   = mLandMap[land->mLandDimid][getChunkID(c.x, c.z)];
-        auto  iter = std::find(ls.begin(), ls.end(), land->mLandID);
-        if (iter != ls.end()) {
-            ls.erase(iter);
+    // 擦除映射表
+    auto land = landIter->second;
+    for (auto& chunk : land->mPos.getChunks()) {
+        auto& landVec = mLandMap[land->mLandDimid][getChunkID(chunk.x, chunk.z)];
+        auto  iter    = std::find(landVec.begin(), landVec.end(), land->mLandID);
+        if (iter != landVec.end()) {
+            landVec.erase(iter);
         }
     }
-    mLandCache.erase(landIt);
+
+    // 擦除缓存
+    mLandCache.erase(landIter);
     return true;
 }
 
