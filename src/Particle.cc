@@ -33,7 +33,7 @@ bool Particle::draw(Player& player) {
             mPackets.push_back(SpawnParticleEffectPacket(
                 Vec3{p.x + 0.5, p.y + 0.5, p.z + 0.5},
                 Config::cfg.selector.particle,
-                dim,
+                (char)dim,
                 molangVariables
             ));
         }

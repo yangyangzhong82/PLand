@@ -17,11 +17,11 @@ struct Config {
     } economy;
 
     struct {
-        bool  landTp{true};    // 领地传送
-        int   maxLand{20};     // 最大领地数量
-        int   minSpacing{16};  // 最小领地间距
-        float refundRate{0.9}; // 退款率(1为全额退款)
-        float discountRate{1}; // 折扣率(1为无折扣)
+        bool   landTp{true};    // 领地传送
+        int    maxLand{20};     // 最大领地数量
+        int    minSpacing{16};  // 最小领地间距
+        double refundRate{0.9}; // 退款率(1为全额退款)
+        double discountRate{1}; // 折扣率(1为无折扣)
 
         struct {
             bool enterTip{true};           // 进入领地提示

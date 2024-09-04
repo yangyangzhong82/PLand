@@ -103,7 +103,7 @@ long long EconomySystem::get(Player& player) {
 bool EconomySystem::set(Player& player, long long money) {
     switch (Config::cfg.economy.kit) {
     case EconomyKit::ScoreBoard:
-        return ScoreBoard_Set(player, money, Config::cfg.economy.scoreboardObjName);
+        return ScoreBoard_Set(player, static_cast<int>(money), Config::cfg.economy.scoreboardObjName);
     case EconomyKit::LegacyMoney:
         return LLMoney_Set(player.getXuid(), money);
     default:
@@ -116,7 +116,7 @@ bool EconomySystem::add(Player& player, long long money) {
     if (!Config::cfg.economy.enabled) return true; // 未启用则不限制
     switch (Config::cfg.economy.kit) {
     case EconomyKit::ScoreBoard:
-        return ScoreBoard_Add(player, money, Config::cfg.economy.scoreboardObjName);
+        return ScoreBoard_Add(player, static_cast<int>(money), Config::cfg.economy.scoreboardObjName);
     case EconomyKit::LegacyMoney:
         return LLMoney_Add(player.getXuid(), money);
     default:
@@ -130,7 +130,7 @@ bool EconomySystem::reduce(Player& player, long long money) {
     if (get(player) >= money) {                    // 防止玩家余额不足
         switch (Config::cfg.economy.kit) {
         case EconomyKit::ScoreBoard:
-            return ScoreBoard_Reduce(player, money, Config::cfg.economy.scoreboardObjName);
+            return ScoreBoard_Reduce(player, static_cast<int>(money), Config::cfg.economy.scoreboardObjName);
         case EconomyKit::LegacyMoney:
             return LLMoney_Reduce(player.getXuid(), money);
         default:
