@@ -7,6 +7,7 @@ add_repositories("liteldev-repo https://github.com/LiteLDev/xmake-repo.git")
 -- please note that you should add bdslibrary yourself if using dev version
 add_requires("levilamina 0.13.5")
 add_requires("exprtk 2022.01.01")
+add_requires("legacymoney 0.8.3")
 
 if not has_config("vs_runtime") then
     set_runtimes("MD")
@@ -24,15 +25,21 @@ target("PLand") -- Change this to your mod name.
         "/w44738",
         "/w45204"
     )
-    add_defines("NOMINMAX", "UNICODE", "PLUGIN_NAME=\"[PLand] \"")
-    add_defines("BUILD_TIME=\"" .. os.date('%Y-%m-%d %H:%M:%S') .. "\"")
+    add_defines("NOMINMAX", "UNICODE")
     add_files("src/**.cpp", "src/**.cc")
     add_includedirs("src", "include")
-    add_packages("levilamina", "exprtk")
+    add_packages(
+        "levilamina",
+        "exprtk",
+        "legacymoney"
+    )
     add_shflags("/DELAYLOAD:bedrock_server.dll") -- To use symbols provided by SymbolProvider.
     set_exceptions("none") -- To avoid conflicts with /EHa.
     set_kind("shared")
     set_languages("c++20")
+
+    add_defines("PLUGIN_NAME=\"[PLand] \"")
+    add_defines("BUILD_TIME=\"" .. os.date('%Y-%m-%d %H:%M:%S') .. "\"")
 
     if is_mode("debug") then
         add_defines("DEBUG", "LL_I18N_COLLECT_STRINGS")
