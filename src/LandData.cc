@@ -6,7 +6,7 @@ namespace land {
 // getters
 LandPos const&            LandData::getLandPos() const { return mPos; }
 LandID                    LandData::getLandID() const { return mLandID; }
-LandDim                   LandData::getLandDim() const { return mLandDim; }
+LandDimid                 LandData::getLandDimid() const { return mLandDimid; }
 LandPermTable&            LandData::getLandPermTable() { return mLandPermTable; }
 LandPermTable const&      LandData::getLandPermTableConst() const { return mLandPermTable; }
 UUIDs const&              LandData::getLandOwner() const { return mLandOwner; }
@@ -78,5 +78,10 @@ LandPermType LandData::getPermType(UUIDs const& uuid) const {
     if (isLandMember(uuid)) return LandPermType::Member;
     return LandPermType::Guest;
 }
+
+
+// static
+LandDataPtr LandData::make() { return std::make_shared<LandData>(); }
+
 
 } // namespace land

@@ -1,27 +1,96 @@
 #include "pland/PLand.h"
 #include "fmt/core.h"
+#include "ll/api/data/KeyValueDB.h"
 #include "mc/world/level/BlockPos.h"
+#include "mod/MyMod.h"
+#include "pland/Global.h"
+#include "pland/LandData.h"
+#include "pland/utils/JSON.h"
+#include "pland/utils/Utils.h"
 #include <algorithm>
 #include <cstdint>
+#include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
 
 namespace land {
 
+namespace fs = std::filesystem;
+#define DB_DIR_NAME      "db"
+#define DB_KEY_OPERATORS "operators"
+
+bool PLand::init() {
+    auto dir = my_mod::MyMod::getInstance().getSelf().getDataDir() / DB_DIR_NAME;
+    if (!fs::exists(dir)) {
+        fs::create_directory(dir);
+    }
+
+    if (!mDB) {
+        mDB = std::make_unique<ll::data::KeyValueDB>(dir);
+    }
+
+
+    // init and load operators
+    if (!mDB->has(DB_KEY_OPERATORS)) {
+        mDB->set(DB_KEY_OPERATORS, "[]"); // empty array
+    }
+    auto ops = JSON::parse(*mDB->get(DB_KEY_OPERATORS));
+    JSON::jsonToStructNoMerge(ops, mLandOperators);
+
+
+    // load land data
+    mDB->iter([this](auto key, auto value) {
+        if (key == DB_KEY_OPERATORS) return true; // skip operators
+        auto json = JSON::parse(value);
+        auto land = LandData::make();
+
+        JSON::jsonToStruct(json, *land);
+
+        mLandCache.emplace(land->getLandID(), land);
+        return true;
+    });
+
+
+    auto& logger = my_mod::MyMod::getInstance().getSelf().getLogger();
+    logger.info("已加载 {} 位操作员", mLandOperators.size());
+    logger.info("已加载 {} 块领地数据", mLandCache.size());
+    return _initCache();
+}
+bool PLand::save() {
+    mDB->set(DB_KEY_OPERATORS, JSON::structToJsonString(mLandOperators));
+
+    for (auto& [id, land] : mLandCache) {
+        mDB->set(std::to_string(land->mLandID), JSON::structToJsonString(*land));
+    }
+
+    return true;
+}
+bool PLand::_initCache() {
+    for (auto& [id, land] : mLandCache) {
+        auto& chunkMap = mLandMap[LandDimid(land->getLandDimid())]; // 区块表
+
+        auto chs = land->mPos.getChunks();
+        for (auto& ch : chs) {
+            auto  chunkID      = PLand::getChunkID(ch.x, ch.z);
+            auto& chunkLandVec = chunkMap[chunkID]; // 区块领地数组
+
+            if (!some(chunkLandVec, land->getLandID())) {
+                chunkLandVec.push_back(land->getLandID());
+            }
+        }
+    }
+    my_mod::MyMod::getInstance().getSelf().getLogger().info("初始化领地缓存系统完成");
+    return true;
+}
+
+
 PLand& PLand::getInstance() {
     static PLand instance;
     return instance;
 }
 
-bool PLand::init() {
-    // TODO: load land data from file
-    return true;
-}
-bool PLand::save() {
-    // TODO: save land data to file
-    return true;
-}
 
 bool PLand::isOperator(UUIDs const& uuid) const {
     return std::find(mLandOperators.begin(), mLandOperators.end(), uuid) != mLandOperators.end();
@@ -55,7 +124,7 @@ bool PLand::addLand(LandDataPtr land) {
 
     auto chs = land->mPos.getChunks();
     for (auto& c : chs) {
-        auto& ls   = mLandMap[land->mLandDim][getChunkID(c.x, c.z)];
+        auto& ls   = mLandMap[land->mLandDimid][getChunkID(c.x, c.z)];
         auto  iter = std::find(ls.begin(), ls.end(), land->mLandID);
         if (iter == ls.end()) {
             ls.push_back(land->mLandID);
@@ -74,7 +143,7 @@ bool PLand::removeLand(LandID landId) {
     auto land = landIt->second;
 
     for (auto& c : land->mPos.getChunks()) {
-        auto& ls   = mLandMap[land->mLandDim][getChunkID(c.x, c.z)];
+        auto& ls   = mLandMap[land->mLandDimid][getChunkID(c.x, c.z)];
         auto  iter = std::find(ls.begin(), ls.end(), land->mLandID);
         if (iter != ls.end()) {
             ls.erase(iter);

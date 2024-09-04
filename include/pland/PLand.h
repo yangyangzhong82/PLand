@@ -22,8 +22,8 @@ public:
     std::unique_ptr<ll::data::KeyValueDB> mDB;
 
     //                 维度                         区块            领地
-    std::unordered_map<LandDim, std::unordered_map<ChunkID, std::vector<LandID>>> mLandMap;   // 领地映射表
-    std::unordered_map<LandID, LandDataPtr>                                       mLandCache; // 领地缓存
+    std::unordered_map<LandDimid, std::unordered_map<ChunkID, std::vector<LandID>>> mLandMap;   // 领地映射表
+    std::unordered_map<LandID, LandDataPtr>                                         mLandCache; // 领地缓存
 
     std::vector<UUIDs> mLandOperators; // 领地操作员
 
@@ -31,6 +31,7 @@ public:
 
     bool init();
     bool save();
+    bool _initCache(); // private
 
     bool isOperator(UUIDs const& uuid) const;
     bool addOperator(UUIDs const& uuid);

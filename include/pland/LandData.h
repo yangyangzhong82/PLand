@@ -87,9 +87,10 @@ struct LandPermTable {
 using LandDataPtr = std::shared_ptr<class LandData>;
 class LandData {
 public:
+    int                version{1};                         // 版本号
     LandPos            mPos;                               // 领地对角坐标
     LandID             mLandID{static_cast<uint64_t>(-1)}; // 领地唯一ID
-    LandDim            mLandDim;                           // 领地所在维度
+    LandDimid          mLandDimid;                         // 领地所在维度
     bool               mIs3DLand;                          // 是否为3D领地
     LandPermTable      mLandPermTable;                     // 领地权限
     UUIDs              mLandOwner;                         // 领地主人
@@ -99,12 +100,12 @@ public:
     bool               mIsSaleing{false};                  // 是否正在出售
     int                mSalePrice{0};                      // 出售价格
 
-    // LandDataPtr make(BlockPos const& po1, BlockPos const& pos2, LandDim dim, bool is3D);
+    static LandDataPtr make();
 
     // getters
     LandPos const& getLandPos() const;
     LandID         getLandID() const;
-    LandDim        getLandDim() const;
+    LandDimid      getLandDimid() const;
     int            getSalePrice() const;
 
     LandPermTable&       getLandPermTable();

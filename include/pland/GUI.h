@@ -5,7 +5,7 @@ namespace land {
 
 
 // 选择领地维度(2D/3D)
-class ChooseLandDimensionlAndNew {
+class ChooseLandDimidensionlAndNew {
 public:
     static void send(Player& player);
 };
