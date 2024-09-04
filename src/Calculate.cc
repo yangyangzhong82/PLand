@@ -1,6 +1,9 @@
 #include "pland/Calculate.h"
 
+
+#pragma warning(disable : 4702)
 #include "exprtk.hpp"
+#pragma warning(default : 4702)
 
 namespace land {
 
