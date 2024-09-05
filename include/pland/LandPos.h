@@ -33,7 +33,13 @@ public:
 
     static LandPos make(BlockPos const& min, BlockPos const& max);
 
-    void fix();
+    void fix(); // fix min/max
+
+    int getDepth() const;  // (长) X
+    int getHeight() const; // (高) Y
+    int getWidth() const;  // (宽) Z
+    int getSquare() const; // (底面积) X * Z
+    int getVolume() const; // (总体积) Z * X * Y
 
     std::string toString() const;
 

@@ -1,4 +1,5 @@
 #include "pland/Calculate.h"
+#include "pland/LandPos.h"
 
 
 #pragma warning(disable : 4702)
@@ -13,6 +14,13 @@ Calculate::Calculate(int height, int width, int depth)
   mDepth((double)depth) {
     mSquare = mWidth * mDepth;
     mVolume = mHeight * mSquare;
+}
+Calculate::Calculate(LandPos& land) {
+    mHeight = land.getHeight();
+    mWidth  = land.getWidth();
+    mDepth  = land.getDepth();
+    mSquare = land.getSquare();
+    mVolume = land.getVolume();
 }
 
 int Calculate::eval(string code) {
@@ -31,7 +39,7 @@ int Calculate::eval(string code) {
     // 编译表达式
     exprtk::parser<double> parser;
     if (!parser.compile(code, expr)) {
-        return -1;
+        return 0;
     }
 
     return (int)expr.value(); // 计算结果

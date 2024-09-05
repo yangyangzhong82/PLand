@@ -21,7 +21,7 @@ public:
     Particle(LandPos& pos, int dimid, bool draw3D);
     Particle(BlockPos pos1, BlockPos pos2, int dimid, bool draw3D);
 
-    bool draw(Player& player, bool refreshCache = false);
+    bool draw(Player& player, bool refreshCache = false, bool usePlayerYDraw2D = true);
 };
 
 

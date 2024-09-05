@@ -64,7 +64,23 @@ bool                                   LandSelector::init() {
             } else if (!this->isSelectedPointB(pl) && this->isSelectedPointA(pl)) {
                 if (this->trySelectPointB(pl, ev.clickPos())) {
                     mc::sendText(pl, "已选择点B \"{}\""_tr(ev.clickPos().toString()));
-                    SelectorChangeYGui::send(pl); // 发送GUI
+
+
+                    if (auto iter = mSelectors.find(pl.getUuid().asString()); iter != mSelectors.end()) {
+                        auto& data = iter->second;
+                        if (data.mDraw3D) {
+                            // 3DLand
+                            SelectorChangeYGui::send(pl); // 发送GUI
+                        } else {
+                            // 2DLand
+                            if (auto dim = pl.getLevel().getDimension(data.mDimid); dim) {
+                                data.mPos.mMax_B.y = dim->getHeight();
+                                data.mPos.mMin_A.y = dim->getMinHeight();
+                            } else {
+                                mc::sendText<mc::LogLevel::Error>(pl, "获取维度失败"_tr());
+                            }
+                        }
+                    }
                 } else {
                     mc::sendText<mc::LogLevel::Error>(pl, "选择失败"_tr());
                 }
@@ -104,6 +120,8 @@ bool                                   LandSelector::init() {
 
                     // 绘制粒子
                     if (!data.mIsInitedParticle) {
+                        data.mParticle.mDimid  = data.mDimid;
+                        data.mParticle.mDraw3D = data.mDraw3D;
                         data.mParticle.mPos    = data.mPos;
                         data.mIsInitedParticle = true;
                     }

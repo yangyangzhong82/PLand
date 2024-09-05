@@ -18,7 +18,7 @@ Particle::Particle(BlockPos pos1, BlockPos pos2, int dimid, bool draw3D)
 Particle::Particle(LandPos& pos, int dimid, bool draw3D) : mPos(LandPos(pos)), mDimid(dimid), mDraw3D(draw3D) {}
 
 
-bool Particle::draw(Player& player, bool refreshCache) {
+bool Particle::draw(Player& player, bool refreshCache, bool usePlayerYDraw2D) {
     if (mPackets.empty() || refreshCache) {
         static std::optional<class MolangVariableMap> molangVariables;
 
@@ -27,13 +27,27 @@ bool Particle::draw(Player& player, bool refreshCache) {
         auto dim = VanillaDimensions::toSerializedInt(mDimid);
 
         mPackets.reserve(pos.size());
-        for (auto& p : pos) {
-            mPackets.push_back(SpawnParticleEffectPacket(
-                Vec3{p.x + 0.5, p.y + 0.5, p.z + 0.5},
-                Config::cfg.selector.particle,
-                (char)dim,
-                molangVariables
-            ));
+        if (mDraw3D) {
+            for (auto& p : pos) {
+                mPackets.push_back(SpawnParticleEffectPacket(
+                    Vec3{p.x + 0.5, p.y + 0.5, p.z + 0.5},
+                    Config::cfg.selector.particle,
+                    (char)dim,
+                    molangVariables
+                ));
+            }
+        } else {
+            // 2D
+            float y  = usePlayerYDraw2D ? (float)(player.getFeetBlockPos().y + 5) : pos[0].y;
+            y       += 0.5; // center
+            for (auto& p : pos) {
+                mPackets.push_back(SpawnParticleEffectPacket(
+                    Vec3{p.x + 0.5, y, p.z + 0.5},
+                    Config::cfg.selector.particle,
+                    (char)dim,
+                    molangVariables
+                ));
+            }
         }
     }
 

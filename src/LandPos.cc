@@ -23,6 +23,13 @@ PosBase PosBase::make(BlockPos const& pos) { return PosBase{pos.x, pos.y, pos.z}
 
 
 // LandPos
+int LandPos::getDepth() const { return mMax_B.x - mMin_A.x; }
+int LandPos::getHeight() const { return mMax_B.y - mMin_A.y; }
+int LandPos::getWidth() const { return mMax_B.z - mMin_A.z; }
+int LandPos::getSquare() const { return getWidth() * getHeight() * getDepth(); }
+int LandPos::getVolume() const { return getSquare() * getDepth(); }
+
+
 void LandPos::fix() {
     if (mMin_A.x > mMax_B.x) std::swap(mMin_A.x, mMax_B.x);
     if (mMin_A.y > mMax_B.y) std::swap(mMin_A.y, mMax_B.y);

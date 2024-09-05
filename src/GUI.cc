@@ -3,7 +3,9 @@
 #include "ll/api/form/ModalForm.h"
 #include "ll/api/form/SimpleForm.h"
 #include "mod/MyMod.h"
+#include "pland/Calculate.h"
 #include "pland/Config.h"
+#include "pland/EconomySystem.h"
 #include "pland/Global.h"
 #include "pland/LandSelector.h"
 #include "pland/utils/MC.h"
@@ -28,7 +30,17 @@ void ChooseLandDimAndNewLand::impl(Player& player) {
                 return;
             }
 
-            LandSelector::getInstance().tryStartSelect(pl, pl.getDimensionId(), !((bool)res.value()));
+            bool land3D = !((bool)res.value());
+            if (land3D && !Config::cfg.land.bought.threeDimensionl.enabled) {
+                mc::sendText(pl, "3D领地功能未启用，请联系管理员"_tr());
+                return;
+            }
+            if (!land3D && !Config::cfg.land.bought.twoDimensionl.enabled) {
+                mc::sendText(pl, "2D领地功能未启用，请联系管理员"_tr());
+                return;
+            }
+
+            LandSelector::getInstance().tryStartSelect(pl, pl.getDimensionId(), land3D);
             mc::sendText(pl, "选区功能已开启，使用命令 /pland set 或使用 {} 来选择ab点"_tr(Config::cfg.selector.tool));
         });
 }
@@ -49,9 +61,43 @@ void LandMainGui::impl(Player& player) {
 
 
 void LandBuyGui::impl(Player& player) {
-    auto fm = createForm();
+    auto dataPtr = LandSelector::getInstance().getSelector(player);
+    if (!dataPtr) {
+        mc::sendText<mc::LogLevel::Error>(player, "请先使用 /pland new 来选择领地"_tr());
+        return;
+    }
 
-    fm.appendButton("test", [](Player& pl) {});
+    bool is3D = dataPtr->mDraw3D;
+
+    auto& economy = EconomySystem::getInstance();
+
+    int price = Calculate(dataPtr->mPos)
+                    .eval(
+                        is3D ? Config::cfg.land.bought.threeDimensionl.calculate
+                             : Config::cfg.land.bought.twoDimensionl.calculate
+                    );
+
+    auto fm = createForm();
+    fm.setTitle(PLUGIN_NAME + ("| 购买领地"_tr()));
+
+    fm.setContent("领地类型: {}\n体积: {}x{}x{} {}\n范围: {}\n价格: {}\n{}"_tr(
+        is3D ? "3D" : "2D",
+        dataPtr->mPos.getDepth(),
+        dataPtr->mPos.getWidth(),
+        dataPtr->mPos.getHeight(),
+        dataPtr->mPos.getVolume(),
+        dataPtr->mPos.toString(),
+        price,
+        economy.getSpendTip(player, price)
+    ));
+
+    fm.appendButton("确认购买"_tr(), "textures/ui/realms_green_check", [](Player& pl) {
+        
+    });
+    fm.appendButton("暂存订单"_tr(), "textures/ui/recipe_book_icon", [](Player& pl) {});
+    fm.appendButton("放弃订单"_tr(), "textures/ui/cancel", [](Player& pl) {
+        LandSelector::getInstance().tryCancelSelect(pl);
+    });
 
     fm.sendTo(player);
 }
@@ -65,7 +111,7 @@ void SelectorChangeYGui::impl(Player& player) {
 
     CustomForm fm(PLUGIN_NAME + ("| 确认Y轴范围"_tr()));
 
-    fm.appendLabel("确认选区的Y轴范围"_tr());
+    fm.appendLabel("确认选区的Y轴范围\n您可以在此调节Y轴范围，如果不需要修改，请直接点击提交"_tr());
 
     fm.appendInput("start", "开始Y轴"_tr(), "int", std::to_string(dataPtr->mPos.mMin_A.y));
     fm.appendInput("end", "结束Y轴"_tr(), "int", std::to_string(dataPtr->mPos.mMax_B.y));
@@ -96,6 +142,7 @@ void SelectorChangeYGui::impl(Player& player) {
 
             dataPtr->mPos.mMin_A.y = startY;
             dataPtr->mPos.mMax_B.y = endY;
+            dataPtr->mParticle.draw(pl, true); // force update cache
 
             mc::sendText(pl, "Y轴范围已修改为 {} ~ {}"_tr(startY, endY));
         } catch (...) {
