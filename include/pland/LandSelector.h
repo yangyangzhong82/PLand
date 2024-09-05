@@ -3,6 +3,7 @@
 #include "mc/world/item/registry/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "pland/Global.h"
+#include "pland/LandPos.h"
 #include "pland/Particle.h"
 #include <optional>
 #include <unordered_map>
@@ -11,21 +12,20 @@
 namespace land {
 
 struct LandSelectorData {
-    Player*  mPlayer{nullptr};
-    BlockPos mPos1;
-    BlockPos mPos2;
-    int      mDim; // 维度
-    bool     mDraw3D;
-    bool     mSelectedPoint1{false};
-    bool     mSelectedPoint2{false};
-    bool     mCanDraw{false};  // 能否绘制
-    bool     mCanSelect{true}; // 能否选择
+    Player* mPlayer{nullptr};
+    LandPos mPos;                   // 选择的位置
+    int     mDimid;                 // 维度
+    bool    mDraw3D;                // 是否绘制3D
+    bool    mSelectedPointA{false}; // 是否已经选择了第一个点
+    bool    mSelectedPointB{false}; // 是否已经选择了两个点
+    bool    mCanDraw{false};        // 能否绘制
+    bool    mCanSelect{true};       // 能否选择
 
-    bool     mIsInited{false};
+    bool     mIsInitedParticle{false}; // 是否已经初始化mParticle
     Particle mParticle;
 
     LandSelectorData() = default;
-    LandSelectorData(Player& player, int dim, bool draw3D) : mPlayer(&player), mDim(dim), mDraw3D(draw3D) {}
+    LandSelectorData(Player& player, int dim, bool draw3D) : mPlayer(&player), mDimid(dim), mDraw3D(draw3D) {}
 };
 
 class LandSelector {
@@ -41,7 +41,7 @@ public:
     bool init();   // 初始化
     bool uninit(); // 卸载
 
-    std::optional<LandSelectorData> getSelector(Player& player) const;
+    LandSelectorData* getSelector(Player& player);
 
     bool isSelectTool(ItemStack const& item) const;
     bool isSelecting(Player& player) const;

@@ -11,17 +11,27 @@ class PosBase {
 public:
     int x, y, z;
 
+    static PosBase make(int x, int y, int z);
+    static PosBase make(BlockPos const& pos);
+
     std::string toString() const;
+    BlockPos    toBlockPos() const;
+
+    PosBase& operator=(PosBase const& pos) = default;
+    bool     operator==(PosBase const& pos) const;
+    bool     operator!=(PosBase const& pos) const;
+    PosBase& operator=(BlockPos const& pos);
+    bool     operator==(BlockPos const& pos) const;
+    bool     operator!=(BlockPos const& pos) const;
 };
 
 
 // 领地坐标
-using LandPosPtr = std::shared_ptr<class LandPos>;
 class LandPos {
 public:
-    PosBase mMin, mMax;
+    PosBase mMin_A, mMax_B;
 
-    static LandPosPtr make(BlockPos const& min, BlockPos const& max);
+    static LandPos make(BlockPos const& min, BlockPos const& max);
 
     void fix();
 

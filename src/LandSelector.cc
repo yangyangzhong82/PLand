@@ -9,12 +9,14 @@
 #include "mc/world/item/registry/ItemStack.h"
 #include "mod/MyMod.h"
 #include "pland/Config.h"
+#include "pland/GUI.h"
 #include "pland/Global.h"
 #include "pland/utils/Date.h"
 #include "pland/utils/MC.h"
 #include <optional>
 #include <unordered_map>
 
+#include "mc/network/packet/SetTitlePacket.h"
 
 namespace land {
 
@@ -62,16 +64,17 @@ bool                                   LandSelector::init() {
             } else if (!this->isSelectedPointB(pl) && this->isSelectedPointA(pl)) {
                 if (this->trySelectPointB(pl, ev.clickPos())) {
                     mc::sendText(pl, "已选择点B \"{}\""_tr(ev.clickPos().toString()));
+                    SelectorChangeYGui::send(pl); // 发送GUI
                 } else {
                     mc::sendText<mc::LogLevel::Error>(pl, "选择失败"_tr());
                 }
             }
         });
 
-    mPlayerLeave = bus.emplaceListener<ll::event::PlayerLeaveEvent>([](ll::event::PlayerLeaveEvent const& ev) {
-        auto iter = LandSelector::getInstance().mSelectors.find(ev.self().getUuid().asString());
-        if (iter != LandSelector::getInstance().mSelectors.end()) {
-            LandSelector::getInstance().mSelectors.erase(iter);
+    mPlayerLeave = bus.emplaceListener<ll::event::PlayerLeaveEvent>([this](ll::event::PlayerLeaveEvent const& ev) {
+        auto iter = this->mSelectors.find(ev.self().getUuid().asString());
+        if (iter != this->mSelectors.end()) {
+            this->mSelectors.erase(iter);
         }
     });
 
@@ -79,24 +82,38 @@ bool                                   LandSelector::init() {
     mTickScheduler.add<ll::schedule::RepeatTask>(20_tick, [this]() {
         for (auto& [uuid, data] : mSelectors) {
             try {
-                if (data.mPlayer == nullptr) {
+                auto pl = data.mPlayer; // 玩家指针
+                if (pl == nullptr) {
                     mSelectors.erase(uuid); // 玩家断开连接
                     continue;
                 }
 
-                if (data.mCanDraw && Config::cfg.selector.drawParticle) {
-                    if (!data.mIsInited) {
-                        data.mParticle = Particle(data.mPos1, data.mPos2, data.mDim, data.mDraw3D);
-                        data.mParticle.fix();
-                        data.mIsInited = true;
+                SetTitlePacket titlePacket(SetTitlePacket::TitleType::Title);
+                SetTitlePacket subTitlePacket(SetTitlePacket::TitleType::Subtitle);
+                if (!data.mSelectedPointA) {
+                    titlePacket.mTitleText = "[ 选区器 ]"_tr();
+                    subTitlePacket.mTitleText = "使用 /pland set a 或使用 {} 选择点A"_tr(Config::cfg.selector.tool);
+
+                } else if (!data.mSelectedPointB) {
+                    titlePacket.mTitleText = "[ 选区器 ]"_tr();
+                    subTitlePacket.mTitleText = "使用 /pland set b 或使用 {} 选择点B"_tr(Config::cfg.selector.tool);
+
+                } else if (data.mCanDraw && Config::cfg.selector.drawParticle) {
+                    titlePacket.mTitleText    = "[ 选区完成 ]"_tr();
+                    subTitlePacket.mTitleText = "使用 /pland buy 呼出购买菜单"_tr(Config::cfg.selector.tool);
+
+                    // 绘制粒子
+                    if (!data.mIsInitedParticle) {
+                        data.mParticle.mPos    = data.mPos;
+                        data.mIsInitedParticle = true;
                     }
-                    data.mParticle.draw(*data.mPlayer);
+                    data.mParticle.draw(*pl);
                 }
+
+                titlePacket.sendTo(*pl);
+                subTitlePacket.sendTo(*pl);
             } catch (...) {
                 mSelectors.erase(uuid);
-                my_mod::MyMod::getInstance().getSelf().getLogger().warn(
-                    "Exception in LandSelector::mTickScheduler, player leave"
-                );
                 continue;
             }
         }
@@ -110,13 +127,13 @@ bool LandSelector::uninit() {
     return true;
 }
 
-std::optional<LandSelectorData> LandSelector::getSelector(Player& player) const {
+LandSelectorData* LandSelector::getSelector(Player& player) {
     auto iter = mSelectors.find(player.getUuid().asString());
     if (iter == mSelectors.end()) {
-        return std::nullopt;
+        return nullptr;
     }
 
-    return iter->second;
+    return &iter->second;
 }
 bool LandSelector::isSelectTool(ItemStack const& item) const { return item.getTypeName() == Config::cfg.selector.tool; }
 bool LandSelector::isSelecting(Player& player) const {
@@ -129,11 +146,11 @@ bool LandSelector::isSelected(Player& player) const {
 }
 bool LandSelector::isSelectedPointA(Player& player) const {
     auto iter = mSelectors.find(player.getUuid().asString());
-    return iter != mSelectors.end() && iter->second.mSelectedPoint1;
+    return iter != mSelectors.end() && iter->second.mSelectedPointA;
 }
 bool LandSelector::isSelectedPointB(Player& player) const {
     auto iter = mSelectors.find(player.getUuid().asString());
-    return iter != mSelectors.end() && iter->second.mSelectedPoint2;
+    return iter != mSelectors.end() && iter->second.mSelectedPointB;
 }
 
 
@@ -166,8 +183,8 @@ bool LandSelector::trySelectPointA(Player& player, BlockPos pos) {
         return false;
     }
 
-    iter->second.mSelectedPoint1 = true;
-    iter->second.mPos1           = pos;
+    iter->second.mSelectedPointA = true;
+    iter->second.mPos.mMin_A     = pos;
     return true;
 }
 bool LandSelector::trySelectPointB(Player& player, BlockPos pos) {
@@ -178,10 +195,11 @@ bool LandSelector::trySelectPointB(Player& player, BlockPos pos) {
         return false;
     }
 
-    iter->second.mSelectedPoint2 = true;
-    iter->second.mPos2           = pos;
+    iter->second.mSelectedPointB = true;
+    iter->second.mPos.mMax_B     = pos;
     iter->second.mCanSelect      = false;
     iter->second.mCanDraw        = true;
+    iter->second.mPos.fix(); // fix  min/max
     return true;
 }
 

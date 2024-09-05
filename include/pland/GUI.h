@@ -11,20 +11,28 @@ public:
     static void impl(Player& player);
 };
 
+class LandBuyGui : public FormWrapper<LandBuyGui, LandMainGui> {
+public:
+    static void impl(Player& player);
+};
+
 class ChooseLandDimAndNewLand : public FormWrapper<ChooseLandDimAndNewLand> {
 public:
     static void impl(Player& player);
 };
 
+
+// 选区完成修改Y范围
+class SelectorChangeYGui : public FormWrapper<SelectorChangeYGui> {
+public:
+    static void impl(Player& player);
+};
+
+
+// TODO:
 class LandManagerGui : public FormWrapper<LandManagerGui> {
 public:
     static void impl(Player& player);
 };
-
-class LandBuyGui : public FormWrapper<LandBuyGui> {
-public:
-    static void impl(Player& player);
-};
-
 
 } // namespace land

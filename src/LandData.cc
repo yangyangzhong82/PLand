@@ -57,8 +57,8 @@ bool LandData::isLandMember(UUIDs const& uuid) const {
 }
 
 bool LandData::isRadiusInLand(BlockPos const& pos, int radius) const {
-    BlockPos minPos(pos.x - radius, mIs3DLand ? pos.y - radius : mPos.mMin.y, pos.z - radius);
-    BlockPos maxPos(pos.x + radius, mIs3DLand ? pos.y + radius : mPos.mMax.y, pos.z + radius);
+    BlockPos minPos(pos.x - radius, mIs3DLand ? pos.y - radius : mPos.mMin_A.y, pos.z - radius);
+    BlockPos maxPos(pos.x + radius, mIs3DLand ? pos.y + radius : mPos.mMax_B.y, pos.z + radius);
     return isAABBInLand(minPos, maxPos);
 }
 
