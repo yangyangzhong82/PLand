@@ -50,6 +50,15 @@ SimpleFormEx& SimpleFormEx::appendButton(
     form->appendButton(text, imageData, imageType, callback);
     return *this;
 }
+SimpleFormEx&
+SimpleFormEx::appendButton(std::string const& text, std::string const& imageData, ButtonCallback callback) {
+    if (!mIsUpperAdded && mBackCallback && (bool)mSimpleFormExBack) {
+        AppendBackButton(*form, mBackCallback); // Upper
+        mIsUpperAdded = true;
+    }
+    form->appendButton(text, imageData, "path", callback);
+    return *this;
+}
 
 SimpleFormEx& SimpleFormEx::sendTo(Player& player, Callback callback) {
     if (mBackCallback && !((bool)mSimpleFormExBack)) {

@@ -74,6 +74,7 @@ public:
     SimpleFormEx& setContent(std::string const& content);
 
     SimpleFormEx& appendButton(std::string const& text, ButtonCallback callback = {});
+    SimpleFormEx& appendButton(std::string const& text, std::string const& imageData, ButtonCallback callback = {});
     SimpleFormEx& appendButton(
         std::string const& text,
         std::string const& imageData,
