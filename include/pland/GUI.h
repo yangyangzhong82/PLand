@@ -37,7 +37,7 @@ public:
 
 
 // TODO:
-class LandManagerGui : public FormWrapper<LandManagerGui> {
+class LandOPManagerGui : public FormWrapper<LandOPManagerGui> {
 public:
     static void impl(Player& player);
 };

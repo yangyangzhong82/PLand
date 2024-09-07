@@ -83,7 +83,7 @@ static auto const Root = [](CommandOrigin const& ori, CommandOutput& out) {
 static auto const Mgr = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
-    LandManagerGui::send(player);
+    LandOPManagerGui::send(player);
 };
 
 

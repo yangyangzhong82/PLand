@@ -210,5 +210,5 @@ void SelectorChangeYGui::impl(Player& player) {
 }
 
 
-void LandManagerGui::impl(Player& player) {}
+void LandOPManagerGui::impl(Player& player) {}
 } // namespace land
