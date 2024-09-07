@@ -1,6 +1,7 @@
 #pragma once
 #include "ll/api/i18n/I18n.h"
 #include "ll/api/schedule/Scheduler.h"
+#include "mc/deps/core/mce/UUID.h"
 #include "mc/world/ActorUniqueID.h"
 
 
@@ -23,6 +24,7 @@ enum class LandPermType : int {
 // Using
 using string = std::string;
 using ll::i18n_literals::operator""_tr;
+using ll::chrono_literals::operator""_tick; // 1s = 20_tick
 
 
 // 全局共享资源
