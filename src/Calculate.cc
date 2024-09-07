@@ -46,10 +46,10 @@ int Calculate::eval(string code) {
 }
 
 
-int Calculate::calculateDiscountPrice(int originalPrice, float discountRate) {
+int Calculate::calculateDiscountPrice(int originalPrice, double discountRate) {
     return (int)(originalPrice * (1 - discountRate / 100));
 }
-int Calculate::calculateRefundsPrice(int originalPrice, float refundRate) {
+int Calculate::calculateRefundsPrice(int originalPrice, double refundRate) {
     return (int)(originalPrice * refundRate / 100);
 }
 
