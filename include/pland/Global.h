@@ -1,5 +1,6 @@
 #pragma once
 #include "ll/api/i18n/I18n.h"
+#include "ll/api/schedule/Scheduler.h"
 #include "mc/world/ActorUniqueID.h"
 
 
@@ -22,5 +23,9 @@ enum class LandPermType : int {
 // Using
 using string = std::string;
 using ll::i18n_literals::operator""_tr;
+
+
+// 全局共享资源
+extern ll::schedule::GameTickScheduler GlobalTickScheduler;
 
 } // namespace land

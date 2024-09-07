@@ -9,6 +9,7 @@
 #include "pland/Calculate.h"
 #include "pland/Command.h"
 #include "pland/Config.h"
+#include "pland/Global.h"
 #include "pland/LandSelector.h"
 #include "pland/PLand.h"
 #include "pland/Particle.h"
@@ -59,7 +60,7 @@ bool MyMod::disable() {
     land::PLand::getInstance().save();
     land::PLand::getInstance()._stopThread();
     land::LandSelector::getInstance().uninit();
-
+    land::GlobalTickScheduler.clear();
 
     return true;
 }

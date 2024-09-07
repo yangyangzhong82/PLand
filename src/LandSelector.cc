@@ -29,7 +29,6 @@ LandSelector& LandSelector::getInstance() {
 
 ll::event::ListenerPtr                 mPlayerUseItemOn;
 ll::event::ListenerPtr                 mPlayerLeave;
-ll::schedule::GameTickScheduler        mTickScheduler;
 std::unordered_map<UUIDm, std::time_t> mStabilized; // 防抖
 bool                                   LandSelector::init() {
     auto& bus = ll::event::EventBus::getInstance();
@@ -96,7 +95,7 @@ bool                                   LandSelector::init() {
     });
 
     using ll::chrono_literals::operator""_tick; // 1s = 20_tick
-    mTickScheduler.add<ll::schedule::RepeatTask>(20_tick, [this]() {
+    GlobalTickScheduler.add<ll::schedule::RepeatTask>(20_tick, [this]() {
         for (auto& [uuid, data] : mSelectors) {
             try {
                 auto pl = data.mPlayer; // 玩家指针
@@ -140,9 +139,10 @@ bool                                   LandSelector::init() {
     return true;
 }
 bool LandSelector::uninit() {
-    mTickScheduler.clear();
     mStabilized.clear();
-    ll::event::EventBus::getInstance().removeListener(mPlayerUseItemOn);
+    auto& bus = ll::event::EventBus::getInstance();
+    bus.removeListener(mPlayerLeave);
+    bus.removeListener(mPlayerUseItemOn);
     return true;
 }
 
