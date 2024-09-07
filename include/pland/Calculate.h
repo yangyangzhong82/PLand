@@ -16,6 +16,9 @@ public:
     Calculate(int height, int width, int depth);
 
     int eval(string code);
+
+    static int calculateDiscountPrice(int originalPrice, float discountRate); // 计算折扣后的价格
+    static int calculateRefundsPrice(int originalPrice, float refundRate);    // 计算退款金额
 };
 
 

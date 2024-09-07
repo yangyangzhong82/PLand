@@ -46,4 +46,12 @@ int Calculate::eval(string code) {
 }
 
 
+int Calculate::calculateDiscountPrice(int originalPrice, float discountRate) {
+    return (int)(originalPrice * (1 - discountRate / 100));
+}
+int Calculate::calculateRefundsPrice(int originalPrice, float refundRate) {
+    return (int)(originalPrice * refundRate / 100);
+}
+
+
 } // namespace land
