@@ -49,7 +49,11 @@ public:
 
     bool hasPos(BlockPos const& pos, bool ignoreY = false) const;
 
+    // 两个领地是否碰撞(重合)
     static bool isCollision(LandPos const& pos1, LandPos const& pos2);
+
+    // 两个领地是否满足最小间距
+    static bool isComplisWithMinSpacing(LandPos const& pos1, LandPos const& pos2, bool ignoreY = false);
 };
 
 

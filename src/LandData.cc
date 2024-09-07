@@ -82,6 +82,13 @@ LandPermType LandData::getPermType(UUIDs const& uuid) const {
 
 // static
 LandDataPtr LandData::make() { return std::make_shared<LandData>(); }
-
+LandDataPtr LandData::make(LandPos const& pos, LandDimid dimid, bool is3D, UUIDs const& owner) {
+    auto ptr = std::make_shared<LandData>();
+    ptr->setLandPos(pos);
+    ptr->mLandDimid = dimid;
+    ptr->setIs3DLand(is3D);
+    ptr->setLandOwner(owner);
+    return ptr;
+}
 
 } // namespace land

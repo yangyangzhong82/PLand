@@ -1,6 +1,7 @@
 #include "pland/LandPos.h"
 #include "fmt/format.h"
 #include "mc/world/level/BlockPos.h"
+#include "pland/Config.h"
 #include <utility>
 
 namespace land {
@@ -113,6 +114,25 @@ bool LandPos::isCollision(const LandPos& pos1, const LandPos& pos2) {
         pos1.mMax_B.x < pos2.mMin_A.x || pos1.mMin_A.x > pos2.mMax_B.x || pos1.mMax_B.y < pos2.mMin_A.y
         || pos1.mMin_A.y > pos2.mMax_B.y || pos1.mMax_B.z < pos2.mMin_A.z || pos1.mMin_A.z > pos2.mMax_B.z
     );
+}
+bool LandPos::isComplisWithMinSpacing(const LandPos& pos1, const LandPos& pos2, bool ignoreY) {
+    const int minSpacing = Config::cfg.land.minSpacing;
+
+    // 检查 X 轴
+    int xDist = std::min(std::abs(pos1.mMax_B.x - pos2.mMin_A.x), std::abs(pos2.mMax_B.x - pos1.mMin_A.x));
+    if (xDist < minSpacing) return false;
+
+    // 检查 Z 轴
+    int zDist = std::min(std::abs(pos1.mMax_B.z - pos2.mMin_A.z), std::abs(pos2.mMax_B.z - pos1.mMin_A.z));
+    if (zDist < minSpacing) return false;
+
+    // 如果不忽略 Y 轴，则检查 Y 轴
+    if (!ignoreY) {
+        int yDist = std::min(std::abs(pos1.mMax_B.y - pos2.mMin_A.y), std::abs(pos2.mMax_B.y - pos1.mMin_A.y));
+        if (yDist < minSpacing) return false;
+    }
+
+    return true;
 }
 
 

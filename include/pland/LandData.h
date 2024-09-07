@@ -89,18 +89,19 @@ class LandData {
 public:
     int                version{1};                         // 版本号
     LandPos            mPos;                               // 领地对角坐标
-    LandID             mLandID{static_cast<uint64_t>(-1)}; // 领地唯一ID
+    LandID             mLandID{static_cast<uint64_t>(-1)}; // 领地唯一ID  (由 PLand::addLand() 时分配)
     LandDimid          mLandDimid;                         // 领地所在维度
     bool               mIs3DLand;                          // 是否为3D领地
     LandPermTable      mLandPermTable;                     // 领地权限
     UUIDs              mLandOwner;                         // 领地主人
     std::vector<UUIDs> mLandMembers;                       // 领地成员
-    std::string        mLandName;                          // 领地名称
-    std::string        mLandDescribe;                      // 领地描述
+    std::string        mLandName{"Unnamed territories"};   // 领地名称
+    std::string        mLandDescribe{"No description"};    // 领地描述
     bool               mIsSaleing{false};                  // 是否正在出售
     int                mSalePrice{0};                      // 出售价格
 
-    static LandDataPtr make();
+    static LandDataPtr make(); // 创建一个空领地数据(反射使用)
+    static LandDataPtr make(LandPos const& pos, LandDimid dimid, bool is3D, UUIDs const& owner); // 新建领地数据
 
     // getters
     LandPos const& getLandPos() const;

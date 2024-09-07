@@ -1,5 +1,6 @@
 #pragma once
 #include "ll/api/data/KeyValueDB.h"
+#include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
@@ -34,27 +35,27 @@ public:
     bool save();
     bool _initCache(); // private
 
-    bool mThreadCanRun{true};
-    void _startThread(); // private
-    void _stopThread();  // private
+    bool mThreadCanRun{true}; // private
+    void _startThread();      // private
+    void _stopThread();       // private
 
     bool isOperator(UUIDs const& uuid) const;
     bool addOperator(UUIDs const& uuid);
     bool removeOperator(UUIDs const& uuid);
 
+    bool hasLand(LandID id) const;
     bool addLand(LandDataPtr land);
-
     bool removeLand(LandID id);
 
-    bool hasLand(LandID id) const;
+    LandDataPtr getLand(LandID id) const;                                                          // 获取领地数据
+    LandPermType getPermType(UUIDs const& uuid, LandID id = 0, bool ignoreOperator = false) const; // 获取领地权限类型
 
-    LandDataPtr getLand(LandID id) const;
-
-    LandPermType getPermType(UUIDs const& uuid, LandID id = 0, bool ignoreOperator = false) const;
-
-    LandDataPtr              getLandAt(BlockPos const& pos) const;
-    std::vector<LandDataPtr> getLandAt(BlockPos const& center, int radius) const;         // 半径内的领地
-    std::vector<LandDataPtr> getLandAt(BlockPos const& pos1, BlockPos const& pos2) const; // 矩形内的领地
+    // 获取领地数据
+    LandDataPtr getLandAt(BlockPos const& pos, LandDimid dimid) const;
+    // 半径内的领地
+    std::vector<LandDataPtr> getLandAt(BlockPos const& center, int radius, LandDimid dimid) const;
+    // 矩形内的领地
+    std::vector<LandDataPtr> getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const;
 
     LandID generateLandID();
 

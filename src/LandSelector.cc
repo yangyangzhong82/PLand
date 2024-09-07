@@ -11,6 +11,7 @@
 #include "pland/Config.h"
 #include "pland/GUI.h"
 #include "pland/Global.h"
+#include "pland/LandData.h"
 #include "pland/utils/Date.h"
 #include "pland/utils/MC.h"
 #include <optional>
@@ -182,7 +183,7 @@ bool LandSelector::tryStartSelect(Player& player, int dim, bool draw3D) {
     mSelectors[UUIDs(uid)] = LandSelectorData(player, dim, draw3D);
     return true;
 }
-bool LandSelector::tryCancelSelect(Player& player) {
+bool LandSelector::tryCancel(Player& player) {
     auto uid = player.getUuid().asString();
 
     auto iter = mSelectors.find(uid);
@@ -220,5 +221,30 @@ bool LandSelector::trySelectPointB(Player& player, BlockPos pos) {
     iter->second.mPos.fix(); // fix  min/max
     return true;
 }
+
+bool LandSelector::completeAndRelease(Player& player) {
+    auto uid = player.getUuid().asString();
+
+    auto iter = mSelectors.find(uid);
+    if (iter == mSelectors.end()) {
+        return false;
+    }
+
+    mSelectors.erase(iter);
+    return true;
+}
+LandDataPtr LandSelector::makeLandFromSelector(Player& player) {
+    auto uid = player.getUuid().asString();
+
+    auto iter = mSelectors.find(uid);
+    if (iter == mSelectors.end()) {
+        return nullptr;
+    }
+
+    auto& data = iter->second;
+
+    return LandData::make(data.mPos, data.mDimid, data.mDraw3D, data.mPlayer->getUuid().asString());
+}
+
 
 } // namespace land

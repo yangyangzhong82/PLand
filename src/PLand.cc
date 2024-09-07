@@ -190,14 +190,14 @@ LandPermType PLand::getPermType(UUIDs const& uuid, LandID id, bool ignoreOperato
 
 LandID PLand::generateLandID() { return static_cast<LandID>(mLandCache.size()) + 1; }
 
-LandDataPtr PLand::getLandAt(BlockPos const& pos) const {
+LandDataPtr PLand::getLandAt(BlockPos const& pos, LandDimid dimid) const {
     ChunkID chunkId = getChunkID(pos.x >> 4, pos.z >> 4);
-    auto    dimIt   = mLandMap.find(pos.y);
+    auto    dimIt   = mLandMap.find(dimid); // 查找维度
     if (dimIt != mLandMap.end()) {
-        auto chunkIt = dimIt->second.find(chunkId);
+        auto chunkIt = dimIt->second.find(chunkId); // 查找区块
         if (chunkIt != dimIt->second.end()) {
             for (const auto& landId : chunkIt->second) {
-                auto landIt = mLandCache.find(landId);
+                auto landIt = mLandCache.find(landId); // 查找领地
                 if (landIt != mLandCache.end()
                     && landIt->second->getLandPos().hasPos(pos, !landIt->second->is3DLand())) {
                     return landIt->second;
@@ -207,7 +207,7 @@ LandDataPtr PLand::getLandAt(BlockPos const& pos) const {
     }
     return nullptr;
 }
-std::vector<LandDataPtr> PLand::getLandAt(BlockPos const& center, int radius) const {
+std::vector<LandDataPtr> PLand::getLandAt(BlockPos const& center, int radius, LandDimid dimid) const {
     std::vector<LandDataPtr> lands;
 
     int minChunkX = (center.x - radius) >> 4;
@@ -218,12 +218,12 @@ std::vector<LandDataPtr> PLand::getLandAt(BlockPos const& center, int radius) co
     for (int x = minChunkX; x <= maxChunkX; ++x) {
         for (int z = minChunkZ; z <= maxChunkZ; ++z) {
             ChunkID chunkId = getChunkID(x, z);
-            auto    dimIt   = mLandMap.find(center.y);
+            auto    dimIt   = mLandMap.find(dimid); // 查找维度
             if (dimIt != mLandMap.end()) {
-                auto chunkIt = dimIt->second.find(chunkId);
+                auto chunkIt = dimIt->second.find(chunkId); // 查找区块
                 if (chunkIt != dimIt->second.end()) {
                     for (const auto& landId : chunkIt->second) {
-                        auto landIt = mLandCache.find(landId);
+                        auto landIt = mLandCache.find(landId); // 查找领地
                         if (landIt != mLandCache.end() && landIt->second->isRadiusInLand(center, radius)) {
                             lands.push_back(landIt->second);
                         }
@@ -234,7 +234,7 @@ std::vector<LandDataPtr> PLand::getLandAt(BlockPos const& center, int radius) co
     }
     return lands;
 }
-std::vector<LandDataPtr> PLand::getLandAt(BlockPos const& pos1, BlockPos const& pos2) const {
+std::vector<LandDataPtr> PLand::getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const {
     std::vector<LandDataPtr> lands;
 
     int minChunkX = std::min(pos1.x, pos2.x) >> 4;
@@ -245,12 +245,12 @@ std::vector<LandDataPtr> PLand::getLandAt(BlockPos const& pos1, BlockPos const& 
     for (int x = minChunkX; x <= maxChunkX; ++x) {
         for (int z = minChunkZ; z <= maxChunkZ; ++z) {
             ChunkID chunkId = getChunkID(x, z);
-            auto    dimIt   = mLandMap.find(pos1.y);
+            auto    dimIt   = mLandMap.find(dimid); // 查找维度
             if (dimIt != mLandMap.end()) {
-                auto chunkIt = dimIt->second.find(chunkId);
+                auto chunkIt = dimIt->second.find(chunkId); // 查找区块
                 if (chunkIt != dimIt->second.end()) {
                     for (const auto& landId : chunkIt->second) {
-                        auto landIt = mLandCache.find(landId);
+                        auto landIt = mLandCache.find(landId); // 查找领地
                         if (landIt != mLandCache.end() && landIt->second->isAABBInLand(pos1, pos2)) {
                             lands.push_back(landIt->second);
                         }

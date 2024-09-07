@@ -154,7 +154,7 @@ static auto const Set = [](CommandOrigin const& ori, CommandOutput& out, SetPara
 static auto const Cancel = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
-    bool  ok     = LandSelector::getInstance().tryCancelSelect(player);
+    bool  ok     = LandSelector::getInstance().tryCancel(player);
     if (ok) {
         mc::sendText(out, "已取消新建领地"_tr());
     } else {
