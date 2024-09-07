@@ -175,6 +175,41 @@ LandDataPtr PLand::getLand(LandID id) const {
     }
     return nullptr;
 }
+std::vector<LandDataPtr> PLand::getLand() {
+    std::vector<LandDataPtr> lands;
+    for (auto& land : mLandCache) {
+        lands.push_back(land.second);
+    }
+    return lands;
+}
+std::vector<LandDataPtr> PLand::getLand(LandDimid dimid) {
+    std::vector<LandDataPtr> lands;
+    for (auto& land : mLandCache) {
+        if (land.second->mLandDimid == dimid) {
+            lands.push_back(land.second);
+        }
+    }
+    return lands;
+}
+std::vector<LandDataPtr> PLand::getLand(UUIDs const& uuid) {
+    std::vector<LandDataPtr> lands;
+    for (auto& land : mLandCache) {
+        if (land.second->isLandOwner(uuid)) {
+            lands.push_back(land.second);
+        }
+    }
+    return lands;
+}
+std::vector<LandDataPtr> PLand::getLand(UUIDs const& uuid, LandDimid dimid) const {
+    std::vector<LandDataPtr> lands;
+    for (auto& land : mLandCache) {
+        if (land.second->mLandDimid == dimid && land.second->isLandOwner(uuid)) {
+            lands.push_back(land.second);
+        }
+    }
+    return lands;
+}
+
 
 LandPermType PLand::getPermType(UUIDs const& uuid, LandID id, bool ignoreOperator) const {
     if (!ignoreOperator && isOperator(uuid)) return LandPermType::Operator;

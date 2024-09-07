@@ -47,7 +47,12 @@ public:
     bool addLand(LandDataPtr land);
     bool removeLand(LandID id);
 
-    LandDataPtr getLand(LandID id) const;                                                          // 获取领地数据
+    LandDataPtr              getLand(LandID id) const;                          // 获取领地数据
+    std::vector<LandDataPtr> getLand();                                         // 获取所有领地数据
+    std::vector<LandDataPtr> getLand(LandDimid dimid);                          // 获取维度领地数据
+    std::vector<LandDataPtr> getLand(UUIDs const& uuid);                        // 获取玩家领地数据
+    std::vector<LandDataPtr> getLand(UUIDs const& uuid, LandDimid dimid) const; // 获取玩家维度领地数据
+
     LandPermType getPermType(UUIDs const& uuid, LandID id = 0, bool ignoreOperator = false) const; // 获取领地权限类型
 
     // 获取领地数据
