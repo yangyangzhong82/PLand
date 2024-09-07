@@ -86,6 +86,7 @@ bool LandScheduler::setup() {
     auto* infos          = &ll::service::PlayerInfo::getInstance();
     auto* db             = &PLand::getInstance();
     mPlayerEnterListener = bus->emplaceListener<PlayerEnterLandEvent>([logger, infos, db](PlayerEnterLandEvent& ev) {
+        logger->debug("Player {} enter land {}", ev.getPlayer().getName(), ev.getLandID());
         if (!Config::cfg.land.tip.enterTip) {
             return;
         }

@@ -8,6 +8,7 @@ enum class EconomyKit : int { LegacyMoney, ScoreBoard };
 
 struct Config {
     int version{1};
+    int logLevel{4};
 
     struct {
         bool       enabled{true};                // 是否启用

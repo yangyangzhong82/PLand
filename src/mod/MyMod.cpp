@@ -35,18 +35,24 @@ bool MyMod::load() {
     logger.info(R"( |_|     |______|\__,_||_| |_| \__,_|)");
     logger.info(R"(                                     )");
     logger.info("Loading...");
+    logger.info("Build Time: {}", BUILD_TIME);
 
     ll::i18n::load(getSelf().getLangDir());
 
     land::Config::tryLoad();
+    logger.consoleLevel = land::Config::cfg.logLevel; // set console log level
+
     land::PLand::getInstance().init();
+
+#ifdef DEBUG
+    logger.warn("Debug Mode");
+    logger.consoleLevel = 5;
+#endif
 
     return true;
 }
 
 bool MyMod::enable() {
-    auto& logger = getSelf().getLogger();
-    logger.info("Build Time: {}", BUILD_TIME);
 
     land::LandCommand::setup();
     land::LandSelector::getInstance().init();
