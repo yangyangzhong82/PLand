@@ -126,7 +126,7 @@ void LandBuyGui::impl(Player& player) {
         }
 
         auto& db = PLand::getInstance();
-        if ((int)db.getLand(pl.getUuid().asString()).size() >= Config::cfg.land.maxLand) {
+        if ((int)db.getLands(pl.getUuid().asString()).size() >= Config::cfg.land.maxLand) {
             mc::sendText<mc::LogLevel::Error>(pl, "您已经达到最大领地数量"_tr());
             return;
         }

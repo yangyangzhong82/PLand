@@ -7,6 +7,7 @@
 
 namespace land {
 
+// 全局类型定义
 using LandID    = uint64_t;    // 领地ID
 using ChunkID   = uint64_t;    // 区块ID
 using LandDimid = int;         // 领地所在维度
@@ -27,7 +28,8 @@ using ll::i18n_literals::operator""_tr;
 using ll::chrono_literals::operator""_tick; // 1s = 20_tick
 
 
-// 全局共享资源
-extern ll::schedule::GameTickScheduler GlobalTickScheduler;
+// 全局共享资源 (这些对象在 Mod 初始化时创建，在 Mod 退出时销毁)
+extern ll::schedule::GameTickScheduler GlobalTickScheduler; // 全局定时器
+
 
 } // namespace land

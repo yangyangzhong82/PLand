@@ -2,6 +2,7 @@
 #include "ll/api/event/Cancellable.h"
 #include "ll/api/event/Event.h"
 #include "mc/world/actor/player/Player.h"
+#include "pland/Global.h"
 #include "pland/LandData.h"
 #include "pland/LandSelector.h"
 
@@ -61,6 +62,31 @@ public:
 
     Player&     getPlayer() const;
     LandDataPtr getLandData() const;
+};
+
+
+// 玩家 进入/离开 领地(LandScheduler)
+class PlayerEnterLandEvent final : public ll::event::Event {
+protected:
+    Player& mPlayer;
+    LandID  mLandID;
+
+public:
+    constexpr explicit PlayerEnterLandEvent(Player& player, LandID landID) : mPlayer(player), mLandID(landID) {}
+
+    Player& getPlayer() const;
+    LandID  getLandID() const;
+};
+class PlayerLeaveLandEvent final : public ll::event::Event {
+protected:
+    Player& mPlayer;
+    LandID  mLandID;
+
+public:
+    constexpr explicit PlayerLeaveLandEvent(Player& player, LandID landID) : mPlayer(player), mLandID(landID) {}
+
+    Player& getPlayer() const;
+    LandID  getLandID() const;
 };
 
 
