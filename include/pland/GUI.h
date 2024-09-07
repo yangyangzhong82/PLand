@@ -29,12 +29,6 @@ public:
     static void impl(Player& player);
 };
 
-// 继续Gui
-class ContinueGui : public FormWrapper<ContinueGui> {
-public:
-    static void impl(Player& player);
-};
-
 
 // TODO:
 class LandOPManagerGui : public FormWrapper<LandOPManagerGui> {
