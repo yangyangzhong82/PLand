@@ -124,10 +124,6 @@ static auto const Operator = [](CommandOrigin const& ori, CommandOutput& out, Op
 static auto const New = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
-    if (!some(Config::cfg.land.bought.allowDimensions, player.getDimensionId().id)) {
-        mc::sendText(out, "你所在的维度无法购买领地"_tr());
-        return;
-    }
     ChooseLandDimAndNewLand::send(player);
 };
 

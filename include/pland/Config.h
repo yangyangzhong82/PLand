@@ -17,16 +17,16 @@ struct Config {
     } economy;
 
     struct {
-        bool   landTp{true};    // 领地传送
+        bool   landTp{true};    // 领地传送// todo
         int    maxLand{20};     // 最大领地数量
         int    minSpacing{16};  // 最小领地间距
-        double refundRate{0.9}; // 退款率(1为全额退款)
+        double refundRate{0.9}; // 退款率(1为全额退款)// todo
         double discountRate{1}; // 折扣率(1为无折扣)
 
         struct {
-            bool enterTip{true};           // 进入领地提示
-            bool bottomContinuedTip{true}; // 底部持续提示
-            int  bottomTipFrequency{1};    // 底部提示频率(s)
+            bool enterTip{true};           // 进入领地提示// todo
+            bool bottomContinuedTip{true}; // 底部持续提示// todo
+            int  bottomTipFrequency{1};    // 底部提示频率(s)// todo
         } tip;
 
         // 购买配置

@@ -24,6 +24,11 @@ using namespace ll::form;
 namespace land {
 
 void ChooseLandDimAndNewLand::impl(Player& player) {
+    if (!some(Config::cfg.land.bought.allowDimensions, player.getDimensionId().id)) {
+        mc::sendText(player, "你所在的维度无法购买领地"_tr());
+        return;
+    }
+
     PlayerAskCreateLandBeforeEvent ev(player);
     ll::event::EventBus::getInstance().publish(ev);
     if (ev.isCancelled()) {
@@ -85,14 +90,15 @@ void LandBuyGui::impl(Player& player) {
 
     auto& economy = EconomySystem::getInstance();
 
-    int price = Calculate(dataPtr->mPos)
-                    .eval(
-                        is3D ? Config::cfg.land.bought.threeDimensionl.calculate
-                             : Config::cfg.land.bought.twoDimensionl.calculate
-                    );
+    int originalPrice = Calculate(dataPtr->mPos)
+                            .eval(
+                                is3D ? Config::cfg.land.bought.threeDimensionl.calculate
+                                     : Config::cfg.land.bought.twoDimensionl.calculate
+                            );
+    int discountedPrice = Calculate::calculateDiscountPrice(originalPrice, Config::cfg.land.discountRate);
 
     // publish event
-    PlayerBuyLandBeforeEvent ev(player, dataPtr, price);
+    PlayerBuyLandBeforeEvent ev(player, dataPtr, discountedPrice);
     ll::event::EventBus::getInstance().publish(ev);
     if (ev.isCancelled()) {
         return;
@@ -100,50 +106,78 @@ void LandBuyGui::impl(Player& player) {
 
     auto fm = createForm();
     fm.setTitle(PLUGIN_NAME + ("| 购买领地"_tr()));
-    fm.setContent("领地类型: {}\n体积: {}x{}x{} {}\n范围: {}\n价格: {}\n{}"_tr(
+    fm.setContent("领地类型: {}\n体积: {}x{}x{} {}\n范围: {}\n原价: {}\n折扣价: {}\n{}"_tr(
         is3D ? "3D" : "2D",
         dataPtr->mPos.getDepth(),
         dataPtr->mPos.getWidth(),
         dataPtr->mPos.getHeight(),
         dataPtr->mPos.getVolume(),
         dataPtr->mPos.toString(),
-        price,
-        economy.getSpendTip(player, price)
+        originalPrice,
+        discountedPrice,
+        economy.getSpendTip(player, discountedPrice)
     ));
 
-    fm.appendButton("确认购买"_tr(), "textures/ui/realms_green_check", [price](Player& pl) {
-        if (EconomySystem::getInstance().reduce(pl, price)) {
-            auto& selector = LandSelector::getInstance();
-            auto  data     = selector.getSelector(pl);
-            if (!data) {
-                return;
-            }
-            auto& db    = PLand::getInstance();
-            auto  lands = db.getLandAt(data->mPos.mMin_A.toBlockPos(), data->mPos.mMax_B.toBlockPos(), data->mDimid);
+    fm.appendButton("确认购买"_tr(), "textures/ui/realms_green_check", [discountedPrice](Player& pl) {
+        auto& eco = EconomySystem::getInstance();
+        if (eco.get(pl) < discountedPrice) {
+            mc::sendText<mc::LogLevel::Error>(pl, "您的余额不足，无法购买"_tr());
+            return; // 预检查经济
+        }
 
-            if (!lands.empty()) {
-                for (auto& land : lands) {
-                    if (LandPos::isCollision(land->mPos, data->mPos)) {
-                        mc::sendText<mc::LogLevel::Error>(pl, "领地重叠，请重新选择"_tr());
-                        return;
-                    }
-                    if (!LandPos::isComplisWithMinSpacing(land->mPos, data->mPos)) {
-                        mc::sendText<mc::LogLevel::Error>(pl, "领地距离过近，请重新选择"_tr());
-                        return;
-                    }
+        auto& db = PLand::getInstance();
+        if ((int)db.getLand(pl.getUuid().asString()).size() >= Config::cfg.land.maxLand) {
+            mc::sendText<mc::LogLevel::Error>(pl, "您已经达到最大领地数量"_tr());
+            return;
+        }
+
+        auto& selector = LandSelector::getInstance();
+        auto  data     = selector.getSelector(pl);
+        if (!data) {
+            return;
+        }
+
+        int const   length      = data->mPos.getDepth();
+        int const   width       = data->mPos.getWidth();
+        auto const& squareRange = Config::cfg.land.bought.squareRange;
+        if (length < squareRange.min || width < squareRange.min) {
+            mc::sendText<mc::LogLevel::Error>(pl, "领地范围过小，最小为 {}x{}"_tr(squareRange.min, squareRange.min));
+            return;
+        }
+        if (length > squareRange.max || width > squareRange.max) {
+            mc::sendText<mc::LogLevel::Error>(pl, "领地范围过大，最大为 {}x{}"_tr(squareRange.max, squareRange.max));
+            return;
+        }
+
+        auto lands = db.getLandAt(data->mPos.mMin_A.toBlockPos(), data->mPos.mMax_B.toBlockPos(), data->mDimid);
+        if (!lands.empty()) {
+            for (auto& land : lands) {
+                if (LandPos::isCollision(land->mPos, data->mPos)) {
+                    mc::sendText<mc::LogLevel::Error>(pl, "领地重叠，请重新选择"_tr());
+                    return;
+                }
+                if (!LandPos::isComplisWithMinSpacing(land->mPos, data->mPos)) {
+                    mc::sendText<mc::LogLevel::Error>(pl, "领地距离过近，请重新选择"_tr());
+                    return;
                 }
             }
+        }
 
-            auto landPtr = selector.makeLandFromSelector(pl);
-            if (db.addLand(landPtr)) {
-                selector.completeAndRelease(pl);
-                mc::sendText<mc::LogLevel::Info>(pl, "购买成功"_tr());
+        // 扣除经济
+        if (!eco.reduce(pl, discountedPrice)) {
+            mc::sendText<mc::LogLevel::Error>(pl, "您的余额不足，无法购买"_tr());
+            return;
+        }
 
-                PlayerBuyLandAfterEvent ev(pl, landPtr);
-                ll::event::EventBus::getInstance().publish(ev);
+        auto landPtr = selector.makeLandFromSelector(pl);
+        if (db.addLand(landPtr)) {
+            selector.completeAndRelease(pl);
+            mc::sendText<mc::LogLevel::Info>(pl, "购买成功"_tr());
 
-            } else mc::sendText<mc::LogLevel::Error>(pl, "购买失败"_tr());
-        } else mc::sendText<mc::LogLevel::Error>(pl, "购买失败，余额不足"_tr());
+            PlayerBuyLandAfterEvent ev(pl, landPtr);
+            ll::event::EventBus::getInstance().publish(ev);
+
+        } else mc::sendText<mc::LogLevel::Error>(pl, "购买失败"_tr());
     });
     fm.appendButton("暂存订单"_tr(), "textures/ui/recipe_book_icon"); // close
     fm.appendButton("放弃订单"_tr(), "textures/ui/cancel", [](Player& pl) {
