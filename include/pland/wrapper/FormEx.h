@@ -7,44 +7,109 @@
 #include <memory>
 #include <type_traits>
 
-
+// clang-format off
 /*
 Usage:
 
-// 基础的 SimpleFormEx
-class MyForm : public FormWrapper<MyForm> {
-public:
-    static void impl(Player& player) {
-        auto fm = createForm();
-        // do something
-        fm.sendTo(player);
-    }
-};
-MyForm::send(player);
+1. 基本用法（无父表单，无额外参数）：
+    class SimpleForm : public FormWrapper<SimpleForm> {
+    public:
+        static void impl(Player& player) {
+            auto fm = createForm();
+            // 设置表单内容
+            fm.sendTo(player);
+        }
+    };
+    SimpleForm::send(player);
 
-// 带有返回按钮的 SimpleFormEx
-class MyForm2 : public FormWrapper<MyForm2, ParentForm> {
-public:
-    static void impl(Player& player) {
-        auto fm = createForm();
-        // do something
-        fm.sendTo(player);
-    }
-};
-MyForm2::send(player);
 
-// 带有返回按钮的 SimpleFormEx(call 自定义表单)
-class MyForm3 : public FormWrapper<MyForm3, ParentForm, ParentForm::Call> {
-public:
-    static void impl(Player& player) {
-        auto fm = createForm();
-        // do something
-        fm.sendTo(player);
+2. 带父表单：
+    class ChildForm : public FormWrapper<ChildForm, ParentForm> {
+    public:
+        static void impl(Player& player) {
+            auto fm = createForm(); // 自动添加返回按钮
+            // 设置表单内容
+            fm.sendTo(player);
+        }
+    };
+    ChildForm::send(player);
+
+
+3. 带自定义父表单回调：
+    void customParentCallback(Player& player) {
+        // 自定义回调逻辑
     }
-};
-MyForm3::send(player);
+    class CustomCallbackForm : public FormWrapper<CustomCallbackForm, ParentForm, ParentCallWrapper<customParentCallback>> {
+    public:
+        static void impl(Player& player) {
+            auto fm = createForm(); // 使用自定义回调
+            // 设置表单内容
+            fm.sendTo(player);
+        }
+    };
+    CustomCallbackForm::send(player);
+
+
+4. 带额外参数：
+    class ParameterizedForm : public FormWrapper<ParameterizedForm> {
+    public:
+        static void impl(Player& player, int param1, std::string param2) {
+            auto fm = createForm();
+            // 使用 param1 和 param2 设置表单内容
+            fm.sendTo(player);
+        }
+    };
+    ParameterizedForm::send(player, 42, "Hello");
+
+
+5. 带回调：
+    class CallbackForm : public FormWrapper<CallbackForm> {
+    public:
+        using Callback = std::function<void(Player&, int)>;
+
+        static void impl(Player& player, Callback callback) {
+            auto fm = createForm();
+            // 设置表单内容，在适当的地方调用 callback
+            fm.sendTo(player, [callback](int buttonId) {
+                callback(player, buttonId);
+            });
+        }
+    };
+    CallbackForm::send(player, [](Player& p, int result) {
+        // 处理回调
+    });
+
+
+6. 特殊(高级)回调:
+    // 自定义父表单回调函数
+    void customParentCallback(Player& player, int someData) {
+        // 自定义回调逻辑
+        std::cout << "Custom parent callback with data: " << someData << std::endl;
+    }
+    // 使用 ParentCallWrapper 包装自定义回调函数
+    class CustomCallbackForm : public FormWrapper<CustomCallbackForm, ParentForm, ParentCallWrapper<customParentCallback>> {
+    public:
+        static void impl(Player& player) {
+            auto fm = createForm(); // 这里会使用自定义回调
+            // 设置表单内容
+            fm.sendTo(player);
+        }
+    };
+
+    // 或者不同的函数签名
+    void anotherParentCallback(Player& player, std::string message, bool flag) {
+        // 另一种自定义回调逻辑
+    }
+
+    class AnotherCustomForm : public FormWrapper<AnotherCustomForm, ParentForm, ParentCallWrapper<anotherParentCallback>> {
+        // ... 实现 ...
+    };
+
+    CustomCallbackForm::send(player);
 
 */
+// clang-format on
+
 
 namespace wrapper {
 
@@ -103,14 +168,16 @@ struct HasImplMethod<T, std::void_t<decltype(T::impl)>> : std::true_type {};
 // 表单包装器模板类
 // Impl: 实现类(必须包含一个 static impl 方法)
 // ParentForm: 父表单类(可选, 必须继承 FormWrapper)
-// ParentCall: 父表单的回调函数(可选)
+// ParentCall: 父表单的回调函数包装器(可选, 必须继承 ParentCallWrapper)
 // BackPos: 返回按钮位置(可选)
-template <typename Impl, typename ParentForm = void, auto ParentCall = nullptr, auto BackPos = SimpleFormExBack::Lower>
+template <typename Impl, typename ParentForm = void, typename ParentCall = void, auto BackPos = SimpleFormExBack::Lower>
 class FormWrapper {
 public:
-    static void send(Player& player) {
+    // 支持传递任意数量和类型的参数给 impl 方法
+    template <typename... Args>
+    static void send(Player& player, Args&&... args) {
         static_assert(HasImplMethod<Impl>::value, "Impl must have a static impl method");
-        Impl::impl(player);
+        Impl::impl(player, std::forward<Args>(args)...);
     }
 
 protected:
@@ -121,8 +188,8 @@ protected:
             return SimpleFormEx{
                 [](Player& p) {
                     if constexpr (!std::is_same_v<ParentForm, void>) {
-                        if constexpr (ParentCall != nullptr) {
-                            ParentCall(p);
+                        if constexpr (!std::is_same_v<ParentCall, void>) {
+                            ParentCall::call(p);
                         } else {
                             ParentForm::send(p);
                         }
@@ -134,4 +201,15 @@ protected:
     }
 };
 
+// 辅助类处理父表单的回调
+// Func: 要包装的回调函数
+template <auto Func>
+struct ParentCallWrapper {
+    // 调用包装的回调函数
+    // 支持传递任意数量和类型的参数
+    template <typename... Args>
+    static void call(Args&&... args) {
+        Func(std::forward<Args>(args)...);
+    }
+};
 } // namespace wrapper
