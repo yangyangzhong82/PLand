@@ -30,4 +30,14 @@ Player&    PlayerDeleteLandAfterEvent::getPlayer() const { return mPlayer; }
 LandID     PlayerDeleteLandAfterEvent::getLandID() const { return mLandID; }
 
 
+Player&      LandMemberChangeBeforeEvent::getPlayer() const { return mPlayer; }
+UUIDs const& LandMemberChangeBeforeEvent::getTargetPlayer() const { return mTargetPlayer; }
+LandID       LandMemberChangeBeforeEvent::getLandID() const { return mLandID; }
+bool         LandMemberChangeBeforeEvent::isAdd() const { return mIsAdd; }
+Player&      LandMemberChangeAfterEvent::getPlayer() const { return mPlayer; }
+UUIDs const& LandMemberChangeAfterEvent::getTargetPlayer() const { return mTargetPlayer; }
+LandID       LandMemberChangeAfterEvent::getLandID() const { return mLandID; }
+bool         LandMemberChangeAfterEvent::isAdd() const { return mIsAdd; }
+
+
 } // namespace land

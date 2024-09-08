@@ -121,4 +121,46 @@ public:
 };
 
 
+// 领地成员变动(EditLandMemberGui)
+class LandMemberChangeBeforeEvent final : public ll::event::Cancellable<ll::event::Event> {
+protected:
+    Player&      mPlayer;       // 操作者
+    UUIDs const& mTargetPlayer; // 目标玩家
+    LandID       mLandID;
+    bool         mIsAdd; // true: 添加成员, false: 删除成员
+
+public:
+    LandMemberChangeBeforeEvent(Player& player, UUIDs const& targetPlayer, LandID landID, bool isAdd)
+    : Cancellable(),
+      mPlayer(player),
+      mTargetPlayer(targetPlayer),
+      mLandID(landID),
+      mIsAdd(isAdd) {}
+
+    Player&      getPlayer() const;
+    UUIDs const& getTargetPlayer() const;
+    LandID       getLandID() const;
+    bool         isAdd() const;
+};
+class LandMemberChangeAfterEvent final : public ll::event::Event {
+protected:
+    Player&      mPlayer;       // 操作者
+    UUIDs const& mTargetPlayer; // 目标玩家
+    LandID       mLandID;
+    bool         mIsAdd; // true: 添加成员, false: 删除成员
+
+public:
+    LandMemberChangeAfterEvent(Player& player, UUIDs const& targetPlayer, LandID landID, bool isAdd)
+    : mPlayer(player),
+      mTargetPlayer(targetPlayer),
+      mLandID(landID),
+      mIsAdd(isAdd) {}
+
+    Player&      getPlayer() const;
+    UUIDs const& getTargetPlayer() const;
+    LandID       getLandID() const;
+    bool         isAdd() const;
+};
+
+
 } // namespace land
