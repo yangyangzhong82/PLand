@@ -315,7 +315,7 @@ void LandManagerGui::impl(Player& player, LandID id) {
     });
     fm.appendButton("修改领地名称"_tr(), "textures/ui/book_edit_default", [land](Player& pl) {});
     fm.appendButton("修改领地描述"_tr(), "textures/ui/book_edit_default", [land](Player& pl) {});
-    fm.appendButton("领地过户"_tr(), "textures/ui/sidebar_icons/my_characters", [land](Player& pl) {});
+    // fm.appendButton("领地过户"_tr(), "textures/ui/sidebar_icons/my_characters", [land](Player& pl) {});
     // fm.appendButton("重新选区"_tr(), "textures/ui/anvil_icon", [land](Player& pl) {});
     fm.appendButton("删除领地"_tr(), "textures/ui/icon_trash", [land](Player& pl) { DeleteLandGui::impl(pl, land); });
 
@@ -412,6 +412,11 @@ void EditLandMemberGui::impl(Player& player, LandDataPtr ptr) {
 }
 void EditLandMemberGui::AddMemberGui::impl(Player& player, LandDataPtr ptr) {
     ChoosePlayerGui::impl<EditLandMemberGui>(player, [ptr](Player& self, Player& target) {
+        if (self == target) {
+            mc::sendText(self, "不能添加自己为领地成员哦!"_tr());
+            return;
+        }
+
         LandMemberChangeBeforeEvent ev(self, target.getUuid().asString(), ptr->getLandID(), true);
         ll::event::EventBus::getInstance().publish(ev);
         if (ev.isCancelled()) {
