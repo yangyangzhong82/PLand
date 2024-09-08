@@ -107,6 +107,32 @@ Usage:
 
     CustomCallbackForm::send(player);
 
+
+7. 动态父表单(回调):
+    class AAA : public FormWrapper<AAA> {
+    public:
+        using ChooseCallback = std::function<void(Player&, LandID)>;
+
+        template<typename DynamicParentForm, typename DynamicParentCall>
+        static void impl(Player& player, ChooseCallback callback) {
+            auto fm = createForm<DynamicParentForm, DynamicParentCall>();
+            // ...
+            fm.sendTo(player, [callback](Player& p, int buttonId) {
+                // ...
+                callback(p, selectedLand);
+            });
+        }
+    };
+
+    // 在某些情况下，使用 BBB 作为父表单
+    AAA::send<BBB>(player, callback);
+
+    // 在其他情况下，使用 CCC 作为父表单
+    AAA::send<CCC>(player, callback);
+
+    // 如果不需要父表单，可以不指定或明确指定 void
+    AAA::send<void>(player, callback);
+
 */
 // clang-format on
 
@@ -164,35 +190,45 @@ struct HasImplMethod : std::false_type {};
 template <typename T>
 struct HasImplMethod<T, std::void_t<decltype(T::impl)>> : std::true_type {};
 
+template <typename T, typename = void>
+struct HasCallMethod : std::false_type {};
+template <typename T>
+struct HasCallMethod<T, std::void_t<decltype(T::call)>> : std::true_type {};
+
 
 // 表单包装器模板类
-// Impl: 实现类(必须包含一个 static impl 方法)
-// ParentForm: 父表单类(可选, 必须继承 FormWrapper)
-// ParentCall: 父表单的回调函数包装器(可选, 必须继承 ParentCallWrapper)
-// BackPos: 返回按钮位置(可选)
-template <typename Impl, typename ParentForm = void, typename ParentCall = void, auto BackPos = SimpleFormExBack::Lower>
+template <
+    typename Impl,                     // 实现类(必须包含一个 static impl 方法)
+    typename DefaultParentForm = void, // 父表单类(可选, 必须继承 FormWrapper)
+    typename DefaultParentCall = void, // 父表单的回调函数包装器(可选, 必须继承 ParentCallWrapper)
+    auto BackPos               = SimpleFormExBack::Lower // 返回按钮位置(可选)
+    >
 class FormWrapper {
 public:
-    // 支持传递任意数量和类型的参数给 impl 方法
-    template <typename... Args>
+    template <
+        typename DynamicParentForm = DefaultParentForm, // send<B>() => impl<B>() => createForm<B>()
+        typename DynamicParentCall = DefaultParentCall, // send<B>() => impl<B>() => createForm<B>()
+        typename... Args>
     static void send(Player& player, Args&&... args) {
         static_assert(HasImplMethod<Impl>::value, "Impl must have a static impl method");
-        Impl::impl(player, std::forward<Args>(args)...);
+        Impl::template impl<DynamicParentForm, DynamicParentCall>(player, std::forward<Args>(args)...);
     }
 
+
 protected:
+    // 创建表单
+    template <typename ParentForm = DefaultParentForm, typename ParentCall = DefaultParentCall>
     static SimpleFormEx createForm() {
         if constexpr (std::is_same_v<ParentForm, void>) {
             return SimpleFormEx{}; // 没有父表单
         } else {
             return SimpleFormEx{
                 [](Player& p) {
-                    if constexpr (!std::is_same_v<ParentForm, void>) {
-                        if constexpr (!std::is_same_v<ParentCall, void>) {
-                            ParentCall::call(p);
-                        } else {
-                            ParentForm::send(p);
-                        }
+                    if constexpr (!std::is_same_v<ParentCall, void>) {
+                        static_assert(HasCallMethod<ParentCall>::value, "ParentCall must have a static call method");
+                        ParentCall::call(p);
+                    } else {
+                        ParentForm::send(p);
                     }
                 },
                 BackPos
