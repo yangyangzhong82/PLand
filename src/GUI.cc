@@ -236,7 +236,7 @@ void SelectorChangeYGui::impl(Player& player) {
 }
 
 
-// 选择类GUI
+// 通用组件Gui
 template <typename ParentForm>
 void ChooseLandGui::impl(Player& player, ChooseCallback callback) {
     auto fm = SimpleFormEx::create<ParentForm, BackButtonPos::Upper>();
@@ -265,6 +265,22 @@ void ChoosePlayerGui::impl(Player& player, ChoosePlayerCall callback) {
     });
 
     fm.sendTo(player);
+}
+void EditStringGui::impl(
+    Player&          player,
+    string const&    title,        // 标题
+    string const&    text,         // 提示
+    string const&    defaultValue, // 默认值
+    EditStringResult callback      // 回调
+) {
+    CustomForm fm(PLUGIN_NAME + title);
+    fm.appendInput("str", text, "string", defaultValue);
+    fm.sendTo(player, [callback](Player& pl, CustomFormResult res, FormCancelReason) {
+        if (!res.has_value()) {
+            return;
+        }
+        callback(pl, std::get<string>(res->at("str")));
+    });
 }
 
 
@@ -313,8 +329,12 @@ void LandManagerGui::impl(Player& player, LandID id) {
     fm.appendButton("修改成员"_tr(), "textures/ui/FriendsIcon", [land](Player& pl) {
         EditLandMemberGui::impl(pl, land);
     });
-    fm.appendButton("修改领地名称"_tr(), "textures/ui/book_edit_default", [land](Player& pl) {});
-    fm.appendButton("修改领地描述"_tr(), "textures/ui/book_edit_default", [land](Player& pl) {});
+    fm.appendButton("修改领地名称"_tr(), "textures/ui/book_edit_default", [land](Player& pl) {
+        EditLandNameGui::impl(pl, land);
+    });
+    fm.appendButton("修改领地描述"_tr(), "textures/ui/book_edit_default", [land](Player& pl) {
+        EditLandDescGui::impl(pl, land);
+    });
     // fm.appendButton("领地过户"_tr(), "textures/ui/sidebar_icons/my_characters", [land](Player& pl) {});
     // fm.appendButton("重新选区"_tr(), "textures/ui/anvil_icon", [land](Player& pl) {});
     fm.appendButton("删除领地"_tr(), "textures/ui/icon_trash", [land](Player& pl) { DeleteLandGui::impl(pl, land); });
@@ -387,6 +407,30 @@ void LandManagerGui::DeleteLandGui::impl(Player& player, LandDataPtr ptr) {
 
         } else mc::sendText(pl, "经济系统异常，操作失败"_tr());
     });
+}
+void LandManagerGui::EditLandNameGui::impl(Player& player, LandDataPtr ptr) {
+    EditStringGui::impl(
+        player,
+        "修改领地名称"_tr(),
+        "请输入新的领地名称"_tr(),
+        ptr->getLandName(),
+        [ptr](Player& pl, string result) {
+            ptr->setLandName(result);
+            mc::sendText(pl, "领地名称已更新!"_tr());
+        }
+    );
+}
+void LandManagerGui::EditLandDescGui::impl(Player& player, LandDataPtr ptr) {
+    EditStringGui::impl(
+        player,
+        "修改领地描述"_tr(),
+        "请输入新的领地描述"_tr(),
+        ptr->getLandDescribe(),
+        [ptr](Player& pl, string result) {
+            ptr->setLandDescribe(result);
+            mc::sendText(pl, "领地描述已更新!"_tr());
+        }
+    );
 }
 
 

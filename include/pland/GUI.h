@@ -23,7 +23,7 @@ public:
 };
 
 
-// 通用选择GUI
+// 通用组件Gui
 class ChooseLandGui {
 public:
     using ChooseCallback = std::function<void(Player&, LandID id)>;
@@ -35,6 +35,17 @@ public:
     using ChoosePlayerCall = std::function<void(Player&, Player& choosedPlayer)>;
     template <typename ParentForm = void>
     static void impl(Player& player, ChoosePlayerCall callback);
+};
+class EditStringGui {
+public:
+    using EditStringResult = std::function<void(Player& self, string result)>;
+    static void impl(
+        Player&          player,
+        string const&    title        = " | 编辑", // 标题
+        string const&    text         = "",        // 提示
+        string const&    defaultValue = "",        // 默认值
+        EditStringResult callback     = {}         // 回调
+    );
 };
 
 
@@ -56,6 +67,15 @@ public:
     };
 
     class DeleteLandGui {
+    public:
+        static void impl(Player& player, LandDataPtr ptr);
+    };
+
+    class EditLandNameGui {
+    public:
+        static void impl(Player& player, LandDataPtr ptr);
+    };
+    class EditLandDescGui {
     public:
         static void impl(Player& player, LandDataPtr ptr);
     };
