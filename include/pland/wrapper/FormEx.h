@@ -125,13 +125,13 @@ Usage:
     };
 
     // 在某些情况下，使用 BBB 作为父表单
-    AAA::send<BBB>(player, callback);
+    AAA::impl<BBB>(player, callback);
 
     // 在其他情况下，使用 CCC 作为父表单
-    AAA::send<CCC>(player, callback);
+    AAA::impl<CCC>(player, callback);
 
     // 如果不需要父表单，可以不指定或明确指定 void
-    AAA::send<void>(player, callback);
+    AAA::impl<void>(player, callback);
 
 */
 // clang-format on
@@ -199,36 +199,35 @@ struct HasCallMethod<T, std::void_t<decltype(T::call)>> : std::true_type {};
 // 表单包装器模板类
 template <
     typename Impl,                     // 实现类(必须包含一个 static impl 方法)
-    typename DefaultParentForm = void, // 父表单类(可选, 必须继承 FormWrapper)
-    typename DefaultParentCall = void, // 父表单的回调函数包装器(可选, 必须继承 ParentCallWrapper)
+    typename DefaultParentForm = void, // 父表单类(可选, 继承 FormWrapper)
+    typename DefaultParentCall = void, // 父表单的回调函数包装器(可选, 继承 ParentCallWrapper)
     auto BackPos               = SimpleFormExBack::Lower // 返回按钮位置(可选)
     >
 class FormWrapper {
 public:
-    template <
-        typename DynamicParentForm = DefaultParentForm, // send<B>() => impl<B>() => createForm<B>()
-        typename DynamicParentCall = DefaultParentCall, // send<B>() => impl<B>() => createForm<B>()
-        typename... Args>
+    template <typename... Args>
     static void send(Player& player, Args&&... args) {
         static_assert(HasImplMethod<Impl>::value, "Impl must have a static impl method");
-        Impl::template impl<DynamicParentForm, DynamicParentCall>(player, std::forward<Args>(args)...);
+        Impl::impl(player, std::forward<Args>(args)...);
     }
-
 
 protected:
     // 创建表单
-    template <typename ParentForm = DefaultParentForm, typename ParentCall = DefaultParentCall>
+    template <typename DynamicParentForm = DefaultParentForm, typename DynamicParentCall = DefaultParentCall>
     static SimpleFormEx createForm() {
-        if constexpr (std::is_same_v<ParentForm, void>) {
+        if constexpr (std::is_same_v<DynamicParentForm, void>) {
             return SimpleFormEx{}; // 没有父表单
         } else {
             return SimpleFormEx{
                 [](Player& p) {
-                    if constexpr (!std::is_same_v<ParentCall, void>) {
-                        static_assert(HasCallMethod<ParentCall>::value, "ParentCall must have a static call method");
-                        ParentCall::call(p);
+                    if constexpr (!std::is_same_v<DynamicParentCall, void>) {
+                        static_assert(
+                            HasCallMethod<DynamicParentCall>::value,
+                            "DynamicParentCall must have a static call method"
+                        );
+                        DynamicParentCall::call(p);
                     } else {
-                        ParentForm::send(p);
+                        DynamicParentForm::send(p);
                     }
                 },
                 BackPos
