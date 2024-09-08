@@ -99,6 +99,7 @@ public:
     std::string        mLandDescribe{"No description"};    // 领地描述
     bool               mIsSaleing{false};                  // 是否正在出售
     int                mSalePrice{0};                      // 出售价格
+    int                mOriginalBuyPrice{0};               // 原始购买价格
 
     static LandDataPtr make(); // 创建一个空领地数据(反射使用)
     static LandDataPtr make(LandPos const& pos, LandDimid dimid, bool is3D, UUIDs const& owner); // 新建领地数据

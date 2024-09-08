@@ -90,4 +90,35 @@ public:
 };
 
 
+// 玩家删除领地 (DeleteLandGui)
+class PlayerDeleteLandBeforeEvent final : public ll::event::Cancellable<ll::event::Event> {
+protected:
+    Player&    mPlayer;
+    LandID     mLandID;
+    int const& mRefundPrice; // 删除后返还的金额
+
+public:
+    constexpr explicit PlayerDeleteLandBeforeEvent(Player& player, LandID landID, int const& refundPrice)
+    : Cancellable(),
+      mPlayer(player),
+      mLandID(landID),
+      mRefundPrice(refundPrice) {}
+
+    Player&    getPlayer() const;
+    LandID     getLandID() const;
+    int const& getRefundPrice() const;
+};
+class PlayerDeleteLandAfterEvent final : public ll::event::Event {
+protected:
+    Player& mPlayer;
+    LandID  mLandID;
+
+public:
+    constexpr explicit PlayerDeleteLandAfterEvent(Player& player, LandID landID) : mPlayer(player), mLandID(landID) {}
+
+    Player& getPlayer() const;
+    LandID  getLandID() const;
+};
+
+
 } // namespace land

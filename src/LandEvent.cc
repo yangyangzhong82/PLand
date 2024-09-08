@@ -23,4 +23,11 @@ Player& PlayerLeaveLandEvent::getPlayer() const { return mPlayer; }
 LandID  PlayerLeaveLandEvent::getLandID() const { return mLandID; }
 
 
+Player&    PlayerDeleteLandBeforeEvent::getPlayer() const { return mPlayer; }
+LandID     PlayerDeleteLandBeforeEvent::getLandID() const { return mLandID; }
+int const& PlayerDeleteLandBeforeEvent::getRefundPrice() const { return mRefundPrice; }
+Player&    PlayerDeleteLandAfterEvent::getPlayer() const { return mPlayer; }
+LandID     PlayerDeleteLandAfterEvent::getLandID() const { return mLandID; }
+
+
 } // namespace land

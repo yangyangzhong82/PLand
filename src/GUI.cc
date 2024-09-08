@@ -1,8 +1,12 @@
 #include "pland/GUI.h"
+#include "fmt/compile.h"
 #include "ll/api/event/EventBus.h"
 #include "ll/api/form/CustomForm.h"
+#include "ll/api/form/FormBase.h"
 #include "ll/api/form/ModalForm.h"
 #include "ll/api/form/SimpleForm.h"
+#include "ll/api/i18n/I18n.h"
+#include "mc/world/actor/player/Player.h"
 #include "mod/MyMod.h"
 #include "pland/Calculate.h"
 #include "pland/Config.h"
@@ -13,6 +17,7 @@
 #include "pland/LandPos.h"
 #include "pland/LandSelector.h"
 #include "pland/PLand.h"
+#include "pland/utils/JSON.h"
 #include "pland/utils/MC.h"
 #include "pland/utils/Utils.h"
 #include <string>
@@ -71,11 +76,148 @@ void LandMainGui::impl(Player& player) {
     fm.setContent("欢迎使用 Pland 领地管理插件\n\n请选择一个功能"_tr());
 
     fm.appendButton("新建领地", "textures/ui/anvil_icon", [](Player& pl) { ChooseLandDimAndNewLand::send(pl); });
-    fm.appendButton("管理领地", "textures/ui/icon_spring", [](Player& pl) {});
-    fm.appendButton("领地传送", "textures/ui/icon_recipe_nature", [](Player& pl) {});
+    fm.appendButton("管理领地", "textures/ui/icon_spring", [](Player& pl) {
+        ChooseLandGui::impl<>(pl, LandManagerGui::impl);
+    });
+    fm.appendButton("领地传送", "textures/ui/icon_recipe_nature", [](Player& pl) { LandTeleportGui::send(pl); });
 
     fm.appendButton("关闭", "textures/ui/cancel");
     fm.sendTo(player);
+}
+
+template <typename DynamicParentForm, typename DynamicParentCall>
+void ChooseLandGui::impl(Player& player, ChooseCallback callback) {
+    auto fm = createForm<DynamicParentForm, DynamicParentCall>();
+    fm.setTitle(PLUGIN_NAME + ("| 选择领地"_tr()));
+    fm.setContent("请选择一个领地"_tr());
+
+    auto lands = PLand::getInstance().getLands(player.getUuid().asString());
+    for (auto& land : lands) {
+        fm.appendButton(
+            fmt::format("{}\n维度: {} | ID: {}", land->getLandName(), land->getLandDimid(), land->getLandID()),
+            "textures/ui/icon_recipe_nature",
+            [callback, land](Player& pl) { callback(pl, land->getLandID()); }
+        );
+    }
+
+    fm.sendTo(player);
+}
+
+void LandManagerGui::impl(Player& player, LandID id) {
+    auto land = PLand::getInstance().getLand(id);
+    if (!land) {
+        mc::sendText<mc::LogLevel::Error>(player, "领地不存在"_tr());
+        return;
+    }
+
+    auto fm = createForm();
+    fm.setTitle(PLUGIN_NAME + ("| 领地管理 [{}]"_tr(land->getLandID())));
+    fm.setContent("领地: {}\n类型: {}\n大小: {}x{}x{} = {}\n范围: {}\n"_tr(
+        land->getLandName(),
+        land->is3DLand() ? "3D" : "2D",
+        land->getLandPos().getDepth(),
+        land->getLandPos().getWidth(),
+        land->getLandPos().getHeight(),
+        land->getLandPos().getVolume(),
+        land->getLandPos().toString()
+    ));
+
+    fm.appendButton("编辑权限"_tr(), "textures/ui/sidebar_icons/promotag", [land](Player& pl) {
+        EditLandPermGui::send(pl, land);
+    });
+    fm.appendButton("修改成员"_tr(), "textures/ui/FriendsIcon", [land](Player& pl) {
+        EditLandMemberGui::send(pl, land);
+    });
+    fm.appendButton("修改领地名称"_tr(), "textures/ui/book_edit_default", [land](Player& pl) {});
+    fm.appendButton("修改领地描述"_tr(), "textures/ui/book_edit_default", [land](Player& pl) {});
+    fm.appendButton("领地过户"_tr(), "textures/ui/sidebar_icons/my_characters", [land](Player& pl) {});
+    // fm.appendButton("重新选区"_tr(), "textures/ui/anvil_icon", [land](Player& pl) {});
+    fm.appendButton("删除领地"_tr(), "textures/ui/icon_trash", [land](Player& pl) { DeleteLandGui::send(pl, land); });
+
+    fm.sendTo(player);
+}
+
+void EditLandMemberGui::impl(Player& player, LandDataPtr ptr) {}
+
+
+void EditLandPermGui::impl(Player& player, LandDataPtr ptr) {
+    CustomForm fm(PLUGIN_NAME + " | 编辑权限"_tr());
+
+    auto& i18n = ll::i18n::getInstance();
+
+    auto js = JSON::structTojson(ptr->getLandPermTableConst());
+    for (auto& [k, v] : js.items()) {
+        fm.appendToggle(k, (string)i18n->get(k), v);
+    }
+
+    fm.sendTo(player, [ptr](Player& pl, CustomFormResult const& res, FormCancelReason) {
+        if (!res) {
+            return;
+        }
+
+        auto& perm = ptr->getLandPermTable();
+        auto  j    = JSON::structTojson(perm);
+        for (auto const& [key, value] : j.items()) {
+            bool const val = std::get<uint64_t>(res->at(key));
+            j[key]         = val;
+        }
+
+        JSON::jsonToStructNoMerge(j, perm);
+
+        mc::sendText(pl, "权限表已更新");
+    });
+}
+
+void DeleteLandGui::impl(Player& player, LandDataPtr ptr) {
+    int price = Calculate::calculateRefundsPrice(ptr->mOriginalBuyPrice, Config::cfg.land.refundRate);
+
+    PlayerDeleteLandBeforeEvent ev(player, ptr->getLandID(), price);
+    ll::event::EventBus::getInstance().publish(ev);
+    if (ev.isCancelled()) {
+        return;
+    }
+
+    ModalForm fm(
+        PLUGIN_NAME + " | 确认删除?"_tr(),
+        "您确定要删除领地 {} 吗?\n删除领地后，您将获得 {} 金币的退款。\n此操作不可逆,请谨慎操作!"_tr(
+            ptr->getLandName(),
+            price
+        ),
+        "确认"_tr(),
+        "返回"_tr()
+    );
+    fm.sendTo(player, [ptr, price](Player& pl, ModalFormResult const& res, FormCancelReason) {
+        if (!res) {
+            return;
+        }
+        if (!(bool)res.value()) {
+            LandManagerGui::impl(pl, ptr->getLandID());
+            return;
+        }
+
+        auto& db  = PLand::getInstance();
+        auto& eco = EconomySystem::getInstance();
+
+        if (eco.add(pl, price)) {
+            db.removeLand(ptr->getLandID());
+            mc::sendText(pl, "删除领地成功!"_tr());
+
+            PlayerDeleteLandAfterEvent ev(pl, ptr->getLandID());
+            ll::event::EventBus::getInstance().publish(ev);
+
+        } else mc::sendText(pl, "经济系统异常，操作失败"_tr());
+    });
+}
+
+void LandTeleportGui::impl(Player& player) {
+    ChooseLandGui::impl<LandMainGui>(player, [](Player& pl, LandID id) {
+        auto land = PLand::getInstance().getLand(id);
+        if (!land) {
+            mc::sendText<mc::LogLevel::Error>(pl, "领地不存在"_tr());
+            return;
+        }
+        // TODO: teleport
+    });
 }
 
 
@@ -106,7 +248,7 @@ void LandBuyGui::impl(Player& player) {
 
     auto fm = createForm();
     fm.setTitle(PLUGIN_NAME + ("| 购买领地"_tr()));
-    fm.setContent("领地类型: {}\n体积: {}x{}x{} {}\n范围: {}\n原价: {}\n折扣价: {}\n{}"_tr(
+    fm.setContent("领地类型: {}\n体积: {}x{}x{} = {}\n范围: {}\n原价: {}\n折扣价: {}\n{}"_tr(
         is3D ? "3D" : "2D",
         dataPtr->mPos.getDepth(),
         dataPtr->mPos.getWidth(),
@@ -171,6 +313,7 @@ void LandBuyGui::impl(Player& player) {
 
         auto landPtr = selector.makeLandFromSelector(pl);
         if (db.addLand(landPtr)) {
+            landPtr->mOriginalBuyPrice = discountedPrice; // 保存购买价格
             selector.completeAndRelease(pl);
             mc::sendText<mc::LogLevel::Info>(pl, "购买成功"_tr());
 
