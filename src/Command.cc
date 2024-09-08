@@ -76,14 +76,14 @@ namespace Lambda {
 static auto const Root = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
-    LandMainGui::send(player);
+    LandMainGui::impl(player);
 };
 
 
 static auto const Mgr = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
-    LandOPManagerGui::send(player);
+    LandOPManagerGui::impl(player);
 };
 
 
@@ -124,7 +124,7 @@ static auto const Operator = [](CommandOrigin const& ori, CommandOutput& out, Op
 static auto const New = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
-    ChooseLandDimAndNewLand::send(player);
+    ChooseLandDimAndNewLand::impl(player);
 };
 
 enum class SetType : int { A, B };
@@ -162,7 +162,7 @@ static auto const Cancel = [](CommandOrigin const& ori, CommandOutput& out) {
 static auto const Buy = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
-    LandBuyGui::send(player);
+    LandBuyGui::impl(player);
 };
 
 static auto const Reload = [](CommandOrigin const& ori, CommandOutput& out) {

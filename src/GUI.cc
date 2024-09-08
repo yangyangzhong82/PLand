@@ -20,6 +20,7 @@
 #include "pland/utils/JSON.h"
 #include "pland/utils/MC.h"
 #include "pland/utils/Utils.h"
+#include "pland/wrapper/FormEx.h"
 #include <string>
 
 
@@ -71,23 +72,25 @@ void ChooseLandDimAndNewLand::impl(Player& player) {
 
 
 void LandMainGui::impl(Player& player) {
-    auto fm = createForm();
+    auto fm = SimpleFormEx::create();
     fm.setTitle(PLUGIN_NAME + ("| 领地菜单"_tr()));
     fm.setContent("欢迎使用 Pland 领地管理插件\n\n请选择一个功能"_tr());
 
-    fm.appendButton("新建领地", "textures/ui/anvil_icon", [](Player& pl) { ChooseLandDimAndNewLand::send(pl); });
+    fm.appendButton("新建领地", "textures/ui/anvil_icon", [](Player& pl) { ChooseLandDimAndNewLand::impl(pl); });
     fm.appendButton("管理领地", "textures/ui/icon_spring", [](Player& pl) {
-        ChooseLandGui::impl<>(pl, LandManagerGui::impl);
+        ChooseLandGui::impl<LandMainGui>(pl, LandManagerGui::impl);
     });
-    fm.appendButton("领地传送", "textures/ui/icon_recipe_nature", [](Player& pl) { LandTeleportGui::send(pl); });
+    fm.appendButton("领地传送", "textures/ui/icon_recipe_nature", [](Player& pl) {
+        ChooseLandGui::impl<LandMainGui>(pl, LandTeleportGui::impl);
+    });
 
     fm.appendButton("关闭", "textures/ui/cancel");
     fm.sendTo(player);
 }
 
-template <typename DynamicParentForm, typename DynamicParentCall>
+template <typename ParentForm>
 void ChooseLandGui::impl(Player& player, ChooseCallback callback) {
-    auto fm = createForm<DynamicParentForm, DynamicParentCall>();
+    auto fm = SimpleFormEx::create<ParentForm, BackButtonPos::Upper>();
     fm.setTitle(PLUGIN_NAME + ("| 选择领地"_tr()));
     fm.setContent("请选择一个领地"_tr());
 
@@ -110,7 +113,7 @@ void LandManagerGui::impl(Player& player, LandID id) {
         return;
     }
 
-    auto fm = createForm();
+    auto fm = SimpleFormEx::create();
     fm.setTitle(PLUGIN_NAME + ("| 领地管理 [{}]"_tr(land->getLandID())));
     fm.setContent("领地: {}\n类型: {}\n大小: {}x{}x{} = {}\n范围: {}\n"_tr(
         land->getLandName(),
@@ -123,21 +126,26 @@ void LandManagerGui::impl(Player& player, LandID id) {
     ));
 
     fm.appendButton("编辑权限"_tr(), "textures/ui/sidebar_icons/promotag", [land](Player& pl) {
-        EditLandPermGui::send(pl, land);
+        EditLandPermGui::impl(pl, land);
     });
     fm.appendButton("修改成员"_tr(), "textures/ui/FriendsIcon", [land](Player& pl) {
-        EditLandMemberGui::send(pl, land);
+        EditLandMemberGui::impl(pl, land);
     });
     fm.appendButton("修改领地名称"_tr(), "textures/ui/book_edit_default", [land](Player& pl) {});
     fm.appendButton("修改领地描述"_tr(), "textures/ui/book_edit_default", [land](Player& pl) {});
     fm.appendButton("领地过户"_tr(), "textures/ui/sidebar_icons/my_characters", [land](Player& pl) {});
     // fm.appendButton("重新选区"_tr(), "textures/ui/anvil_icon", [land](Player& pl) {});
-    fm.appendButton("删除领地"_tr(), "textures/ui/icon_trash", [land](Player& pl) { DeleteLandGui::send(pl, land); });
+    fm.appendButton("删除领地"_tr(), "textures/ui/icon_trash", [land](Player& pl) { DeleteLandGui::impl(pl, land); });
 
     fm.sendTo(player);
 }
 
-void EditLandMemberGui::impl(Player& player, LandDataPtr ptr) {}
+void EditLandMemberGui::impl(Player& player, LandDataPtr ptr) {
+    auto fm = SimpleFormEx::create<LandManagerGui>(ptr->getLandID());
+    // TODO
+
+    fm.sendTo(player);
+}
 
 
 void EditLandPermGui::impl(Player& player, LandDataPtr ptr) {
@@ -209,15 +217,13 @@ void DeleteLandGui::impl(Player& player, LandDataPtr ptr) {
     });
 }
 
-void LandTeleportGui::impl(Player& player) {
-    ChooseLandGui::impl<LandMainGui>(player, [](Player& pl, LandID id) {
-        auto land = PLand::getInstance().getLand(id);
-        if (!land) {
-            mc::sendText<mc::LogLevel::Error>(pl, "领地不存在"_tr());
-            return;
-        }
-        // TODO: teleport
-    });
+void LandTeleportGui::impl(Player& player, LandID id) {
+    auto land = PLand::getInstance().getLand(id);
+    if (!land) {
+        mc::sendText<mc::LogLevel::Error>(player, "领地不存在"_tr());
+        return;
+    }
+    // TODO: teleport
 }
 
 
@@ -246,7 +252,7 @@ void LandBuyGui::impl(Player& player) {
         return;
     }
 
-    auto fm = createForm();
+    auto fm = SimpleFormEx::create();
     fm.setTitle(PLUGIN_NAME + ("| 购买领地"_tr()));
     fm.setContent("领地类型: {}\n体积: {}x{}x{} = {}\n范围: {}\n原价: {}\n折扣价: {}\n{}"_tr(
         is3D ? "3D" : "2D",
@@ -354,7 +360,7 @@ void SelectorChangeYGui::impl(Player& player) {
 
         if (!isNumber(start) || !isNumber(end) || isOutOfRange(start) || isOutOfRange(end)) {
             mc::sendText<mc::LogLevel::Fatal>(pl, "请输入正确的Y轴范围"_tr());
-            SelectorChangeYGui::send(pl);
+            SelectorChangeYGui::impl(pl);
             return;
         }
 
@@ -364,7 +370,7 @@ void SelectorChangeYGui::impl(Player& player) {
 
             if (startY >= endY) {
                 mc::sendText<mc::LogLevel::Fatal>(pl, "请输入正确的Y轴范围, 开始Y轴必须小于结束Y轴"_tr());
-                SelectorChangeYGui::send(pl);
+                SelectorChangeYGui::impl(pl);
                 return;
             }
 
@@ -387,5 +393,7 @@ void SelectorChangeYGui::impl(Player& player) {
 }
 
 
-void LandOPManagerGui::impl(Player& player) {}
+void LandOPManagerGui::impl(Player& player) {
+    // TODO
+}
 } // namespace land

@@ -8,66 +8,60 @@
 namespace land {
 using namespace wrapper;
 
-// 插件主界面
-class LandMainGui : public FormWrapper<LandMainGui> {
+class LandMainGui {
 public:
     static void impl(Player& player);
 };
 
-// 领地购买GUI
-class LandBuyGui : public FormWrapper<LandBuyGui> {
+class LandBuyGui {
 public:
     static void impl(Player& player);
 };
 
-// 选择领地维度并创建新领地
-class ChooseLandDimAndNewLand : public FormWrapper<ChooseLandDimAndNewLand> {
+class ChooseLandDimAndNewLand {
 public:
     static void impl(Player& player);
 };
 
-// 选区完成修改Y范围
-class SelectorChangeYGui : public FormWrapper<SelectorChangeYGui> {
+class SelectorChangeYGui {
 public:
     static void impl(Player& player);
 };
 
-// 玩家选择领地
-class ChooseLandGui : public FormWrapper<ChooseLandGui, void, void, SimpleFormExBack::Upper> {
+class ChooseLandGui {
 public:
     using ChooseCallback = std::function<void(Player&, LandID id)>;
-    template <typename DynamicParentForm = void, typename DynamicParentCall = void>
+    template <typename ParentForm = void>
     static void impl(Player& player, ChooseCallback callback);
 };
 
-class LandManagerGui : public FormWrapper<LandManagerGui> {
+class LandManagerGui {
 public:
-    static void impl(Player& player, LandID);
+    static void impl(Player& player, LandID id);
 };
 
-class EditLandPermGui : public FormWrapper<EditLandPermGui> {
-public:
-    static void impl(Player& player, LandDataPtr ptr);
-};
-
-class DeleteLandGui : public FormWrapper<DeleteLandGui> {
+class EditLandPermGui {
 public:
     static void impl(Player& player, LandDataPtr ptr);
 };
 
-class EditLandMemberGui : public FormWrapper<EditLandMemberGui> {
+class DeleteLandGui {
 public:
     static void impl(Player& player, LandDataPtr ptr);
 };
 
-class LandTeleportGui : public FormWrapper<LandTeleportGui> {
+class EditLandMemberGui {
 public:
-    static void impl(Player& player);
+    static void impl(Player& player, LandDataPtr ptr);
+};
+
+class LandTeleportGui {
+public:
+    static void impl(Player& player, LandID id);
 };
 
 
-// TODO:
-class LandOPManagerGui : public FormWrapper<LandOPManagerGui> {
+class LandOPManagerGui {
 public:
     static void impl(Player& player);
 };

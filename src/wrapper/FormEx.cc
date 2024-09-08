@@ -7,7 +7,7 @@ namespace wrapper {
 using namespace ll::form;
 
 SimpleFormEx::SimpleFormEx() { form = std::make_unique<SimpleForm>(); }
-SimpleFormEx::SimpleFormEx(BackCallback backCallback, SimpleFormExBack pos) {
+SimpleFormEx::SimpleFormEx(BackCallback backCallback, BackButtonPos pos) {
     form              = std::make_unique<SimpleForm>();
     mBackCallback     = backCallback;
     mSimpleFormExBack = pos;

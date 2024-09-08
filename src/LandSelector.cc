@@ -70,7 +70,7 @@ bool                                   LandSelector::init() {
                         auto& data = iter->second;
                         if (data.mDraw3D) {
                             // 3DLand
-                            SelectorChangeYGui::send(pl); // 发送GUI
+                            SelectorChangeYGui::impl(pl); // 发送GUI
                         } else {
                             // 2DLand
                             if (auto dim = pl.getLevel().getDimension(data.mDimid); dim) {
