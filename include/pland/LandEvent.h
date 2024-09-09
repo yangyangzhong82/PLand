@@ -163,4 +163,40 @@ public:
 };
 
 
+// 领地主人变动(EditLandOwnerGui)
+class LandOwnerChangeBeforeEvent final : public ll::event::Cancellable<ll::event::Event> {
+protected:
+    Player& mPlayer;   // 操作者
+    Player& mNewOwner; // 新主人
+    LandID  mLandID;
+
+public:
+    LandOwnerChangeBeforeEvent(Player& player, Player& newOwner, LandID landID)
+    : Cancellable(),
+      mPlayer(player),
+      mNewOwner(newOwner),
+      mLandID(landID) {}
+
+    Player& getPlayer() const;
+    Player& getNewOwner() const;
+    LandID  getLandID() const;
+};
+class LandOwnerChangeAfterEvent final : public ll::event::Event {
+protected:
+    Player& mPlayer;   // 操作者
+    Player& mNewOwner; // 目标玩家
+    LandID  mLandID;
+
+public:
+    LandOwnerChangeAfterEvent(Player& player, Player& newOwner, LandID landID)
+    : mPlayer(player),
+      mNewOwner(newOwner),
+      mLandID(landID) {}
+
+    Player& getPlayer() const;
+    Player& getNewOwner() const;
+    LandID  getLandID() const;
+};
+
+
 } // namespace land

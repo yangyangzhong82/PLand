@@ -79,6 +79,10 @@ public:
     public:
         static void impl(Player& player, LandDataPtr ptr);
     };
+    class EditLandOwnerGui {
+    public:
+        static void impl(Player& player, LandDataPtr ptr);
+    };
 };
 
 

@@ -335,7 +335,9 @@ void LandManagerGui::impl(Player& player, LandID id) {
     fm.appendButton("修改领地描述"_tr(), "textures/ui/book_edit_default", [land](Player& pl) {
         EditLandDescGui::impl(pl, land);
     });
-    // fm.appendButton("领地过户"_tr(), "textures/ui/sidebar_icons/my_characters", [land](Player& pl) {});
+    fm.appendButton("领地过户"_tr(), "textures/ui/sidebar_icons/my_characters", [land](Player& pl) {
+        EditLandOwnerGui::impl(pl, land);
+    });
     // fm.appendButton("重新选区"_tr(), "textures/ui/anvil_icon", [land](Player& pl) {});
     fm.appendButton("删除领地"_tr(), "textures/ui/icon_trash", [land](Player& pl) { DeleteLandGui::impl(pl, land); });
 
@@ -431,6 +433,52 @@ void LandManagerGui::EditLandDescGui::impl(Player& player, LandDataPtr ptr) {
             mc::sendText(pl, "领地描述已更新!"_tr());
         }
     );
+}
+void LandManagerGui::EditLandOwnerGui::impl(Player& player, LandDataPtr ptr) {
+    ChoosePlayerGui::impl(player, [ptr](Player& self, Player& target) {
+        if (self == target) {
+            mc::sendText(self, "不能将领地转让给自己, 左手倒右手哦!"_tr());
+            return;
+        }
+
+        LandOwnerChangeBeforeEvent ev(self, target, ptr->getLandID());
+        ll::event::EventBus::getInstance().publish(ev);
+        if (ev.isCancelled()) {
+            return;
+        }
+
+        ModalForm fm(
+            PLUGIN_NAME + " | 确认转让?"_tr(),
+            "您确定要将领地转让给 {} 吗?\n转让后，您将失去此领地的权限。\n此操作不可逆,请谨慎操作!"_tr(
+                target.getRealName()
+            ),
+            "确认"_tr(),
+            "返回"_tr()
+        );
+        fm.sendTo(self, [ptr, &target](Player& self, ModalFormResult const& res, FormCancelReason) {
+            if (!res) {
+                return;
+            }
+
+            if (!(bool)res.value()) {
+                LandManagerGui::impl(self, ptr->getLandID());
+                return;
+            }
+
+            if (ptr->setLandOwner(target.getUuid().asString())) {
+                mc::sendText(self, "领地已转让给 {}"_tr(target.getRealName()));
+                mc::sendText(
+                    target,
+                    "您已成功接手来自 \"{}\" 的领地 \"{}\""_tr(self.getRealName(), ptr->getLandName())
+                );
+
+                LandOwnerChangeAfterEvent ev(self, target, ptr->getLandID());
+                ll::event::EventBus::getInstance().publish(ev);
+            } else {
+                mc::sendText<mc::LogLevel::Error>(self, "领地转让失败!"_tr());
+            }
+        });
+    });
 }
 
 
