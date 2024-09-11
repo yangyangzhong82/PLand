@@ -12,6 +12,11 @@ using namespace wrapper;
 class LandBuyGui {
 public:
     static void impl(Player& player);
+
+    class LandBuyWithReSelectGui {
+    public:
+        static void impl(Player& player);
+    };
 };
 class ChooseLandDimAndNewLand {
 public:
@@ -80,6 +85,10 @@ public:
         static void impl(Player& player, LandDataPtr ptr);
     };
     class EditLandOwnerGui {
+    public:
+        static void impl(Player& player, LandDataPtr ptr);
+    };
+    class ReSelectLandGui {
     public:
         static void impl(Player& player, LandDataPtr ptr);
     };

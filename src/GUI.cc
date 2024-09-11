@@ -23,6 +23,7 @@
 #include "pland/utils/MC.h"
 #include "pland/utils/Utils.h"
 #include "pland/wrapper/FormEx.h"
+#include <algorithm>
 #include <string>
 
 
@@ -79,7 +80,12 @@ void LandBuyGui::impl(Player& player) {
         return;
     }
 
-    bool& is3D = dataPtr->mDraw3D;
+    if (dataPtr->mBindLandData) {
+        LandBuyWithReSelectGui::impl(player); // 重新选择领地，切换到另一个购买界面
+        return;
+    }
+
+    bool const& is3D = dataPtr->mDraw3D;
 
     auto& economy = EconomySystem::getInstance();
 
@@ -172,6 +178,128 @@ void LandBuyGui::impl(Player& player) {
             ll::event::EventBus::getInstance().publish(ev);
 
         } else mc::sendText<mc::LogLevel::Error>(pl, "购买失败"_tr());
+    });
+    fm.appendButton("暂存订单"_tr(), "textures/ui/recipe_book_icon"); // close
+    fm.appendButton("放弃订单"_tr(), "textures/ui/cancel", [](Player& pl) {
+        LandSelector::getInstance().tryCancel(pl);
+    });
+
+    fm.sendTo(player);
+}
+void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
+    auto dataPtr = LandSelector::getInstance().getSelector(player);
+    if (!dataPtr) {
+        mc::sendText<mc::LogLevel::Error>(player, "请先使用 /pland new 来选择领地"_tr());
+        return;
+    }
+
+    auto&       economy = EconomySystem::getInstance();
+    bool const& is3D    = dataPtr->mDraw3D;
+
+
+    int const& originalPrice   = dataPtr->mBindLandData->mOriginalBuyPrice; // 原始购买价格
+    int const  discountedPrice = Calculate::calculateDiscountPrice(         // 新范围购买价格
+        Calculate(dataPtr->mPos)
+            .eval(
+                is3D ? Config::cfg.land.bought.threeDimensionl.calculate
+                     : Config::cfg.land.bought.twoDimensionl.calculate
+            ),
+        Config::cfg.land.discountRate
+    );
+
+    // 计算需补差价 & 退还差价
+    int needPay = discountedPrice - originalPrice; // 需补差价
+    int refund  = originalPrice - discountedPrice; // 退还差价
+
+
+    // publish event
+    LandRangeChangeBeforeEvent ev(player, dataPtr->mBindLandData, dataPtr->mPos, needPay, refund);
+    ll::event::EventBus::getInstance().publish(ev);
+    if (ev.isCancelled()) {
+        return;
+    }
+
+    auto fm = SimpleFormEx::create();
+    fm.setTitle(PLUGIN_NAME + ("| 购买领地 & 重新选区"_tr()));
+    fm.setContent("体积: {0}x{1}x{2} = {3}\n范围: {4}\n原购买价格: {5}\n需补差价: {6}\n需退差价: {7}\n{8}"_tr(
+        dataPtr->mPos.getDepth(),  // 1
+        dataPtr->mPos.getWidth(),  // 2
+        dataPtr->mPos.getHeight(), // 3
+        dataPtr->mPos.getVolume(), // 4
+        dataPtr->mPos.toString(),  // 5
+        originalPrice,             // 6
+        needPay < 0 ? 0 : needPay, // 7
+        refund < 0 ? 0 : refund,   // 8
+        needPay > 0 ? economy.getSpendTip(player, discountedPrice) : ""
+    ));
+
+    fm.appendButton("确认购买"_tr(), "textures/ui/realms_green_check", [needPay, refund, discountedPrice](Player& pl) {
+        auto& eco = EconomySystem::getInstance();
+        if (needPay > 0 && eco.get(pl) < needPay) {
+            mc::sendText<mc::LogLevel::Error>(pl, "您的余额不足，无法购买"_tr());
+            return; // 预检查经济
+        }
+
+        auto& db       = PLand::getInstance();
+        auto& selector = LandSelector::getInstance();
+        auto  data     = selector.getSelector(pl);
+        if (!data) {
+            return;
+        }
+
+        int const   length      = data->mPos.getDepth();
+        int const   width       = data->mPos.getWidth();
+        auto const& squareRange = Config::cfg.land.bought.squareRange;
+        if (length < squareRange.min || width < squareRange.min) {
+            mc::sendText<mc::LogLevel::Error>(pl, "领地范围过小，最小为 {}x{}"_tr(squareRange.min, squareRange.min));
+            return;
+        }
+        if (length > squareRange.max || width > squareRange.max) {
+            mc::sendText<mc::LogLevel::Error>(pl, "领地范围过大，最大为 {}x{}"_tr(squareRange.max, squareRange.max));
+            return;
+        }
+
+        auto lands = db.getLandAt(data->mPos.mMin_A.toBlockPos(), data->mPos.mMax_B.toBlockPos(), data->mDimid);
+        if (!lands.empty()) {
+            for (auto& land : lands) {
+                if (land->getLandID() == data->mBindLandData->getLandID()) continue; // 跳过自己
+                if (LandPos::isCollision(land->mPos, data->mPos)) {
+                    mc::sendText<mc::LogLevel::Error>(pl, "领地重叠，请重新选择"_tr());
+                    return;
+                }
+                if (!LandPos::isComplisWithMinSpacing(land->mPos, data->mPos)) {
+                    mc::sendText<mc::LogLevel::Error>(pl, "领地距离过近，请重新选择"_tr());
+                    return;
+                }
+            }
+        }
+
+        // 补差价 & 退还差价
+        if (needPay > 0) {
+            if (!eco.reduce(pl, needPay)) {
+                mc::sendText<mc::LogLevel::Error>(pl, "您的余额不足，无法购买"_tr());
+                return;
+            }
+        } else if (refund > 0) {
+            if (!eco.add(pl, refund)) {
+                mc::sendText<mc::LogLevel::Error>(pl, "经济系统异常,退还差价失败"_tr());
+                return;
+            }
+        }
+
+        auto landPtr = data->mBindLandData;
+        if (landPtr->_setLandPos(data->mPos)) {
+            landPtr->mOriginalBuyPrice = discountedPrice; // 保存购买价格
+
+            selector.completeAndRelease(pl); // 释放数据
+            db.refreshLandRange(landPtr);    // 刷新领地范围
+
+            mc::sendText<mc::LogLevel::Info>(pl, "领地范围修改成功"_tr());
+
+            LandRangeChangeAfterEvent ev(pl, landPtr, data->mPos, needPay, refund);
+            ll::event::EventBus::getInstance().publish(ev);
+
+        } else mc::sendText<mc::LogLevel::Error>(pl, "领地范围修改失败"_tr());
     });
     fm.appendButton("暂存订单"_tr(), "textures/ui/recipe_book_icon"); // close
     fm.appendButton("放弃订单"_tr(), "textures/ui/cancel", [](Player& pl) {
@@ -338,7 +466,7 @@ void LandManagerGui::impl(Player& player, LandID id) {
     fm.appendButton("领地过户"_tr(), "textures/ui/sidebar_icons/my_characters", [land](Player& pl) {
         EditLandOwnerGui::impl(pl, land);
     });
-    // fm.appendButton("重新选区"_tr(), "textures/ui/anvil_icon", [land](Player& pl) {});
+    fm.appendButton("重新选区"_tr(), "textures/ui/anvil_icon", [land](Player& pl) { ReSelectLandGui::impl(pl, land); });
     fm.appendButton("删除领地"_tr(), "textures/ui/icon_trash", [land](Player& pl) { DeleteLandGui::impl(pl, land); });
 
     fm.sendTo(player);
@@ -478,6 +606,26 @@ void LandManagerGui::EditLandOwnerGui::impl(Player& player, LandDataPtr ptr) {
                 mc::sendText<mc::LogLevel::Error>(self, "领地转让失败!"_tr());
             }
         });
+    });
+}
+void LandManagerGui::ReSelectLandGui::impl(Player& player, LandDataPtr ptr) {
+    ModalForm fm(
+        PLUGIN_NAME + " | 重新选区"_tr(),
+        "重新选区为完全重新选择领地的范围，非直接扩充/缩小现有领地范围。\n重新选择的价格计算方式为\"新范围价格 — 旧范围价值\"，是否继续？"_tr(
+        ),
+        "确认"_tr(),
+        "返回"_tr()
+    );
+    fm.sendTo(player, [ptr](Player& self, ModalFormResult const& res, FormCancelReason) {
+        if (!res) {
+            return;
+        }
+
+        if (!(bool)res.value()) {
+            LandManagerGui::impl(self, ptr->getLandID());
+            return;
+        }
+        LandSelector::getInstance().tryReSelect(self, ptr);
     });
 }
 

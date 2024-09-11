@@ -23,12 +23,20 @@ struct LandSelectorData {
     bool    mCanDraw{false};        // 能否绘制
     bool    mCanSelect{true};       // 能否选择
 
+    // 粒子API
     bool     mIsInitedParticle{false}; // 是否已经初始化mParticle
     Particle mParticle;
 
+    // 重新选区
+    LandDataPtr mBindLandData{nullptr}; // 绑定的LandData (此项不为空时，代表玩家正在重新选区<调整大小>)
+    Particle mOldRangeParticle;         // 旧的粒子范围
+
+    // constructor
     LandSelectorData() = default;
     LandSelectorData(Player& player, int dim, bool draw3D) : mPlayer(&player), mDimid(dim), mDraw3D(draw3D) {}
+    LandSelectorData(Player& player, LandDataPtr landData);
 };
+
 
 class LandSelector {
 public:
@@ -46,18 +54,18 @@ public:
     LandSelectorData* getSelector(Player& player);
 
     bool isSelectTool(ItemStack const& item) const;
-    bool isSelecting(Player& player) const;
-    bool isSelected(Player& player) const;
+    bool isSelecting(Player& player) const; // 是否正在选区
+    bool isSelected(Player& player) const;  // 是否已经选完
     bool isSelectedPointA(Player& player) const;
     bool isSelectedPointB(Player& player) const;
 
-    bool tryStartSelect(Player& player, int dim, bool draw3D);
+    bool isReSelector(Player& player) const;                // 是否是重新选区
+    bool tryReSelect(Player& player, LandDataPtr landData); // 重新选区
 
-    bool trySelectPointA(Player& player, BlockPos pos);
-
-    bool trySelectPointB(Player& player, BlockPos pos);
-
-    bool tryCancel(Player& player);
+    bool tryStartSelect(Player& player, int dim, bool draw3D); // 开始选区
+    bool trySelectPointA(Player& player, BlockPos pos);        // 选择第一个点
+    bool trySelectPointB(Player& player, BlockPos pos);        // 选择第二个点
+    bool tryCancel(Player& player);                            // 取消选区
 
     bool        completeAndRelease(Player& player);   // 完成选择并释放
     LandDataPtr makeLandFromSelector(Player& player); // 从选择器中生成LandData

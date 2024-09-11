@@ -5,6 +5,7 @@
 #include "mod/MyMod.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
+#include "pland/LandPos.h"
 #include "pland/utils/JSON.h"
 #include "pland/utils/Utils.h"
 #include <algorithm>
@@ -140,8 +141,6 @@ bool PLand::addLand(LandDataPtr land) {
         auto  iter = std::find(ls.begin(), ls.end(), land->mLandID);
         if (iter == ls.end()) {
             ls.push_back(land->mLandID);
-        } else {
-            return false; // land already added
         }
     }
 
@@ -167,6 +166,28 @@ bool PLand::removeLand(LandID landId) {
     mLandCache.erase(landIter);
     return true;
 }
+bool PLand::refreshLandRange(LandDataPtr ptr) {
+    // 擦除旧映射
+    for (auto& chunk : ptr->mPos.getChunks()) {
+        auto& landVec = mLandMap[ptr->mLandDimid][getChunkID(chunk.x, chunk.z)];
+        auto  iter    = std::find(landVec.begin(), landVec.end(), ptr->mLandID);
+        if (iter != landVec.end()) {
+            landVec.erase(iter);
+        }
+    }
+
+    // 添加映射表
+    auto chunks = ptr->mPos.getChunks();
+    for (auto& chunk : chunks) {
+        auto& lands = mLandMap[ptr->mLandDimid][getChunkID(chunk.x, chunk.z)];
+        auto  iter  = std::find(lands.begin(), lands.end(), ptr->mLandID);
+        if (iter == lands.end()) {
+            lands.push_back(ptr->mLandID);
+        }
+    }
+    return true;
+}
+
 
 LandDataPtr PLand::getLand(LandID id) const {
     auto landIt = mLandCache.find(id);

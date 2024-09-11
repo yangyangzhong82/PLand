@@ -12,6 +12,7 @@
 #include "pland/GUI.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
+#include "pland/Particle.h"
 #include "pland/utils/Date.h"
 #include "pland/utils/MC.h"
 #include <optional>
@@ -126,6 +127,11 @@ bool                                   LandSelector::init() {
                         data.mIsInitedParticle = true;
                     }
                     data.mParticle.draw(*pl);
+                }
+
+                // 重新选区 & 绘制旧范围 (新范围无法绘制时绘制旧范围)
+                if (data.mBindLandData != nullptr && !data.mCanDraw) {
+                    data.mOldRangeParticle.draw(*pl);
                 }
 
                 titlePacket.sendTo(*pl);
@@ -244,6 +250,28 @@ LandDataPtr LandSelector::makeLandFromSelector(Player& player) {
     auto& data = iter->second;
 
     return LandData::make(data.mPos, data.mDimid, data.mDraw3D, data.mPlayer->getUuid().asString());
+}
+
+
+// ReSelect
+bool LandSelector::isReSelector(Player& player) const {
+    auto iter = mSelectors.find(player.getUuid().asString());
+    return iter != mSelectors.end() && iter->second.mBindLandData != nullptr;
+}
+bool LandSelector::tryReSelect(Player& player, LandDataPtr land) {
+    auto uid = player.getUuid().asString();
+
+    mSelectors.emplace(UUIDs(uid), LandSelectorData{player, land});
+    return true;
+}
+
+LandSelectorData::LandSelectorData(Player& player, LandDataPtr landData) {
+    this->mPlayer       = &player;
+    this->mDimid        = landData->mLandDimid;
+    this->mDraw3D       = landData->mIs3DLand;
+    this->mBindLandData = landData;
+
+    this->mOldRangeParticle = Particle(landData->mPos, landData->mLandDimid, landData->mIs3DLand);
 }
 
 

@@ -30,7 +30,7 @@ bool LandData::setLandDescribe(std::string const& describe) {
     mLandDescribe = std::string(describe);
     return true;
 }
-bool LandData::setLandPos(LandPos const& pos) {
+bool LandData::_setLandPos(LandPos const& pos) {
     mPos = LandPos(pos);
     return true;
 }
@@ -84,7 +84,7 @@ LandPermType LandData::getPermType(UUIDs const& uuid) const {
 LandDataPtr LandData::make() { return std::make_shared<LandData>(); }
 LandDataPtr LandData::make(LandPos const& pos, LandDimid dimid, bool is3D, UUIDs const& owner) {
     auto ptr = std::make_shared<LandData>();
-    ptr->setLandPos(pos);
+    ptr->_setLandPos(pos);
     ptr->mLandDimid = dimid;
     ptr->setIs3DLand(is3D);
     ptr->setLandOwner(owner);

@@ -4,6 +4,7 @@
 #include "mc/world/level/BlockPos.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
+#include "pland/LandPos.h"
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
@@ -46,6 +47,8 @@ public:
     bool hasLand(LandID id) const;
     bool addLand(LandDataPtr land);
     bool removeLand(LandID id);
+
+    bool refreshLandRange(LandDataPtr ptr); // 刷新领地范围
 
     LandDataPtr              getLand(LandID id) const;                           // 获取领地数据
     std::vector<LandDataPtr> getLands();                                         // 获取所有领地数据

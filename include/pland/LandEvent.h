@@ -4,6 +4,7 @@
 #include "mc/world/actor/player/Player.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
+#include "pland/LandPos.h"
 #include "pland/LandSelector.h"
 
 namespace land {
@@ -196,6 +197,66 @@ public:
     Player& getPlayer() const;
     Player& getNewOwner() const;
     LandID  getLandID() const;
+};
+
+
+// 领地范围变动(LandBuyWithReSelectGui)
+class LandRangeChangeBeforeEvent final : public ll::event::Cancellable<ll::event::Event> {
+protected:
+    Player&            mPlayer;      // 操作者
+    LandDataPtr const& mLandData;    // 操作的领地数据
+    LandPos const&     mNewRange;    // 新范围
+    int const&         mNeedPay;     // 需要支付的价格
+    int const&         mRefundPrice; // 需要退的价格
+
+public:
+    LandRangeChangeBeforeEvent(
+        Player&            player,
+        LandDataPtr const& landData,
+        LandPos const&     newRange,
+        int const&         needPay,
+        int const&         refundPrice
+    )
+    : Cancellable(),
+      mPlayer(player),
+      mLandData(landData),
+      mNewRange(newRange),
+      mNeedPay(needPay),
+      mRefundPrice(refundPrice) {}
+
+    Player&            getPlayer() const;
+    LandDataPtr const& getLandData() const;
+    LandPos const&     getNewRange() const;
+    int const&         getNeedPay() const;
+    int const&         getRefundPrice() const;
+};
+class LandRangeChangeAfterEvent final : public ll::event::Event {
+protected:
+    Player&            mPlayer;      // 操作者
+    LandDataPtr const& mLandData;    // 操作的领地数据
+    LandPos const&     mNewRange;    // 新范围
+    int const&         mNeedPay;     // 需要支付的价格
+    int const&         mRefundPrice; // 需要退的价格
+
+public:
+    LandRangeChangeAfterEvent(
+        Player&            player,
+        LandDataPtr const& landData,
+        LandPos const&     newRange,
+        int const&         needPay,
+        int const&         refundPrice
+    )
+    : mPlayer(player),
+      mLandData(landData),
+      mNewRange(newRange),
+      mNeedPay(needPay),
+      mRefundPrice(refundPrice) {}
+
+    Player&            getPlayer() const;
+    LandDataPtr const& getLandData() const;
+    LandPos const&     getNewRange() const;
+    int const&         getNeedPay() const;
+    int const&         getRefundPrice() const;
 };
 
 

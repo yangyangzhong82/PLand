@@ -127,7 +127,7 @@ public:
 
     bool setLandName(std::string const& name);
     bool setLandDescribe(std::string const& describe);
-    bool setLandPos(LandPos const& pos);
+    bool _setLandPos(LandPos const& pos); // private 
 
     bool addLandMember(UUIDs const& uuid);
     bool removeLandMember(UUIDs const& uuid);
