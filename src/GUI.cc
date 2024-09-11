@@ -19,6 +19,7 @@
 #include "pland/LandPos.h"
 #include "pland/LandSelector.h"
 #include "pland/PLand.h"
+#include "pland/SafeTeleport.h"
 #include "pland/utils/JSON.h"
 #include "pland/utils/MC.h"
 #include "pland/utils/Utils.h"
@@ -732,7 +733,8 @@ void LandTeleportGui::impl(Player& player, LandID id) {
         mc::sendText<mc::LogLevel::Error>(player, "领地不存在"_tr());
         return;
     }
-    // TODO: teleport
+
+    SafeTeleport::getInstance().teleportTo(player, land->mPos.mMin_A.toBlockPos(), land->getLandDimid());
 }
 
 
