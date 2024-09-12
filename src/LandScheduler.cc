@@ -132,12 +132,12 @@ bool LandScheduler::setup() {
                 SetTitlePacket pkt(SetTitlePacket::TitleType::Actionbar);
 
                 auto& landIds = LandScheduler::mLandidMap;
-                for (auto& [uuid, landid] : landIds) {
+                for (auto& [curPlayerUUID, landid] : landIds) {
                     if (landid == (LandID)-1) {
                         continue;
                     }
 
-                    auto player = level->getPlayer(uuid);
+                    auto player = level->getPlayer(curPlayerUUID);
                     if (!player) {
                         continue;
                     }
@@ -147,19 +147,12 @@ bool LandScheduler::setup() {
                         continue;
                     }
 
-                    auto info = infos->fromUuid(uuid);
-                    if (!info.has_value()) {
-                        logger->warn(
-                            "Failed to get the name of player \"{}\", please check the PlayerInfo status.",
-                            uuid.asString()
-                        );
-                    }
-
-
-                    if (land->isLandOwner(uuid.asString())) {
+                    auto const owner = UUIDm::fromString(land->getLandOwner());
+                    auto       info  = infos->fromUuid(owner);
+                    if (land->isLandOwner(curPlayerUUID.asString())) {
                         pkt.mTitleText = "[Land] 当前正在领地 {}"_tr(land->getLandName());
                     } else {
-                        pkt.mTitleText = "[Land] 这里是 {} 的领地"_tr(info.has_value() ? info->name : uuid.asString());
+                        pkt.mTitleText = "[Land] 这里是 {} 的领地"_tr(info.has_value() ? info->name : owner.asString());
                     }
 
                     pkt.sendTo(*player);
