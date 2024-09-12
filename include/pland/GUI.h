@@ -128,10 +128,6 @@ public:
     public:
         static void impl(Player& player, UUIDs const& targetPlayer);
     };
-    class ManageLandWithDB {
-    public:
-        static void impl(Player& player, UUIDs const& targetPlayer);
-    };
 
 
     // 辅助

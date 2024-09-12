@@ -763,17 +763,14 @@ void LandOPManagerGui::impl(Player& player) {
         IChoosePlayerFromDB::impl(self, ManageLandWithPlayer::impl);
     });
     fm.appendButton("管理指定领地"_tr(), "textures/ui/magnifyingGlass", [](Player& self) {
-        IChoosePlayerFromDB::impl(self, ManageLandWithDB::impl);
+        IChooseLandFromDB::impl(self, "", [](Player& self, LandDataPtr ptr) {
+            LandManagerGui::impl(self, ptr->getLandID());
+        });
     });
 
     fm.sendTo(player);
 }
 void LandOPManagerGui::ManageLandWithPlayer::impl(Player& player, UUIDs const& targetPlayer) {
-    IChooseLandFromDB::impl(player, targetPlayer, [](Player& self, LandDataPtr ptr) {
-        LandManagerGui::impl(self, ptr->getLandID());
-    });
-}
-void LandOPManagerGui::ManageLandWithDB::impl(Player& player, UUIDs const& targetPlayer) {
     IChooseLandFromDB::impl(player, targetPlayer, [](Player& self, LandDataPtr ptr) {
         LandManagerGui::impl(self, ptr->getLandID());
     });
