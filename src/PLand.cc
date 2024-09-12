@@ -196,14 +196,14 @@ LandDataPtr PLand::getLand(LandID id) const {
     }
     return nullptr;
 }
-std::vector<LandDataPtr> PLand::getLands() {
+std::vector<LandDataPtr> PLand::getLands() const {
     std::vector<LandDataPtr> lands;
     for (auto& land : mLandCache) {
         lands.push_back(land.second);
     }
     return lands;
 }
-std::vector<LandDataPtr> PLand::getLands(LandDimid dimid) {
+std::vector<LandDataPtr> PLand::getLands(LandDimid dimid) const {
     std::vector<LandDataPtr> lands;
     for (auto& land : mLandCache) {
         if (land.second->mLandDimid == dimid) {
@@ -212,7 +212,7 @@ std::vector<LandDataPtr> PLand::getLands(LandDimid dimid) {
     }
     return lands;
 }
-std::vector<LandDataPtr> PLand::getLands(UUIDs const& uuid) {
+std::vector<LandDataPtr> PLand::getLands(UUIDs const& uuid) const {
     std::vector<LandDataPtr> lands;
     for (auto& land : mLandCache) {
         if (land.second->isLandOwner(uuid)) {

@@ -123,6 +123,28 @@ public:
 class LandOPManagerGui {
 public:
     static void impl(Player& player);
+
+    class ManageLandWithPlayer {
+    public:
+        static void impl(Player& player, UUIDs const& targetPlayer);
+    };
+    class ManageLandWithDB {
+    public:
+        static void impl(Player& player, UUIDs const& targetPlayer);
+    };
+
+
+    // 辅助
+    class IChoosePlayerFromDB {
+    public:
+        using ChoosePlayerCall = std::function<void(Player& self, UUIDs target)>;
+        static void impl(Player& player, ChoosePlayerCall callback);
+    };
+    class IChooseLandFromDB {
+    public:
+        using ChooseLandCall = std::function<void(Player& self, LandDataPtr ptr)>;
+        static void impl(Player& player, UUIDs const& target, ChooseLandCall callback);
+    };
 };
 
 } // namespace land

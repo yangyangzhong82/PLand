@@ -51,9 +51,9 @@ public:
     bool refreshLandRange(LandDataPtr ptr); // 刷新领地范围
 
     LandDataPtr              getLand(LandID id) const;                           // 获取领地数据
-    std::vector<LandDataPtr> getLands();                                         // 获取所有领地数据
-    std::vector<LandDataPtr> getLands(LandDimid dimid);                          // 获取维度领地数据
-    std::vector<LandDataPtr> getLands(UUIDs const& uuid);                        // 获取玩家领地数据
+    std::vector<LandDataPtr> getLands() const;                                   // 获取所有领地数据
+    std::vector<LandDataPtr> getLands(LandDimid dimid) const;                    // 获取维度领地数据
+    std::vector<LandDataPtr> getLands(UUIDs const& uuid) const;                  // 获取玩家领地数据
     std::vector<LandDataPtr> getLands(UUIDs const& uuid, LandDimid dimid) const; // 获取玩家维度领地数据
 
     LandPermType getPermType(UUIDs const& uuid, LandID id = 0, bool ignoreOperator = false) const; // 获取领地权限类型

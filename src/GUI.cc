@@ -740,6 +740,88 @@ void LandTeleportGui::impl(Player& player, LandID id) {
 
 // 管理员GUI
 void LandOPManagerGui::impl(Player& player) {
-    // TODO
+    auto* db = &PLand::getInstance();
+    if (!db->isOperator(player.getUuid().asString())) {
+        mc::sendText<mc::LogLevel::Error>(player, "无权限访问此表单"_tr());
+        return;
+    }
+
+    auto fm = SimpleFormEx::create();
+
+    fm.setTitle(PLUGIN_NAME + " | 领地管理"_tr());
+    fm.setContent("请选择您要进行的操作"_tr());
+
+    fm.appendButton("管理脚下领地"_tr(), "textures/ui/free_download", [db](Player& self) {
+        auto lands = db->getLandAt(self.getPosition(), self.getDimensionId());
+        if (!lands) {
+            mc::sendText<mc::LogLevel::Error>(self, "您当前所处位置没有领地"_tr());
+            return;
+        }
+        LandManagerGui::impl(self, lands->getLandID());
+    });
+    fm.appendButton("管理玩家领地"_tr(), "textures/ui/FriendsIcon", [](Player& self) {
+        IChoosePlayerFromDB::impl(self, ManageLandWithPlayer::impl);
+    });
+    fm.appendButton("管理指定领地"_tr(), "textures/ui/magnifyingGlass", [](Player& self) {
+        IChoosePlayerFromDB::impl(self, ManageLandWithDB::impl);
+    });
+
+    fm.sendTo(player);
 }
+void LandOPManagerGui::ManageLandWithPlayer::impl(Player& player, UUIDs const& targetPlayer) {
+    IChooseLandFromDB::impl(player, targetPlayer, [](Player& self, LandDataPtr ptr) {
+        LandManagerGui::impl(self, ptr->getLandID());
+    });
+}
+void LandOPManagerGui::ManageLandWithDB::impl(Player& player, UUIDs const& targetPlayer) {
+    IChooseLandFromDB::impl(player, targetPlayer, [](Player& self, LandDataPtr ptr) {
+        LandManagerGui::impl(self, ptr->getLandID());
+    });
+}
+
+
+void LandOPManagerGui::IChoosePlayerFromDB::impl(Player& player, ChoosePlayerCall callback) {
+    auto fm = SimpleFormEx::create<LandOPManagerGui, BackButtonPos::Upper>();
+    fm.setTitle(PLUGIN_NAME + " | 玩家列表"_tr());
+    fm.setContent("请选择您要管理的玩家"_tr());
+
+    auto const& db    = PLand::getInstance();
+    auto const& infos = ll::service::PlayerInfo::getInstance();
+    auto const  lands = db.getLands();
+
+    for (auto const& ptr : lands) {
+        auto info = infos.fromUuid(UUIDm::fromString(ptr->getLandOwner()));
+
+        fm.appendButton(info.has_value() ? info->name : ptr->getLandOwner(), [ptr, callback](Player& self) {
+            callback(self, ptr->getLandOwner());
+        });
+    }
+
+    fm.sendTo(player);
+}
+void LandOPManagerGui::IChooseLandFromDB::impl(Player& player, UUIDs const& target, ChooseLandCall callback) {
+    auto fm = SimpleFormEx::create<LandOPManagerGui, BackButtonPos::Upper>();
+    fm.setTitle(PLUGIN_NAME + " | 领地列表"_tr());
+    fm.setContent("请选择您要管理的领地"_tr());
+
+    auto const& db    = PLand::getInstance();
+    auto const& infos = ll::service::PlayerInfo::getInstance();
+    auto const  lands = target.empty() ? db.getLands() : db.getLands(target);
+
+    for (auto const& ptr : lands) {
+        auto info = infos.fromUuid(UUIDm::fromString(ptr->getLandOwner()));
+        fm.appendButton(
+            "{}\nID: {}  玩家: {}"_tr(
+                ptr->getLandName(),
+                ptr->getLandID(),
+                info.has_value() ? info->name : ptr->getLandOwner()
+            ),
+            [callback, ptr](Player& self) { callback(self, ptr); }
+        );
+    }
+
+    fm.sendTo(player);
+}
+
+
 } // namespace land

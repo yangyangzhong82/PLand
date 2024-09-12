@@ -18,7 +18,7 @@ struct Config {
     } economy;
 
     struct {
-        bool   landTp{true};    // 领地传送// todo
+        bool   landTp{true};    // 领地传送
         int    maxLand{20};     // 最大领地数量
         int    minSpacing{16};  // 最小领地间距
         double refundRate{0.9}; // 退款率(1为全额退款)
