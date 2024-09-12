@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Global.h"
 #include "mc/math/Vec3.h"
 #include "mc/world/actor/player/Player.h"
 namespace land {
@@ -14,9 +14,9 @@ public:
     SafeTeleport(const SafeTeleport&)            = delete;
     SafeTeleport& operator=(const SafeTeleport&) = delete;
 
-    static SafeTeleport& getInstance();
+    LDAPI static SafeTeleport& getInstance();
 
-    void teleportTo(Player& player, Vec3 const& pos, int dimid);
+    LDAPI void teleportTo(Player& player, Vec3 const& pos, int dimid);
 };
 
 

@@ -101,48 +101,48 @@ public:
     int                mSalePrice{0};                      // 出售价格
     int                mOriginalBuyPrice{0};               // 原始购买价格
 
-    static LandDataPtr make(); // 创建一个空领地数据(反射使用)
-    static LandDataPtr make(LandPos const& pos, LandDimid dimid, bool is3D, UUIDs const& owner); // 新建领地数据
+    LDAPI static LandDataPtr make(); // 创建一个空领地数据(反射使用)
+    LDAPI static LandDataPtr make(LandPos const& pos, LandDimid dimid, bool is3D, UUIDs const& owner); // 新建领地数据
 
     // getters
-    LandPos const& getLandPos() const;
-    LandID         getLandID() const;
-    LandDimid      getLandDimid() const;
-    int            getSalePrice() const;
+    LDAPI LandPos const& getLandPos() const;
+    LDAPI LandID         getLandID() const;
+    LDAPI LandDimid      getLandDimid() const;
+    LDAPI int            getSalePrice() const;
 
-    LandPermTable&       getLandPermTable();
-    LandPermTable const& getLandPermTableConst() const;
+    LDAPI LandPermTable&       getLandPermTable();
+    LDAPI LandPermTable const& getLandPermTableConst() const;
 
-    UUIDs const&              getLandOwner() const;
-    std::vector<UUIDs> const& getLandMembers() const;
-    std::string const&        getLandName() const;
-    std::string const&        getLandDescribe() const;
+    LDAPI UUIDs const& getLandOwner() const;
+    LDAPI std::vector<UUIDs> const& getLandMembers() const;
+    LDAPI std::string const& getLandName() const;
+    LDAPI std::string const& getLandDescribe() const;
 
 
     // setters
-    bool setSaleing(bool isSaleing);
-    bool setIs3DLand(bool is3D);
-    bool setLandOwner(UUIDs const& uuid);
-    bool setSalePrice(int price);
+    LDAPI bool setSaleing(bool isSaleing);
+    LDAPI bool setIs3DLand(bool is3D);
+    LDAPI bool setLandOwner(UUIDs const& uuid);
+    LDAPI bool setSalePrice(int price);
 
-    bool setLandName(std::string const& name);
-    bool setLandDescribe(std::string const& describe);
-    bool _setLandPos(LandPos const& pos); // private 
+    LDAPI bool setLandName(std::string const& name);
+    LDAPI bool setLandDescribe(std::string const& describe);
+    LDAPI bool _setLandPos(LandPos const& pos); // private
 
-    bool addLandMember(UUIDs const& uuid);
-    bool removeLandMember(UUIDs const& uuid);
+    LDAPI bool addLandMember(UUIDs const& uuid);
+    LDAPI bool removeLandMember(UUIDs const& uuid);
 
 
     // others
-    bool is3DLand() const;
-    bool isLandOwner(UUIDs const& uuid) const;
-    bool isLandMember(UUIDs const& uuid) const;
-    bool isSaleing() const;
+    LDAPI bool is3DLand() const;
+    LDAPI bool isLandOwner(UUIDs const& uuid) const;
+    LDAPI bool isLandMember(UUIDs const& uuid) const;
+    LDAPI bool isSaleing() const;
 
-    bool isRadiusInLand(BlockPos const& pos, int radius) const;
-    bool isAABBInLand(BlockPos const& pos1, BlockPos const& pos2) const;
+    LDAPI bool isRadiusInLand(BlockPos const& pos, int radius) const;
+    LDAPI bool isAABBInLand(BlockPos const& pos1, BlockPos const& pos2) const;
 
-    LandPermType getPermType(UUIDs const& uuid) const;
+    LDAPI LandPermType getPermType(UUIDs const& uuid) const;
 };
 
 

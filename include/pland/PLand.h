@@ -30,45 +30,46 @@ public:
 
     std::vector<UUIDs> mLandOperators; // 领地操作员
 
-    static PLand& getInstance();
+    LDAPI static PLand& getInstance();
 
-    bool init();
-    bool save();
-    bool _initCache(); // private
+    LDAPI bool init();
+    LDAPI bool save();
+    LDAPI bool _initCache(); // private
 
-    bool mThreadCanRun{true}; // private
-    void _startThread();      // private
-    void _stopThread();       // private
+    bool       mThreadCanRun{true}; // private
+    LDAPI void _startThread();      // private
+    LDAPI void _stopThread();       // private
 
-    bool isOperator(UUIDs const& uuid) const;
-    bool addOperator(UUIDs const& uuid);
-    bool removeOperator(UUIDs const& uuid);
+    LDAPI bool isOperator(UUIDs const& uuid) const;
+    LDAPI bool addOperator(UUIDs const& uuid);
+    LDAPI bool removeOperator(UUIDs const& uuid);
 
-    bool hasLand(LandID id) const;
-    bool addLand(LandDataPtr land);
-    bool removeLand(LandID id);
+    LDAPI bool hasLand(LandID id) const;
+    LDAPI bool addLand(LandDataPtr land);
+    LDAPI bool removeLand(LandID id);
 
-    bool refreshLandRange(LandDataPtr ptr); // 刷新领地范围
+    LDAPI bool refreshLandRange(LandDataPtr ptr); // 刷新领地范围
 
-    LandDataPtr              getLand(LandID id) const;                           // 获取领地数据
-    std::vector<LandDataPtr> getLands() const;                                   // 获取所有领地数据
-    std::vector<LandDataPtr> getLands(LandDimid dimid) const;                    // 获取维度领地数据
-    std::vector<LandDataPtr> getLands(UUIDs const& uuid) const;                  // 获取玩家领地数据
-    std::vector<LandDataPtr> getLands(UUIDs const& uuid, LandDimid dimid) const; // 获取玩家维度领地数据
+    LDAPI LandDataPtr getLand(LandID id) const;                                        // 获取领地数据
+    LDAPI std::vector<LandDataPtr> getLands() const;                                   // 获取所有领地数据
+    LDAPI std::vector<LandDataPtr> getLands(LandDimid dimid) const;                    // 获取维度领地数据
+    LDAPI std::vector<LandDataPtr> getLands(UUIDs const& uuid) const;                  // 获取玩家领地数据
+    LDAPI std::vector<LandDataPtr> getLands(UUIDs const& uuid, LandDimid dimid) const; // 获取玩家维度领地数据
 
-    LandPermType getPermType(UUIDs const& uuid, LandID id = 0, bool ignoreOperator = false) const; // 获取领地权限类型
+    LDAPI LandPermType
+    getPermType(UUIDs const& uuid, LandID id = 0, bool ignoreOperator = false) const; // 获取领地权限类型
 
     // 获取领地数据
-    LandDataPtr getLandAt(BlockPos const& pos, LandDimid dimid) const;
+    LDAPI LandDataPtr getLandAt(BlockPos const& pos, LandDimid dimid) const;
     // 半径内的领地
-    std::vector<LandDataPtr> getLandAt(BlockPos const& center, int radius, LandDimid dimid) const;
+    LDAPI std::vector<LandDataPtr> getLandAt(BlockPos const& center, int radius, LandDimid dimid) const;
     // 矩形内的领地
-    std::vector<LandDataPtr> getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const;
+    LDAPI std::vector<LandDataPtr> getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const;
 
-    LandID generateLandID();
+    LDAPI LandID generateLandID();
 
-    static ChunkID             getChunkID(int x, int z);
-    static std::pair<int, int> parseChunkID(ChunkID id);
+    LDAPI static ChunkID             getChunkID(int x, int z);
+    LDAPI static std::pair<int, int> parseChunkID(ChunkID id);
 };
 
 

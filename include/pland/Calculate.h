@@ -12,13 +12,13 @@ public:
     double mSquare; // 底面积(长*宽)
     double mVolume; // 体积(长*宽*高)
 
-    Calculate(LandPos& landPos);
-    Calculate(int height, int width, int depth);
+    LDAPI Calculate(LandPos& landPos);
+    LDAPI Calculate(int height, int width, int depth);
 
-    int eval(string code);
+    LDAPI int eval(string code);
 
-    static int calculateDiscountPrice(int originalPrice, double discountRate); // 计算折扣后的价格
-    static int calculateRefundsPrice(int originalPrice, double refundRate);    // 计算退款金额
+    LDAPI static int calculateDiscountPrice(int originalPrice, double discountRate); // 计算折扣后的价格
+    LDAPI static int calculateRefundsPrice(int originalPrice, double refundRate);    // 计算退款金额
 };
 
 

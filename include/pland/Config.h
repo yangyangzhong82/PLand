@@ -58,10 +58,10 @@ struct Config {
     } selector;
 
     // Functions
-    static Config cfg;
-    static bool   tryLoad();
-    static bool   trySave();
-    static bool   tryUpdate();
+    LDAPI static Config cfg;
+    LDAPI static bool   tryLoad();
+    LDAPI static bool   trySave();
+    LDAPI static bool   tryUpdate();
 };
 
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "Global.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/ChunkPos.h"
 #include <memory>
@@ -11,18 +12,18 @@ class PosBase {
 public:
     int x, y, z;
 
-    static PosBase make(int x, int y, int z);
-    static PosBase make(BlockPos const& pos);
+    LDAPI static PosBase make(int x, int y, int z);
+    LDAPI static PosBase make(BlockPos const& pos);
 
-    std::string toString() const;
-    BlockPos    toBlockPos() const;
+    LDAPI std::string toString() const;
+    LDAPI BlockPos    toBlockPos() const;
 
-    PosBase& operator=(PosBase const& pos) = default;
-    bool     operator==(PosBase const& pos) const;
-    bool     operator!=(PosBase const& pos) const;
-    PosBase& operator=(BlockPos const& pos);
-    bool     operator==(BlockPos const& pos) const;
-    bool     operator!=(BlockPos const& pos) const;
+    LDAPI PosBase& operator=(PosBase const& pos) = default;
+    LDAPI bool     operator==(PosBase const& pos) const;
+    LDAPI bool     operator!=(PosBase const& pos) const;
+    LDAPI PosBase& operator=(BlockPos const& pos);
+    LDAPI bool     operator==(BlockPos const& pos) const;
+    LDAPI bool     operator!=(BlockPos const& pos) const;
 };
 
 
@@ -31,29 +32,29 @@ class LandPos {
 public:
     PosBase mMin_A, mMax_B;
 
-    static LandPos make(BlockPos const& min, BlockPos const& max);
+    LDAPI static LandPos make(BlockPos const& min, BlockPos const& max);
 
-    void fix(); // fix min/max
+    LDAPI void fix(); // fix min/max
 
-    int getDepth() const;  // (长) X
-    int getHeight() const; // (高) Y
-    int getWidth() const;  // (宽) Z
-    int getSquare() const; // (底面积) X * Z
-    int getVolume() const; // (总体积) Z * X * Y
+    LDAPI int getDepth() const;  // (长) X
+    LDAPI int getHeight() const; // (高) Y
+    LDAPI int getWidth() const;  // (宽) Z
+    LDAPI int getSquare() const; // (底面积) X * Z
+    LDAPI int getVolume() const; // (总体积) Z * X * Y
 
-    std::string toString() const;
+    LDAPI std::string toString() const;
 
-    std::vector<ChunkPos> getChunks() const;
-    std::vector<BlockPos> getBorder() const;
-    std::vector<BlockPos> getRange() const;
+    LDAPI std::vector<ChunkPos> getChunks() const;
+    LDAPI std::vector<BlockPos> getBorder() const;
+    LDAPI std::vector<BlockPos> getRange() const;
 
-    bool hasPos(BlockPos const& pos, bool ignoreY = false) const;
+    LDAPI bool hasPos(BlockPos const& pos, bool ignoreY = false) const;
 
     // 两个领地是否碰撞(重合)
-    static bool isCollision(LandPos const& pos1, LandPos const& pos2);
+    LDAPI static bool isCollision(LandPos const& pos1, LandPos const& pos2);
 
     // 两个领地是否满足最小间距
-    static bool isComplisWithMinSpacing(LandPos const& pos1, LandPos const& pos2, bool ignoreY = false);
+    LDAPI static bool isComplisWithMinSpacing(LandPos const& pos1, LandPos const& pos2, bool ignoreY = false);
 };
 
 

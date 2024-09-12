@@ -1,4 +1,5 @@
-
+#pragma once
+#include "Global.h"
 
 namespace land {
 
@@ -9,7 +10,7 @@ public:
     LandCommand& operator=(const LandCommand&) = delete;
     ~LandCommand()                             = delete;
 
-    static bool setup();
+    LDAPI static bool setup();
 };
 
 

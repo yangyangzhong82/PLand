@@ -33,3 +33,10 @@ extern ll::schedule::GameTickScheduler GlobalTickScheduler; // 全局定时器
 
 
 } // namespace land
+
+
+#ifdef LDAPI_EXPORT
+#define LDAPI __declspec(dllexport)
+#else
+#define LDAPI __declspec(dllimport)
+#endif

@@ -32,9 +32,9 @@ struct LandSelectorData {
     Particle mOldRangeParticle;         // 旧的粒子范围
 
     // constructor
-    LandSelectorData() = default;
-    LandSelectorData(Player& player, int dim, bool draw3D) : mPlayer(&player), mDimid(dim), mDraw3D(draw3D) {}
-    LandSelectorData(Player& player, LandDataPtr landData);
+    LDAPI LandSelectorData() = default;
+    LDAPI LandSelectorData(Player& player, int dim, bool draw3D) : mPlayer(&player), mDimid(dim), mDraw3D(draw3D) {}
+    LDAPI LandSelectorData(Player& player, LandDataPtr landData);
 };
 
 
@@ -46,29 +46,29 @@ public:
 
     std::unordered_map<UUIDs, LandSelectorData> mSelectors;
 
-    static LandSelector& getInstance();
+    LDAPI static LandSelector& getInstance();
 
-    bool init();   // 初始化
-    bool uninit(); // 卸载
+    LDAPI bool init();   // 初始化
+    LDAPI bool uninit(); // 卸载
 
-    LandSelectorData* getSelector(Player& player);
+    LDAPI LandSelectorData* getSelector(Player& player);
 
-    bool isSelectTool(ItemStack const& item) const;
-    bool isSelecting(Player& player) const; // 是否正在选区
-    bool isSelected(Player& player) const;  // 是否已经选完
-    bool isSelectedPointA(Player& player) const;
-    bool isSelectedPointB(Player& player) const;
+    LDAPI bool isSelectTool(ItemStack const& item) const;
+    LDAPI bool isSelecting(Player& player) const; // 是否正在选区
+    LDAPI bool isSelected(Player& player) const;  // 是否已经选完
+    LDAPI bool isSelectedPointA(Player& player) const;
+    LDAPI bool isSelectedPointB(Player& player) const;
 
-    bool isReSelector(Player& player) const;                // 是否是重新选区
-    bool tryReSelect(Player& player, LandDataPtr landData); // 重新选区
+    LDAPI bool isReSelector(Player& player) const;                // 是否是重新选区
+    LDAPI bool tryReSelect(Player& player, LandDataPtr landData); // 重新选区
 
-    bool tryStartSelect(Player& player, int dim, bool draw3D); // 开始选区
-    bool trySelectPointA(Player& player, BlockPos pos);        // 选择第一个点
-    bool trySelectPointB(Player& player, BlockPos pos);        // 选择第二个点
-    bool tryCancel(Player& player);                            // 取消选区
+    LDAPI bool tryStartSelect(Player& player, int dim, bool draw3D); // 开始选区
+    LDAPI bool trySelectPointA(Player& player, BlockPos pos);        // 选择第一个点
+    LDAPI bool trySelectPointB(Player& player, BlockPos pos);        // 选择第二个点
+    LDAPI bool tryCancel(Player& player);                            // 取消选区
 
-    bool        completeAndRelease(Player& player);   // 完成选择并释放
-    LandDataPtr makeLandFromSelector(Player& player); // 从选择器中生成LandData
+    LDAPI bool        completeAndRelease(Player& player);   // 完成选择并释放
+    LDAPI LandDataPtr makeLandFromSelector(Player& player); // 从选择器中生成LandData
 };
 
 

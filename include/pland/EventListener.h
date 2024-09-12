@@ -11,14 +11,14 @@ public:
     EventListener(const EventListener&)            = delete;
     EventListener& operator=(const EventListener&) = delete;
 
-    static bool setup();
+    LDAPI static bool setup();
 
-    static bool release();
+    LDAPI static bool release();
 
-    static std::unordered_set<string> UseItemOnMap;
-    static std::unordered_set<string> InteractBlockMap;
-    static std::unordered_set<string> AnimalEntityMap;
-    static std::unordered_set<string> MobEntityMap;
+    LDAPI static std::unordered_set<string> UseItemOnMap;
+    LDAPI static std::unordered_set<string> InteractBlockMap;
+    LDAPI static std::unordered_set<string> AnimalEntityMap;
+    LDAPI static std::unordered_set<string> MobEntityMap;
 };
 
 

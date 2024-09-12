@@ -12,19 +12,19 @@ public:
     EconomySystem(const EconomySystem&)            = delete;
     EconomySystem& operator=(const EconomySystem&) = delete;
 
-    static EconomySystem& getInstance();
+    LDAPI static EconomySystem& getInstance();
 
-    long long get(Player& player);
+    LDAPI long long get(Player& player);
 
-    bool set(Player& player, long long money);
+    LDAPI bool set(Player& player, long long money);
 
-    bool add(Player& player, long long money);
+    LDAPI bool add(Player& player, long long money);
 
-    bool reduce(Player& player, long long money);
+    LDAPI bool reduce(Player& player, long long money);
 
-    string getSpendTip(Player& player, long long money);
+    LDAPI string getSpendTip(Player& player, long long money);
 
-    void sendLackMoneyTip(Player& player, long long money); // 发送经济不足提示
+    LDAPI void sendLackMoneyTip(Player& player, long long money); // 发送经济不足提示
 };
 
 

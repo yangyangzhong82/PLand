@@ -25,7 +25,7 @@ target("PLand") -- Change this to your mod name.
         "/w44738",
         "/w45204"
     )
-    add_defines("NOMINMAX", "UNICODE")
+    add_defines("NOMINMAX", "UNICODE", "LDAPI_EXPORT")
     add_files("src/**.cpp", "src/**.cc")
     add_includedirs("src", "include")
     add_packages(

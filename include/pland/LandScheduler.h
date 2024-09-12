@@ -15,13 +15,13 @@ public:
     LandScheduler& operator=(LandScheduler&&)      = delete;
     LandScheduler& operator=(const LandScheduler&) = delete;
 
-    static std::unordered_map<UUIDm, Vec3>      mPosMap;
-    static std::unordered_map<UUIDm, LandDimid> mDimidMap;
-    static std::unordered_map<UUIDm, LandID>    mLandidMap;
+    LDAPI static std::unordered_map<UUIDm, Vec3>      mPosMap;
+    LDAPI static std::unordered_map<UUIDm, LandDimid> mDimidMap;
+    LDAPI static std::unordered_map<UUIDm, LandID>    mLandidMap;
 
 
-    static bool setup();   // setup the scheduler
-    static bool release(); // release the scheduler
+    LDAPI static bool setup();   // setup the scheduler
+    LDAPI static bool release(); // release the scheduler
 };
 
 

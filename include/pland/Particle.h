@@ -17,11 +17,11 @@ public:
 
     std::vector<SpawnParticleEffectPacket> mPackets;
 
-    Particle() = default;
-    Particle(LandPos& pos, int dimid, bool draw3D);
-    Particle(BlockPos pos1, BlockPos pos2, int dimid, bool draw3D);
+    LDAPI Particle() = default;
+    LDAPI Particle(LandPos& pos, int dimid, bool draw3D);
+    LDAPI Particle(BlockPos pos1, BlockPos pos2, int dimid, bool draw3D);
 
-    bool draw(Player& player, bool refreshCache = false, bool usePlayerYDraw2D = true);
+    LDAPI bool draw(Player& player, bool refreshCache = false, bool usePlayerYDraw2D = true);
 };
 
 
