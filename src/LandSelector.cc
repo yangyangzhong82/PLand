@@ -50,21 +50,21 @@ bool                                   LandSelector::init() {
 #ifdef DEBUG
             my_mod::MyMod::getInstance().getSelf().getLogger().info(
                 "PlayerInteractBlockEvent: {}",
-                ev.clickPos().toString()
+                ev.blockPos().toString()
             );
 #endif
 
             if (!this->isSelectedPointA(pl)) {
-                if (this->trySelectPointA(pl, ev.clickPos())) {
-                    mc::sendText(pl, "已选择点A \"{}\""_tr(ev.clickPos().toString()));
+                if (this->trySelectPointA(pl, ev.blockPos())) {
+                    mc::sendText(pl, "已选择点A \"{}\""_tr(ev.blockPos().toString()));
                     mStabilized[pl.getUuid()] = Date::future(50 / 1000).getTime(); // 50ms
                 } else {
                     mc::sendText<mc::LogLevel::Error>(pl, "选择失败"_tr());
                 }
 
             } else if (!this->isSelectedPointB(pl) && this->isSelectedPointA(pl)) {
-                if (this->trySelectPointB(pl, ev.clickPos())) {
-                    mc::sendText(pl, "已选择点B \"{}\""_tr(ev.clickPos().toString()));
+                if (this->trySelectPointB(pl, ev.blockPos())) {
+                    mc::sendText(pl, "已选择点B \"{}\""_tr(ev.blockPos().toString()));
 
 
                     if (auto iter = mSelectors.find(pl.getUuid().asString()); iter != mSelectors.end()) {
