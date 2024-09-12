@@ -9,6 +9,7 @@
 #include "pland/Calculate.h"
 #include "pland/Command.h"
 #include "pland/Config.h"
+#include "pland/EventListener.h"
 #include "pland/Global.h"
 #include "pland/LandScheduler.h"
 #include "pland/LandSelector.h"
@@ -57,6 +58,7 @@ bool MyMod::enable() {
     land::LandCommand::setup();
     land::LandSelector::getInstance().init();
     land::LandScheduler::setup();
+    land::EventListener::setup();
 
     return true;
 }
@@ -69,6 +71,7 @@ bool MyMod::disable() {
     land::PLand::getInstance()._stopThread();
     land::LandSelector::getInstance().uninit();
     land::LandScheduler::release();
+    land::EventListener::release();
     land::GlobalTickScheduler.clear();
 
     return true;
