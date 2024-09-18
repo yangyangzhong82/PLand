@@ -1,6 +1,7 @@
 add_rules("mode.debug", "mode.release")
 
 add_repositories("liteldev-repo https://github.com/LiteLDev/xmake-repo.git")
+add_repositories("engsr6982-repo https://github.com/engsr6982/xmake-repo.git")
 
 -- add_requires("levilamina x.x.x") for a specific version
 -- add_requires("levilamina develop") to use develop version
@@ -8,6 +9,7 @@ add_repositories("liteldev-repo https://github.com/LiteLDev/xmake-repo.git")
 add_requires("levilamina 0.13.5")
 add_requires("exprtk 2022.01.01")
 add_requires("legacymoney 0.8.3")
+add_requires("more_events 0.1.0")
 
 if not has_config("vs_runtime") then
     set_runtimes("MD")
@@ -31,7 +33,8 @@ target("PLand") -- Change this to your mod name.
     add_packages(
         "levilamina",
         "exprtk",
-        "legacymoney"
+        "legacymoney",
+        "more_events"
     )
     add_shflags("/DELAYLOAD:bedrock_server.dll") -- To use symbols provided by SymbolProvider.
     set_exceptions("none") -- To avoid conflicts with /EHa.
