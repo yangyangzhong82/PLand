@@ -22,9 +22,9 @@
 #include <functional>
 #include <unordered_map>
 
-#include "more_events/ArmorStandSwapItemEvent.h"
-#include "more_events/PlayerAttackBlockEvent.h"
-#include "more_events/PlayerDropItemEvent.h"
+#include "ArmorStandSwapItemEvent.h"
+#include "PlayerAttackBlockEvent.h"
+#include "PlayerDropItemEvent.h"
 
 
 ll::event::ListenerPtr mPlayerDestroyBlockEvent;  // 玩家尝试破坏方块
