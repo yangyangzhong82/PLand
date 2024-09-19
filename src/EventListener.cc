@@ -13,6 +13,7 @@
 #include "mc/network/packet/UpdateBlockPacket.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/world/level/material/Material.h"
+#include "mc/world/phys/AABB.h"
 #include "mc/world/phys/HitResult.h"
 #include "mod/MyMod.h"
 #include "pland/Global.h"
@@ -22,22 +23,43 @@
 #include <functional>
 #include <unordered_map>
 
+
+#include "more_events/ActorRideEvent.h"
 #include "more_events/ArmorStandSwapItemEvent.h"
+#include "more_events/ExplodeEvent.h"
+#include "more_events/FarmDecayEvent.h"
+#include "more_events/MobHurtEffectEvent.h"
+#include "more_events/PistonTryPushEvent.h"
 #include "more_events/PlayerAttackBlockEvent.h"
 #include "more_events/PlayerDropItemEvent.h"
+#include "more_events/PlayerUseItemFrameEvent.h"
+#include "more_events/PressurePlateTriggerEvent.h"
+#include "more_events/ProjectileSpawnEvent.h"
+#include "more_events/RedstoneUpdateEvent.h"
+#include "more_events/WitherDestroyBlockEvent.h"
 
 
-ll::event::ListenerPtr mPlayerDestroyBlockEvent;  // 玩家尝试破坏方块
-ll::event::ListenerPtr mPlayerPlaceingBlockEvent; // 玩家尝试放置方块
-ll::event::ListenerPtr mPlayerUseItemOnEvent;     // 玩家对方块使用物品（点击右键）
-ll::event::ListenerPtr mFireSpreadEvent;          // 火焰蔓延
-ll::event::ListenerPtr mPlayerAttackEntityEvent;  // 玩家攻击实体
-ll::event::ListenerPtr mPlayerPickUpItemEvent;    // 玩家捡起物品
-ll::event::ListenerPtr mPlayerInteractBlockEvent; // 方块接受玩家互动
-ll::event::ListenerPtr mPlayerUseItemEvent;       // 玩家使用物品
-ll::event::ListenerPtr mArmorStandSwapItemEvent;  // 玩家交换盔甲架物品
-ll::event::ListenerPtr mPlayerAttackBlockEvent;   // 玩家攻击方块
-ll::event::ListenerPtr mPlayerDropItemEvent;      // 玩家丢弃物品
+ll::event::ListenerPtr mPlayerDestroyBlockEvent;   // 玩家尝试破坏方块
+ll::event::ListenerPtr mPlayerPlaceingBlockEvent;  // 玩家尝试放置方块
+ll::event::ListenerPtr mPlayerUseItemOnEvent;      // 玩家对方块使用物品（点击右键）
+ll::event::ListenerPtr mFireSpreadEvent;           // 火焰蔓延
+ll::event::ListenerPtr mPlayerAttackEntityEvent;   // 玩家攻击实体
+ll::event::ListenerPtr mPlayerPickUpItemEvent;     // 玩家捡起物品
+ll::event::ListenerPtr mPlayerInteractBlockEvent;  // 方块接受玩家互动
+ll::event::ListenerPtr mPlayerUseItemEvent;        // 玩家使用物品
+ll::event::ListenerPtr mArmorStandSwapItemEvent;   // 玩家交换盔甲架物品 (more_events)
+ll::event::ListenerPtr mPlayerAttackBlockEvent;    // 玩家攻击方块 (more_events)
+ll::event::ListenerPtr mPlayerDropItemEvent;       // 玩家丢弃物品 (more_events)
+ll::event::ListenerPtr mActorRideEvent;            // 实体骑乘 (more_events)
+ll::event::ListenerPtr mExplodeEvent;              // 爆炸 (more_events)
+ll::event::ListenerPtr mFarmDecayEvent;            // 农田退化 (more_events)
+ll::event::ListenerPtr mMobHurtEffectEvent;        // 实体受伤效果 (more_events)
+ll::event::ListenerPtr mPistonTryPushEvent;        // 活塞尝试推动方块 (more_events)
+ll::event::ListenerPtr mPlayerUseItemFrameEvent;   // 玩家使用物品展示框 (more_events)
+ll::event::ListenerPtr mPressurePlateTriggerEvent; // 压力板触发 (more_events)
+ll::event::ListenerPtr mProjectileSpawnEvent;      // 投掷物生成 (more_events)
+ll::event::ListenerPtr mRedstoneUpdateEvent;       // 红石更新 (more_events)
+ll::event::ListenerPtr mWitherDestroyBlockEvent;   // 凋零破坏方块 (more_events)
 
 
 namespace land {
@@ -58,6 +80,7 @@ bool EventListener::setup() {
     auto* bus    = &ll::event::EventBus::getInstance();
     auto* logger = &my_mod::MyMod::getInstance().getSelf().getLogger();
 
+    // Minecraft events (ll)
     mPlayerDestroyBlockEvent =
         bus->emplaceListener<ll::event::PlayerDestroyBlockEvent>([db, logger](ll::event::PlayerDestroyBlockEvent& ev) {
             auto& player   = ev.self();
@@ -307,6 +330,7 @@ bool EventListener::setup() {
             return true;
         });
 
+    // Minecraft events (MoreEvents)
     mPlayerAttackBlockEvent =
         bus->emplaceListener<more_events::PlayerAttackBlockEvent>([db,
                                                                    logger](more_events::PlayerAttackBlockEvent& ev) {
@@ -363,6 +387,191 @@ bool EventListener::setup() {
             return true;
         });
 
+    mActorRideEvent = bus->emplaceListener<more_events::ActorRideEvent>([db, logger](more_events::ActorRideEvent& ev) {
+        logger->debug("[ActorRide]: executed");
+        Actor& passenger = ev.getPassenger();
+
+        if (!passenger.isPlayer()) {
+            return true; // 忽略非玩家骑乘事件
+        }
+
+        auto const& typeName = ev.getRided().getTypeName();
+        auto        land     = db->getLandAt(passenger.getPosition(), passenger.getDimensionId());
+        // 特殊处理：
+        if (land) {
+            auto& tab = land->getLandPermTableConst();
+            if (typeName == "minecraft:minecart" || typeName == "minecraft:boat") {
+                if (tab.allowRideTrans) return true;
+            } else {
+                if (tab.allowRideEntity) return true;
+            }
+        }
+
+        if (passenger.isPlayer()) {
+            auto player = passenger.getWeakEntity().tryUnwrap<Player>();
+            if (player.has_value() && PreCheck(land, player->getUuid().asString())) {
+                return true;
+            }
+        }
+
+        ev.cancel();
+        return true;
+    });
+
+    mExplodeEvent = bus->emplaceListener<more_events::ExplodeEvent>([db, logger](more_events::ExplodeEvent& ev) {
+        logger->debug("[Explode] Pos: {}", ev.getPos().toString());
+
+        auto lands = db->getLandAt(ev.getPos(), ev.getExplosionRadius() + 1, ev.getRegion().getDimensionId());
+        for (auto& p : lands) {
+            if (!p->getLandPermTableConst().allowExplode) {
+                ev.cancel();
+                break;
+            }
+        }
+
+        return true;
+    });
+
+    mFarmDecayEvent = bus->emplaceListener<more_events::FarmDecayEvent>([db, logger](more_events::FarmDecayEvent& ev) {
+        logger->debug("[FarmDecay] Pos: {}", ev.getPos().toString());
+
+        auto land = db->getLandAt(ev.getPos(), ev.getBlockSource().getDimensionId());
+        if (land) {
+            if (land->getLandPermTableConst().allowFarmDecay) return true;
+        }
+
+        ev.cancel();
+        return true;
+    });
+
+    mMobHurtEffectEvent =
+        bus->emplaceListener<more_events::MobHurtEffectEvent>([db, logger](more_events::MobHurtEffectEvent& ev) {
+            logger->debug("[MobHurtEffect] mob: {}", ev.getSelf().getTypeName());
+            auto& self = ev.getSelf();
+
+            auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
+            if (land) {
+                auto const& et  = self.getTypeName();
+                auto const& tab = land->getLandPermTableConst();
+                if (tab.allowAttackPlayer && self.isPlayer()) return true;
+                if (tab.allowAttackAnimal && AnimalEntityMap.contains(et)) return true;
+                if (tab.allowAttackMob && MobEntityMap.contains(et)) return true;
+            }
+
+            if (self.isPlayer()) {
+                auto const pl = self.getWeakEntity().tryUnwrap<Player>();
+                if (pl.has_value()) {
+                    if (PreCheck(land, pl->getUuid().asString())) return true;
+                }
+            }
+
+            ev.cancel();
+            return true;
+        });
+
+    mPistonTryPushEvent =
+        bus->emplaceListener<more_events::PistonTryPushEvent>([db, logger](more_events::PistonTryPushEvent& ev) {
+            return true; // TODO
+        });
+
+    mPlayerUseItemFrameEvent =
+        bus->emplaceListener<more_events::PlayerUseItemFrameEvent>([db,
+                                                                    logger](more_events::PlayerUseItemFrameEvent& ev) {
+            logger->debug("[PlayerUseItemFrame] pos: {}", ev.getPos().toString());
+
+            auto land = db->getLandAt(ev.getPos(), ev.getPlayer()->getDimensionId());
+            if (PreCheck(land, ev.getPlayer()->getUuid().asString())) return;
+
+            if (land->getLandPermTableConst().useItemFrame) return;
+
+            ev.cancel();
+        });
+
+    mPressurePlateTriggerEvent = bus->emplaceListener<more_events::PressurePlateTriggerEvent>(
+        [db, logger](more_events::PressurePlateTriggerEvent& ev) {
+            logger->debug("[PressurePlateTrigger] pos: {}", ev.getPos().toString());
+
+            auto land = db->getLandAt(ev.getPos(), ev.getRegion().getDimensionId());
+            if (land && land->getLandPermTableConst().usePressurePlate) return;
+
+            auto& entity = ev.getEntity();
+            if (entity.isPlayer()) {
+                auto pl = entity.getWeakEntity().tryUnwrap<Player>();
+                if (pl.has_value()) {
+                    if (PreCheck(land, pl->getUuid().asString())) return;
+                }
+            }
+
+            ev.cancel();
+            return;
+        }
+    );
+
+    mProjectileSpawnEvent =
+        bus->emplaceListener<more_events::ProjectileSpawnEvent>([db, logger](more_events::ProjectileSpawnEvent& ev) {
+            logger->debug("[ProjectileSpawn] type: {}", ev.getProjectileType());
+            Actor* actor = ev.getSpawner();
+            if (!actor) {
+                return;
+            }
+
+            auto& type = ev.getProjectileType();
+            auto  land = db->getLandAt(actor->getPosition(), actor->getDimensionId());
+            if (land) {
+                auto& tab = land->getLandPermTableConst();
+                if (type == "minecraft:fishing_hook" && tab.useFishingHook) return;       // 钓鱼竿
+                if (type == "minecraft:splash_potion" && tab.allowThrowPotion) return;    // 喷溅药水
+                if (type == "minecraft:lingering_potion" && tab.allowThrowPotion) return; // 滞留药水
+                if (type == "minecraft:thrown_trident" && tab.allowThrowTrident) return;  // 三叉戟
+                if (type == "minecraft:arrow" && tab.allowShoot) return;                  // 箭
+                if (type == "minecraft:crossbow" && tab.allowShoot) return;               // 弩射烟花
+                if (type == "minecraft:snowball" && tab.allowThrowSnowball) return;       // 雪球
+                if (type == "minecraft:ender_pearl" && tab.allowThrowEnderPearl) return;  // 末影珍珠
+                if (type == "minecraft:egg" && tab.allowThrowEgg) return;                 // 鸡蛋
+            }
+
+            if (actor->isPlayer()) {
+                auto pl = actor->getWeakEntity().tryUnwrap<Player>();
+                if (pl.has_value()) {
+                    if (PreCheck(land, pl->getUuid().asString())) return;
+                }
+            }
+
+            ev.cancel();
+            return;
+        });
+
+    mRedstoneUpdateEvent =
+        bus->emplaceListener<more_events::RedstoneUpdateEvent>([db, logger](more_events::RedstoneUpdateEvent& ev) {
+            logger->debug("[RedstoneUpdate] Pos: {}", ev.getPos().toString());
+
+            auto land = db->getLandAt(ev.getPos(), ev.getBlockSource().getDimensionId());
+            if (land) {
+                if (land->getLandPermTableConst().allowRedstoneUpdate) return true;
+            }
+
+            ev.cancel();
+            return true;
+        });
+
+    mWitherDestroyBlockEvent =
+        bus->emplaceListener<more_events::WitherDestroyBlockEvent>([db,
+                                                                    logger](more_events::WitherDestroyBlockEvent& ev) {
+            logger->debug("[WitherDestroyBlock] executed");
+            auto& aabb = ev.getAABB();
+
+            auto lands = db->getLandAt(aabb.min, aabb.max, ev.getRegion().getDimensionId());
+            for (auto const& p : lands) {
+                if (!p->getLandPermTableConst().allowWitherDestroy) {
+                    ev.cancel();
+                    break;
+                }
+            }
+
+            return true;
+        });
+
+
     return true;
 }
 
@@ -378,9 +587,20 @@ bool EventListener::release() {
     bus.removeListener(mPlayerPickUpItemEvent);
     bus.removeListener(mPlayerInteractBlockEvent);
     bus.removeListener(mPlayerUseItemEvent);
+
     bus.removeListener(mArmorStandSwapItemEvent);
     bus.removeListener(mPlayerAttackBlockEvent);
     bus.removeListener(mPlayerDropItemEvent);
+    bus.removeListener(mActorRideEvent);
+    bus.removeListener(mExplodeEvent);
+    bus.removeListener(mFarmDecayEvent);
+    bus.removeListener(mMobHurtEffectEvent);
+    bus.removeListener(mPistonTryPushEvent);
+    bus.removeListener(mPlayerUseItemFrameEvent);
+    bus.removeListener(mPressurePlateTriggerEvent);
+    bus.removeListener(mProjectileSpawnEvent);
+    bus.removeListener(mRedstoneUpdateEvent);
+    bus.removeListener(mWitherDestroyBlockEvent);
 
     return true;
 }
