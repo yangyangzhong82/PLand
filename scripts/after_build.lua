@@ -107,15 +107,15 @@ function pack_mod(target,mod_define)
         os.cp(langdir, outputdir)
 
         -- SDK folder
-        local target_include_dir = path.join(bindir, "include")
-        local target_lib_dir = path.join(bindir, "lib")
-        os.mkdir(target_include_dir)
-        os.mkdir(target_lib_dir)
+        -- local target_include_dir = path.join(bindir, "include")
+        -- local target_lib_dir = path.join(bindir, "lib")
+        -- os.mkdir(target_include_dir)
+        -- os.mkdir(target_lib_dir)
         -- SDK copy *.h and lib
-        local h = path.join(os.projectdir(), "include")
-        local lib = path.join(path.directory(oritargetfile), path.basename(oritargetfile) .. ".lib")
-        os.cp(h, target_include_dir)
-        os.cp(lib, target_lib_dir)
+        -- local h = path.join(os.projectdir(), "include")
+        -- local lib = path.join(path.directory(oritargetfile), path.basename(oritargetfile) .. ".lib")
+        -- os.cp(h, target_include_dir)
+        -- os.cp(lib, target_lib_dir)
 
         formattedmanifest = string_formatter(manifest, mod_define)
         io.writefile(manifestfile,formattedmanifest)
