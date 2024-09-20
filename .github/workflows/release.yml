@@ -33,7 +33,7 @@ jobs:
           xmake -w -y
 
       - run: |
-          rm -rf bin/**/*.pdb
+          Get-ChildItem -Path bin -Recurse -Filter "*.pdb" | Remove-Item
 
       - uses: actions/upload-artifact@v4
         with:
