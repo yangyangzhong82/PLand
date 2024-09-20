@@ -384,6 +384,7 @@ bool EventListener::setup() {
 
             if (land->getLandPermTableConst().allowDropItem) return true;
 
+            ev.cancel();
             return true;
         });
 
