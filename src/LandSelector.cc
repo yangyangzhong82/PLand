@@ -198,6 +198,10 @@ bool LandSelector::tryCancel(Player& player) {
     }
 
     mSelectors.erase(iter);
+
+    SetTitlePacket title(::SetTitlePacket::TitleType::Clear);
+    title.sendTo(player); // clear title
+
     return true;
 }
 bool LandSelector::trySelectPointA(Player& player, BlockPos pos) {
@@ -237,6 +241,10 @@ bool LandSelector::completeAndRelease(Player& player) {
     }
 
     mSelectors.erase(iter);
+
+    SetTitlePacket title(::SetTitlePacket::TitleType::Clear);
+    title.sendTo(player); // clear title
+
     return true;
 }
 LandDataPtr LandSelector::makeLandFromSelector(Player& player) {
