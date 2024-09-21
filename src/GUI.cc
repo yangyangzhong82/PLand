@@ -309,7 +309,7 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
 
     fm.sendTo(player);
 }
-void SelectorChangeYGui::impl(Player& player) {
+void SelectorChangeYGui::impl(Player& player, std::string const& exception) {
     auto dataPtr = LandSelector::getInstance().getSelector(player);
     if (!dataPtr) {
         return;
@@ -322,6 +322,8 @@ void SelectorChangeYGui::impl(Player& player) {
     fm.appendInput("start", "开始Y轴"_tr(), "int", std::to_string(dataPtr->mPos.mMin_A.y));
     fm.appendInput("end", "结束Y轴"_tr(), "int", std::to_string(dataPtr->mPos.mMax_B.y));
 
+    fm.appendLabel(exception);
+
     fm.sendTo(player, [dataPtr](Player& pl, CustomFormResult res, FormCancelReason) {
         if (!res.has_value()) {
             return;
@@ -331,8 +333,7 @@ void SelectorChangeYGui::impl(Player& player) {
         string end   = std::get<string>(res->at("end"));
 
         if (!isNumber(start) || !isNumber(end) || isOutOfRange(start) || isOutOfRange(end)) {
-            mc::sendText<mc::LogLevel::Fatal>(pl, "请输入正确的Y轴范围"_tr());
-            SelectorChangeYGui::impl(pl);
+            SelectorChangeYGui::impl(pl, "请输入正确的Y轴范围"_tr());
             return;
         }
 
@@ -341,8 +342,7 @@ void SelectorChangeYGui::impl(Player& player) {
             int endY   = std::stoi(end);
 
             if (startY >= endY) {
-                mc::sendText<mc::LogLevel::Fatal>(pl, "请输入正确的Y轴范围, 开始Y轴必须小于结束Y轴"_tr());
-                SelectorChangeYGui::impl(pl);
+                SelectorChangeYGui::impl(pl, "请输入正确的Y轴范围, 开始Y轴必须小于结束Y轴"_tr());
                 return;
             }
 

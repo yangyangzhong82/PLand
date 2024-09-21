@@ -24,7 +24,7 @@ public:
 };
 class SelectorChangeYGui {
 public:
-    LDAPI static void impl(Player& player);
+    LDAPI static void impl(Player& player, std::string const& exception = "");
 };
 
 
