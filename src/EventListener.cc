@@ -474,7 +474,17 @@ bool EventListener::setup() {
 
     mPistonTryPushEvent =
         bus->emplaceListener<more_events::PistonTryPushEvent>([db, logger](more_events::PistonTryPushEvent& ev) {
-            return true; // TODO
+            auto const& piston = ev.getPistonPos();
+            auto const& push   = ev.getPushPos();
+            auto&       region = ev.getRegion();
+
+            logger->debug("[PistonTryPush] piston: {}, push: {}", piston.toString(), push.toString());
+
+            auto land  = db->getLandAt(push, region.getDimensionId());
+            auto land2 = db->getLandAt(piston, region.getDimensionId());
+            if (land && !land->getLandPermTableConst().allowPistonPush && land != land2) {
+                ev.cancel();
+            }
         });
 
     mPlayerUseItemFrameEvent =

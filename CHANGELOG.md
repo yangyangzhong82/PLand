@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - 新增 MossSpreadEvent 事件处理
+- 新增 PistonTryPushEvent 事件处理
 
 ## [0.0.3] - 2024-9-21
 
