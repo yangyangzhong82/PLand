@@ -1,6 +1,7 @@
 #include "pland/EventListener.h"
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/Listener.h"
+#include "ll/api/event/ListenerBase.h"
 #include "ll/api/event/player/PlayerAttackEvent.h"
 #include "ll/api/event/player/PlayerDestroyBlockEvent.h"
 #include "ll/api/event/player/PlayerInteractBlockEvent.h"
@@ -29,6 +30,7 @@
 #include "more_events/ExplodeEvent.h"
 #include "more_events/FarmDecayEvent.h"
 #include "more_events/MobHurtEffectEvent.h"
+#include "more_events/MossSpreadEvent.h"
 #include "more_events/PistonTryPushEvent.h"
 #include "more_events/PlayerAttackBlockEvent.h"
 #include "more_events/PlayerDropItemEvent.h"
@@ -60,7 +62,7 @@ ll::event::ListenerPtr mPressurePlateTriggerEvent; // 压力板触发 (more_even
 ll::event::ListenerPtr mProjectileSpawnEvent;      // 投掷物生成 (more_events)
 ll::event::ListenerPtr mRedstoneUpdateEvent;       // 红石更新 (more_events)
 ll::event::ListenerPtr mWitherDestroyBlockEvent;   // 凋零破坏方块 (more_events)
-
+ll::event::ListenerPtr mMossSpreadEvent;           // 苔藓蔓延 (more_events)
 
 namespace land {
 bool PreCheck(LandDataPtr ptr, UUIDs uuid, bool ignoreOperator = false) {
@@ -572,6 +574,26 @@ bool EventListener::setup() {
             return true;
         });
 
+    mMossSpreadEvent =
+        bus->emplaceListener<more_events::MossSpreadEvent>([db, logger](more_events::MossSpreadEvent& ev) {
+            logger->debug("[MossSpread] {}", ev.getPos().toString());
+
+            auto const& pos = ev.getPos();
+
+            auto land = db->getLandAt(pos, ev.getRegion().getDimensionId());
+            if (!land || land->getLandPermTableConst().useBoneMeal) {
+                return;
+            }
+
+            auto lds = db->getLandAt(pos - 2, pos + 2, ev.getRegion().getDimensionId());
+            for (auto const& p : lds) {
+                if (p->getLandPermTableConst().useBoneMeal) {
+                    return;
+                }
+            }
+
+            ev.cancel();
+        });
 
     return true;
 }
