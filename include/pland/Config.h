@@ -7,7 +7,7 @@ namespace land {
 enum class EconomyKit : int { LegacyMoney, ScoreBoard };
 
 struct Config {
-    int version{1};
+    int version{2};
     int logLevel{4};
 
     struct {
@@ -43,8 +43,9 @@ struct Config {
             } twoDimensionl;
 
             struct {
-                int min{4};     // 最小领地范围
-                int max{60000}; // 最大领地范围
+                int min{4};       // 最小领地范围
+                int max{60000};   // 最大领地范围
+                int minHeight{1}; // 最小领地高度
             } squareRange;
 
             std::vector<LandDimid> allowDimensions{0, 1, 2}; // 允许的领地维度

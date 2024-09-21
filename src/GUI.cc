@@ -139,13 +139,18 @@ void LandBuyGui::impl(Player& player) {
 
         int const   length      = data->mPos.getDepth();
         int const   width       = data->mPos.getWidth();
+        int const   height      = data->mPos.getHeight();
         auto const& squareRange = Config::cfg.land.bought.squareRange;
-        if (length < squareRange.min || width < squareRange.min) {
-            mc::sendText<mc::LogLevel::Error>(pl, "领地范围过小，最小为 {}x{}"_tr(squareRange.min, squareRange.min));
-            return;
-        }
-        if (length > squareRange.max || width > squareRange.max) {
-            mc::sendText<mc::LogLevel::Error>(pl, "领地范围过大，最大为 {}x{}"_tr(squareRange.max, squareRange.max));
+        if ((length < squareRange.min || width < squareRange.min)
+            || (length > squareRange.max || width > squareRange.max) || height < squareRange.minHeight) {
+            mc::sendText<mc::LogLevel::Error>(
+                pl,
+                "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}"_tr(
+                    squareRange.min,
+                    squareRange.max,
+                    squareRange.minHeight
+                )
+            );
             return;
         }
 
@@ -250,13 +255,18 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
 
         int const   length      = data->mPos.getDepth();
         int const   width       = data->mPos.getWidth();
+        int const   height      = data->mPos.getHeight();
         auto const& squareRange = Config::cfg.land.bought.squareRange;
-        if (length < squareRange.min || width < squareRange.min) {
-            mc::sendText<mc::LogLevel::Error>(pl, "领地范围过小，最小为 {}x{}"_tr(squareRange.min, squareRange.min));
-            return;
-        }
-        if (length > squareRange.max || width > squareRange.max) {
-            mc::sendText<mc::LogLevel::Error>(pl, "领地范围过大，最大为 {}x{}"_tr(squareRange.max, squareRange.max));
+        if ((length < squareRange.min || width < squareRange.min)
+            || (length > squareRange.max || width > squareRange.max) || height < squareRange.minHeight) {
+            mc::sendText<mc::LogLevel::Error>(
+                pl,
+                "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}"_tr(
+                    squareRange.min,
+                    squareRange.max,
+                    squareRange.minHeight
+                )
+            );
             return;
         }
 
