@@ -685,6 +685,11 @@ void EditLandMemberGui::AddMemberGui::impl(Player& player, LandDataPtr ptr) {
                 return;
             }
 
+            if (!(bool)res.value()) {
+                EditLandMemberGui::impl(self, ptr);
+                return;
+            }
+
             if (ptr->isLandMember(target.getUuid().asString())) {
                 mc::sendText(self, "该玩家已经是领地成员, 请不要重复添加哦!"_tr());
                 return;
@@ -721,6 +726,11 @@ void EditLandMemberGui::RemoveMemberGui::impl(Player& player, LandDataPtr ptr, U
     );
     fm.sendTo(player, [ptr, member](Player& self, ModalFormResult const& res, FormCancelReason) {
         if (!res) {
+            return;
+        }
+
+        if (!(bool)res.value()) {
+            EditLandMemberGui::impl(self, ptr);
             return;
         }
 
