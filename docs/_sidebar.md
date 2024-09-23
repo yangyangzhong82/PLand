@@ -13,6 +13,5 @@
 - [i18n](dev/I18n.md)
 
 - **其他**
-- [数据迁移]()
 - [QQ群](https://qm.qq.com/q/v2faa5B2xk)
 - [Bug反馈(新功能请求)](https://github.com/engsr6982/pland/issues)
