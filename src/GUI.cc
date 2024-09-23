@@ -399,6 +399,10 @@ void ChoosePlayerGui::impl(Player& player, ChoosePlayerCall callback) {
     fm.setTitle(PLUGIN_NAME + ("| 选择玩家"_tr()));
 
     ll::service::getLevel()->forEachPlayer([callback, &fm](Player& target) {
+        if (target.isSimulatedPlayer()) {
+            return true; // ignore
+        }
+
         fm.appendButton(target.getRealName(), "", [callback, &target](Player& self) { callback(self, target); });
         return true;
     });
