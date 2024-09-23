@@ -3,4 +3,5 @@
 - [安装](md/Install.md)
 - [指令](md/CommandList.md)
 
-- **API文档**
+- **开发者文档**
+- [环境配置](dev/RequireSDK.md)
