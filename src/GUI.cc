@@ -385,7 +385,7 @@ void ChooseLandGui::impl(Player& player, ChooseCallback callback) {
     auto lands = PLand::getInstance().getLands(player.getUuid().asString());
     for (auto& land : lands) {
         fm.appendButton(
-            fmt::format("{}\n维度: {} | ID: {}", land->getLandName(), land->getLandDimid(), land->getLandID()),
+            "{}\n维度: {} | ID: {}"_tr(land->getLandName(), land->getLandDimid(), land->getLandID()),
             "textures/ui/icon_recipe_nature",
             [callback, land](Player& pl) { callback(pl, land->getLandID()); }
         );
