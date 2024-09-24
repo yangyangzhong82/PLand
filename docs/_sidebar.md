@@ -4,7 +4,7 @@
 - [指令](md/CommandList.md)
 - [配置文件](md/Config.md)
 - [领地管理器](md/LandManager.md)
-- [领地权限](md/LandPermission.md)
+- [领地权限详解](md/LandPermission.md)
 
 - **开发者文档**
 - [环境配置](dev/RequireSDK.md)
