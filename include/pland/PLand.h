@@ -22,7 +22,7 @@ public:
     PLand& operator=(const PLand&) = delete;
 
 
-    std::unique_ptr<ll::data::KeyValueDB> mDB;
+    std::unique_ptr<ll::data::KeyValueDB> mDB; // private
 
     //                 维度                         区块            领地
     std::unordered_map<LandDimid, std::unordered_map<ChunkID, std::vector<LandID>>> mLandMap;   // 领地映射表
