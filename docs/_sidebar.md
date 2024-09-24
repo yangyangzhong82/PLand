@@ -3,8 +3,7 @@
 - [安装](md/Install.md)
 - [指令](md/CommandList.md)
 - [配置文件](md/Config.md)
-- [领地管理器](md/LandManager.md)
-- [领地权限详解](md/LandPermission.md)
+- [FAQ](md/FAQ.md)
 
 - **开发者文档**
 - [环境配置](dev/RequireSDK.md)
@@ -13,5 +12,5 @@
 - [i18n](dev/I18n.md)
 
 - **其他**
-- [QQ群](https://qm.qq.com/q/v2faa5B2xk)
-- [Bug反馈(新功能请求)](https://github.com/engsr6982/pland/issues)
+- [QQ 群](https://qm.qq.com/q/v2faa5B2xk)
+- [Bug 反馈(新功能请求)](https://github.com/engsr6982/pland/issues)
