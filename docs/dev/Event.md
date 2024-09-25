@@ -23,3 +23,20 @@
 | LandRangeChangeEvent     | √      | √     | 领地范围变更事件     |
 
 !> 非必要请不要修改事件 `const` 修饰的成员，除非你知道你在做什么。
+
+?> 监听事件示例:
+
+```cpp
+#include "pland/LandEvent.h"
+#include "ll/api/event/EventBus.h"
+#include "ll/api/event/Listener.h"
+#include "ll/api/event/ListenerBase.h"
+
+ll::event::ListenerPtr mEnterLandListener;
+
+void setup() {
+    mEnterLandListener = ll::event::EventBus::getInstance().emplaceListener<pland::PlayerEnterLandEvent>([](pland::PlayerEnterLandEvent const& ev) {
+        // do something
+    });
+}
+```
