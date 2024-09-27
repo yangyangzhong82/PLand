@@ -26,6 +26,7 @@
     "allowAxePeeled": "允许斧头去皮",
     "allowAttackEnderCrystal": "允许攻击末地水晶",
     "allowDestroyArmorStand": "允许破坏盔甲架",
+    "allowLiquidFlow": "允许液体流动",
     "useAnvil": "使用铁砧",
     "useBarrel": "使用木桶",
     "useBeacon": "使用信标",
@@ -70,8 +71,6 @@
     "useShovel": "使用锹(铲除草径)",
     "editFlowerPot": "编辑花盆(种花、树、等)",
     "editSign": "编辑告示牌",
-
-
     "此命令仅限 {} 使用!": "此命令仅限 {} 使用!",
     "{} 已经是管理员，请不要重复添加": "{} 已经是管理员，请不要重复添加",
     "{} 已经被添加为管理员": "{} 已经被添加为管理员",

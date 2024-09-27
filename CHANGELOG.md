@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.0.4] - 2024-9-21
+## [0.1.0] - 2024-9-27
 
 ### Added
 
 - 新增 MossSpreadEvent 事件处理
 - 新增 PistonTryPushEvent 事件处理
+- 新增 LiquidFlowEvent 事件处理
+- 新增 SculkCatalystAbsorbExperienceEvent 事件处理
+- 新增 allowLiquidFlow 权限
 
 ## [0.0.3] - 2024-9-21
 
@@ -23,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - 购买领地后，立即清除标题
-- 修改3D选区时调整Y轴GUI错误提示
+- 修改 3D 选区时调整 Y 轴 GUI 错误提示
 
 ### Fixed
 

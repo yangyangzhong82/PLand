@@ -36,6 +36,7 @@ struct LandPermTable {
     bool allowAxePeeled{false};          // 允许斧头去皮
     bool allowAttackEnderCrystal{false}; // 允许攻击末地水晶
     bool allowDestroyArmorStand{false};  // 允许破坏盔甲架
+    bool allowLiquidFlow{true};          // 允许液体流动
 
     bool useAnvil{false};            // 使用铁砧
     bool useBarrel{false};           // 使用木桶
@@ -87,7 +88,7 @@ struct LandPermTable {
 using LandDataPtr = std::shared_ptr<class LandData>;
 class LandData {
 public:
-    int                version{1};                         // 版本号
+    int                version{2};                         // 版本号
     LandPos            mPos;                               // 领地对角坐标
     LandID             mLandID{static_cast<uint64_t>(-1)}; // 领地唯一ID  (由 PLand::addLand() 时分配)
     LandDimid          mLandDimid;                         // 领地所在维度

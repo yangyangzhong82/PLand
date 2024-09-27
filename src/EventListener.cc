@@ -29,6 +29,7 @@
 #include "more_events/ArmorStandSwapItemEvent.h"
 #include "more_events/ExplodeEvent.h"
 #include "more_events/FarmDecayEvent.h"
+#include "more_events/LiquidFlowEvent.h"
 #include "more_events/MobHurtEffectEvent.h"
 #include "more_events/MossFertilizerEvent.h"
 #include "more_events/PistonTryPushEvent.h"
@@ -38,31 +39,34 @@
 #include "more_events/PressurePlateTriggerEvent.h"
 #include "more_events/ProjectileSpawnEvent.h"
 #include "more_events/RedstoneUpdateEvent.h"
+#include "more_events/SculkCatalystAbsorbExperienceEvent.h"
 #include "more_events/WitherDestroyBlockEvent.h"
 
 
-ll::event::ListenerPtr mPlayerDestroyBlockEvent;   // 玩家尝试破坏方块
-ll::event::ListenerPtr mPlayerPlaceingBlockEvent;  // 玩家尝试放置方块
-ll::event::ListenerPtr mPlayerUseItemOnEvent;      // 玩家对方块使用物品（点击右键）
-ll::event::ListenerPtr mFireSpreadEvent;           // 火焰蔓延
-ll::event::ListenerPtr mPlayerAttackEntityEvent;   // 玩家攻击实体
-ll::event::ListenerPtr mPlayerPickUpItemEvent;     // 玩家捡起物品
-ll::event::ListenerPtr mPlayerInteractBlockEvent;  // 方块接受玩家互动
-ll::event::ListenerPtr mPlayerUseItemEvent;        // 玩家使用物品
-ll::event::ListenerPtr mArmorStandSwapItemEvent;   // 玩家交换盔甲架物品 (more_events)
-ll::event::ListenerPtr mPlayerAttackBlockEvent;    // 玩家攻击方块 (more_events)
-ll::event::ListenerPtr mPlayerDropItemEvent;       // 玩家丢弃物品 (more_events)
-ll::event::ListenerPtr mActorRideEvent;            // 实体骑乘 (more_events)
-ll::event::ListenerPtr mExplodeEvent;              // 爆炸 (more_events)
-ll::event::ListenerPtr mFarmDecayEvent;            // 农田退化 (more_events)
-ll::event::ListenerPtr mMobHurtEffectEvent;        // 实体受伤效果 (more_events)
-ll::event::ListenerPtr mPistonTryPushEvent;        // 活塞尝试推动方块 (more_events)
-ll::event::ListenerPtr mPlayerUseItemFrameEvent;   // 玩家使用物品展示框 (more_events)
-ll::event::ListenerPtr mPressurePlateTriggerEvent; // 压力板触发 (more_events)
-ll::event::ListenerPtr mProjectileSpawnEvent;      // 投掷物生成 (more_events)
-ll::event::ListenerPtr mRedstoneUpdateEvent;       // 红石更新 (more_events)
-ll::event::ListenerPtr mWitherDestroyBlockEvent;   // 凋零破坏方块 (more_events)
-ll::event::ListenerPtr mMossFertilizerEvent;       // 苔藓施肥 (more_events)
+ll::event::ListenerPtr mPlayerDestroyBlockEvent;            // 玩家尝试破坏方块
+ll::event::ListenerPtr mPlayerPlaceingBlockEvent;           // 玩家尝试放置方块
+ll::event::ListenerPtr mPlayerUseItemOnEvent;               // 玩家对方块使用物品（点击右键）
+ll::event::ListenerPtr mFireSpreadEvent;                    // 火焰蔓延
+ll::event::ListenerPtr mPlayerAttackEntityEvent;            // 玩家攻击实体
+ll::event::ListenerPtr mPlayerPickUpItemEvent;              // 玩家捡起物品
+ll::event::ListenerPtr mPlayerInteractBlockEvent;           // 方块接受玩家互动
+ll::event::ListenerPtr mPlayerUseItemEvent;                 // 玩家使用物品
+ll::event::ListenerPtr mArmorStandSwapItemEvent;            // 玩家交换盔甲架物品 (more_events)
+ll::event::ListenerPtr mPlayerAttackBlockEvent;             // 玩家攻击方块 (more_events)
+ll::event::ListenerPtr mPlayerDropItemEvent;                // 玩家丢弃物品 (more_events)
+ll::event::ListenerPtr mActorRideEvent;                     // 实体骑乘 (more_events)
+ll::event::ListenerPtr mExplodeEvent;                       // 爆炸 (more_events)
+ll::event::ListenerPtr mFarmDecayEvent;                     // 农田退化 (more_events)
+ll::event::ListenerPtr mMobHurtEffectEvent;                 // 实体受伤效果 (more_events)
+ll::event::ListenerPtr mPistonTryPushEvent;                 // 活塞尝试推动方块 (more_events)
+ll::event::ListenerPtr mPlayerUseItemFrameEvent;            // 玩家使用物品展示框 (more_events)
+ll::event::ListenerPtr mPressurePlateTriggerEvent;          // 压力板触发 (more_events)
+ll::event::ListenerPtr mProjectileSpawnEvent;               // 投掷物生成 (more_events)
+ll::event::ListenerPtr mRedstoneUpdateEvent;                // 红石更新 (more_events)
+ll::event::ListenerPtr mWitherDestroyBlockEvent;            // 凋零破坏方块 (more_events)
+ll::event::ListenerPtr mMossFertilizerEvent;                // 苔藓施肥 (more_events)
+ll::event::ListenerPtr mLiquidFlowEvent;                    // 流体流动 (more_events)
+ll::event::ListenerPtr mSculkCatalystAbsorbExperienceEvent; // 幽匿催发体吸收经验 (more_events)
 
 namespace land {
 bool PreCheck(LandDataPtr ptr, UUIDs uuid, bool ignoreOperator = false) {
@@ -604,6 +608,41 @@ bool EventListener::setup() {
 
             ev.cancel();
         });
+
+    mLiquidFlowEvent =
+        bus->emplaceListener<more_events::LiquidFlowEvent>([db, logger](more_events::LiquidFlowEvent& ev) {
+            auto& sou  = ev.getLiquidPos();
+            auto& from = ev.getFlowFromPos();
+            logger->debug("[LiquidFlow] {} -> {}", sou.toString(), from.toString());
+
+            auto land = db->getLandAt(sou, ev.getBlockSource().getDimensionId());
+            if (land) {
+                if (!land->getLandPermTableConst().allowLiquidFlow) {
+                    ev.cancel();
+                    return;
+                }
+            }
+        });
+
+    mSculkCatalystAbsorbExperienceEvent = bus->emplaceListener<more_events::SculkCatalystAbsorbExperienceEvent>(
+        [db, logger](more_events::SculkCatalystAbsorbExperienceEvent& ev) {
+            auto& actor  = ev.getDiedActor();
+            auto& region = actor.getDimensionBlockSource();
+            auto  pos    = actor.getBlockPosCurrentlyStandingOn(&actor);
+            logger->debug("[SculkCatalystAbsorbExperience] Pos: {}", pos.toString());
+
+            // 领地内蔓延 && 半径内没有别的领地 => 放行
+            // 领地外蔓延 && 半径内有别的领地   => 放行
+
+            auto cur = db->getLandAt(pos, region.getDimensionId());
+            auto lds = db->getLandAt(pos - 9, pos + 9, region.getDimensionId());
+
+            if (cur && lds.size() == 1) return;
+            if (!cur && lds.empty()) return;
+
+            ev.cancel();
+        }
+    );
 
     return true;
 }
