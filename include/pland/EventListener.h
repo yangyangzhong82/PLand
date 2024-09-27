@@ -18,7 +18,6 @@ public:
     LDAPI static std::unordered_set<string> UseItemOnMap;
     LDAPI static std::unordered_set<string> InteractBlockMap;
     LDAPI static std::unordered_set<string> AnimalEntityMap;
-    LDAPI static std::unordered_set<string> MobEntityMap;
 };
 
 

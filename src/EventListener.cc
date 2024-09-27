@@ -226,7 +226,7 @@ bool EventListener::setup() {
             if (et == "minecraft:armor_stand" && tab.allowDestroyArmorStand) return true;    // 盔甲架
             if (tab.allowAttackPlayer && ev.target().isPlayer()) return true;                // 玩家
             if (tab.allowAttackAnimal && AnimalEntityMap.contains(et)) return true;          // 动物
-            if (tab.allowAttackMob && MobEntityMap.contains(et)) return true;                // 怪物
+            if (tab.allowAttackMob && !AnimalEntityMap.contains(et)) return true;            // 怪物
 
             ev.cancel();
             return true;
@@ -458,7 +458,7 @@ bool EventListener::setup() {
                 auto const& tab = land->getLandPermTableConst();
                 if (tab.allowAttackPlayer && self.isPlayer()) return true;
                 if (tab.allowAttackAnimal && AnimalEntityMap.contains(et)) return true;
-                if (tab.allowAttackMob && MobEntityMap.contains(et)) return true;
+                if (tab.allowAttackMob && !AnimalEntityMap.contains(et)) return true;
             }
 
             if (self.isPlayer()) {
@@ -848,60 +848,6 @@ std::unordered_set<string> EventListener::AnimalEntityMap = {
     "minecraft:villager_v2",      // 村民
     "minecraft:wandering_trader", // 流浪商人
     "minecraft:npc"               // NPC
-};
-std::unordered_set<string> EventListener::MobEntityMap = {
-    "minecraft:pufferfish",    // 河豚
-    "minecraft:bee",           // 蜜蜂
-    "minecraft:dolphin",       // 海豚
-    "minecraft:goat",          // 山羊
-    "minecraft:iron_golem",    // 铁傀儡
-    "minecraft:llama",         // 羊驼
-    "minecraft:llama_spit",    // 羊驼唾沫
-    "minecraft:wolf",          // 狼
-    "minecraft:panda",         // 熊猫
-    "minecraft:polar_bear",    // 北极熊
-    "minecraft:enderman",      // 末影人
-    "minecraft:piglin",        // 猪灵
-    "minecraft:spider",        // 蜘蛛
-    "minecraft:cave_spider",   // 洞穴蜘蛛
-    "minecraft:zombie_pigman", // 僵尸猪人
-
-    "minecraft:blaze",                 // 烈焰人
-    "minecraft:small_fireball",        // 小火球
-    "minecraft:creeper",               // 爬行者
-    "minecraft:drowned",               // 溺尸
-    "minecraft:elder_guardian",        // 远古守卫者
-    "minecraft:husk",                  // 凋零骷髅
-    "minecraft:skeleton",              // 骷髅
-    "minecraft:skeleton_horse",        // 骷髅马
-    "minecraft:slime",                 // 史莱姆
-    "minecraft:vex",                   // 恶魂兽
-    "minecraft:vindicator",            // 卫道士
-    "minecraft:witch",                 // 女巫
-    "minecraft:endermite",             // 末影螨
-    "minecraft:evocation_illager",     // 唤魔者
-    "minecraft:evocation_fang",        // 唤魔者尖牙
-    "minecraft:magma_cube",            // 岩浆怪
-    "minecraft:phantom",               // 幻翼
-    "minecraft:pillager",              // 掠夺者
-    "minecraft:ravager",               // 劫掠兽
-    "minecraft:shulker",               // 潜影贝
-    "minecraft:shulker_bullet",        // 潜影贝弹射物
-    "minecraft:silverfish",            // 蠹虫
-    "minecraft:ghast",                 // 恶魂
-    "minecraft:fireball",              // 火球
-    "minecraft:guardian",              // 守卫者
-    "minecraft:hoglin",                // 疣猪兽
-    "minecraft:wither_skeleton",       // 凋零骷髅
-    "minecraft:zoglin",                // 疣猪兽
-    "minecraft:zombie",                // 僵尸
-    "minecraft:zombie_villager_v2",    // 僵尸村民
-    "minecraft:piglin_brute",          // 猪灵蛮兵
-    "minecraft:ender_dragon",          // 末影龙
-    "minecraft:dragon_fireball",       // 末影龙火球
-    "minecraft:wither",                // 凋零
-    "minecraft:wither_skull",          // 凋零之首
-    "minecraft:wither_skull_dangerous" // 蓝色凋灵之首(Wiki)
 };
 
 
