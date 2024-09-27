@@ -9,7 +9,7 @@ add_repositories("engsr6982-repo https://github.com/engsr6982/xmake-repo.git")
 add_requires("levilamina 0.13.5")
 add_requires("exprtk 2022.01.01")
 add_requires("legacymoney 0.8.3")
-add_requires("more_events 0.1.2")
+add_requires("more_events 0.2.0")
 
 if not has_config("vs_runtime") then
     set_runtimes("MD")

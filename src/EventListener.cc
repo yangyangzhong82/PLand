@@ -30,7 +30,7 @@
 #include "more_events/ExplodeEvent.h"
 #include "more_events/FarmDecayEvent.h"
 #include "more_events/MobHurtEffectEvent.h"
-#include "more_events/MossSpreadEvent.h"
+#include "more_events/MossFertilizerEvent.h"
 #include "more_events/PistonTryPushEvent.h"
 #include "more_events/PlayerAttackBlockEvent.h"
 #include "more_events/PlayerDropItemEvent.h"
@@ -62,7 +62,7 @@ ll::event::ListenerPtr mPressurePlateTriggerEvent; // 压力板触发 (more_even
 ll::event::ListenerPtr mProjectileSpawnEvent;      // 投掷物生成 (more_events)
 ll::event::ListenerPtr mRedstoneUpdateEvent;       // 红石更新 (more_events)
 ll::event::ListenerPtr mWitherDestroyBlockEvent;   // 凋零破坏方块 (more_events)
-ll::event::ListenerPtr mMossSpreadEvent;           // 苔藓蔓延 (more_events)
+ll::event::ListenerPtr mMossFertilizerEvent;       // 苔藓施肥 (more_events)
 
 namespace land {
 bool PreCheck(LandDataPtr ptr, UUIDs uuid, bool ignoreOperator = false) {
@@ -424,7 +424,7 @@ bool EventListener::setup() {
     mExplodeEvent = bus->emplaceListener<more_events::ExplodeEvent>([db, logger](more_events::ExplodeEvent& ev) {
         logger->debug("[Explode] Pos: {}", ev.getPos().toString());
 
-        auto lands = db->getLandAt(ev.getPos(), ev.getExplosionRadius() + 1, ev.getRegion().getDimensionId());
+        auto lands = db->getLandAt(ev.getPos(), (int)(ev.getExplosionRadius() + 1), ev.getRegion().getDimensionId());
         for (auto& p : lands) {
             if (!p->getLandPermTableConst().allowExplode) {
                 ev.cancel();
@@ -584,8 +584,8 @@ bool EventListener::setup() {
             return true;
         });
 
-    mMossSpreadEvent =
-        bus->emplaceListener<more_events::MossSpreadEvent>([db, logger](more_events::MossSpreadEvent& ev) {
+    mMossFertilizerEvent =
+        bus->emplaceListener<more_events::MossFertilizerEvent>([db, logger](more_events::MossFertilizerEvent& ev) {
             logger->debug("[MossSpread] {}", ev.getPos().toString());
 
             auto const& pos = ev.getPos();
