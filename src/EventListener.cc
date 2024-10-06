@@ -612,8 +612,8 @@ bool EventListener::setup() {
     mLiquidFlowEvent =
         bus->emplaceListener<more_events::LiquidFlowEvent>([db, logger](more_events::LiquidFlowEvent& ev) {
             auto& sou  = ev.getLiquidPos();
-            auto& from = ev.getFlowFromPos();
-            logger->debug("[LiquidFlow] {} -> {}", sou.toString(), from.toString());
+            // auto& from = ev.getFlowFromPos();
+            // logger->debug("[LiquidFlow] {} -> {}", sou.toString(), from.toString());
 
             auto land = db->getLandAt(sou, ev.getBlockSource().getDimensionId());
             if (land) {

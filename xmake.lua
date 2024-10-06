@@ -33,9 +33,14 @@ target("PLand") -- Change this to your mod name.
     add_packages(
         "levilamina",
         "exprtk",
-        "legacymoney",
-        "more_events"
+        "more_events",
+        "legacymoney"
     )
+
+    -- MoreEvents test
+    -- add_includedirs("D:/Projects/MoreEvents/bin/include")
+    -- add_links("D:/Projects/MoreEvents/bin/lib/*.lib")
+
     add_shflags("/DELAYLOAD:bedrock_server.dll") -- To use symbols provided by SymbolProvider.
     set_exceptions("none") -- To avoid conflicts with /EHa.
     set_kind("shared")

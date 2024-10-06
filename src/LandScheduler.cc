@@ -22,7 +22,6 @@ namespace land {
 ll::event::ListenerPtr mPlayerEnterListener;       // 玩家进入领地监听器
 ll::event::ListenerPtr mPlayerLeaveServerListener; // 玩家离开服务器监听器
 
-std::unordered_map<UUIDm, Vec3>      LandScheduler::mPosMap;    // 玩家当前位置信息
 std::unordered_map<UUIDm, LandDimid> LandScheduler::mDimidMap;  // 玩家当前所在维度信息
 std::unordered_map<UUIDm, LandID>    LandScheduler::mLandidMap; // 玩家当前所在领地ID信息
 
@@ -36,8 +35,7 @@ bool LandScheduler::setup() {
             auto& db   = PLand::getInstance();
             auto& uuid = player.getUuid();
 
-            auto& curPos  = player.getPosition();         // 获取玩家当前位置
-            auto& lastPos = LandScheduler::mPosMap[uuid]; // 获取玩家上一次的位置
+            auto& curPos = player.getPosition(); // 获取玩家当前位置
 
             int  curDimid  = player.getDimensionId();        // 获取玩家当前维度
             int& lastDimid = LandScheduler::mDimidMap[uuid]; // 获取玩家上一次的维度
@@ -66,9 +64,6 @@ bool LandScheduler::setup() {
                 lastLandID = curLandID;
             }
 
-            // 更新玩家位置
-            lastPos = curPos;
-
             return true;
         });
     });
@@ -76,7 +71,6 @@ bool LandScheduler::setup() {
     mPlayerLeaveServerListener =
         bus->emplaceListener<ll::event::player::PlayerLeaveEvent>([](ll::event::player::PlayerLeaveEvent& ev) {
             auto& uuid = ev.self().getUuid();
-            LandScheduler::mPosMap.erase(uuid);
             LandScheduler::mDimidMap.erase(uuid);
             LandScheduler::mLandidMap.erase(uuid);
         });

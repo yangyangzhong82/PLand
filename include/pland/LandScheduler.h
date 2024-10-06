@@ -15,7 +15,6 @@ public:
     LandScheduler& operator=(LandScheduler&&)      = delete;
     LandScheduler& operator=(const LandScheduler&) = delete;
 
-    LDAPI static std::unordered_map<UUIDm, Vec3>      mPosMap;
     LDAPI static std::unordered_map<UUIDm, LandDimid> mDimidMap;
     LDAPI static std::unordered_map<UUIDm, LandID>    mLandidMap;
 
