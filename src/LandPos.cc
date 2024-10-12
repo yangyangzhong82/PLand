@@ -8,7 +8,8 @@ namespace land {
 
 // PosBase
 std::string PosBase::toString() const { return fmt::format("({},{},{})", x, y, z); }
-BlockPos    PosBase::toBlockPos() const { return BlockPos(x, y, z); }
+PosBase::operator BlockPos() const { return BlockPos(x, y, z); }
+PosBase::operator Vec3() const { return Vec3(x, y, z); }
 bool PosBase::operator==(const PosBase& pos) const { return this->x == pos.x && this->y == pos.y && this->z == pos.z; }
 bool PosBase::operator!=(const PosBase& pos) const { return !(*this == pos); }
 bool PosBase::operator==(const BlockPos& pos) const { return this->x == pos.x && this->y == pos.y && this->z == pos.z; }

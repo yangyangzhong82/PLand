@@ -154,7 +154,7 @@ void LandBuyGui::impl(Player& player) {
             return;
         }
 
-        auto lands = db.getLandAt(data->mPos.mMin_A.toBlockPos(), data->mPos.mMax_B.toBlockPos(), data->mDimid);
+        auto lands = db.getLandAt(data->mPos.mMin_A, data->mPos.mMax_B, data->mDimid);
         if (!lands.empty()) {
             for (auto& land : lands) {
                 if (LandPos::isCollision(land->mPos, data->mPos)) {
@@ -270,7 +270,7 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
             return;
         }
 
-        auto lands = db.getLandAt(data->mPos.mMin_A.toBlockPos(), data->mPos.mMax_B.toBlockPos(), data->mDimid);
+        auto lands = db.getLandAt(data->mPos.mMin_A, data->mPos.mMax_B, data->mDimid);
         if (!lands.empty()) {
             for (auto& land : lands) {
                 if (land->getLandID() == data->mBindLandData->getLandID()) continue; // 跳过自己
@@ -758,7 +758,7 @@ void LandTeleportGui::impl(Player& player, LandID id) {
         return;
     }
 
-    SafeTeleport::getInstance().teleportTo(player, land->mPos.mMin_A.toBlockPos(), land->getLandDimid());
+    SafeTeleport::getInstance().teleportTo(player, land->mPos.mMin_A, land->getLandDimid());
 }
 
 

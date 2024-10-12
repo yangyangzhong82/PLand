@@ -1,8 +1,9 @@
 #pragma once
 #include "Global.h"
+#include "mc/math/Vec3.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/ChunkPos.h"
-#include <memory>
+
 
 namespace land {
 
@@ -16,7 +17,6 @@ public:
     LDAPI static PosBase make(BlockPos const& pos);
 
     LDAPI std::string toString() const;
-    LDAPI BlockPos    toBlockPos() const;
 
     LDAPI PosBase& operator=(PosBase const& pos) = default;
     LDAPI bool     operator==(PosBase const& pos) const;
@@ -24,6 +24,8 @@ public:
     LDAPI PosBase& operator=(BlockPos const& pos);
     LDAPI bool     operator==(BlockPos const& pos) const;
     LDAPI bool     operator!=(BlockPos const& pos) const;
+    LDAPI          operator BlockPos() const;
+    LDAPI          operator Vec3() const;
 };
 
 
