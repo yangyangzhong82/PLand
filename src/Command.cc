@@ -174,6 +174,26 @@ static auto const Reload = [](CommandOrigin const& ori, CommandOutput& out) {
     }
 };
 
+
+enum class DrawStatusType : int {
+    Disbale,
+    Enable,
+};
+enum class DrawType : int {
+    Near,    // 绘制附近领地
+    Current, // 绘制当前领地
+};
+struct DrawParam {
+    DrawStatusType status;
+    DrawType       type;
+};
+static auto const Draw = [](CommandOrigin const& ori, CommandOutput& out, DrawParam const& param) { 
+    // todo:
+    //   1. console && disable => disable all
+    //   2. other only player use    
+};
+
+
 }; // namespace Lambda
 
 
@@ -206,6 +226,11 @@ bool LandCommand::setup() {
 
     // pland buy 购买
     cmd.overload().text("buy").execute(Lambda::Buy);
+
+    // pland draw <disable|enbale> <near|current> 开启/关闭领地绘制
+    if (Config::cfg.land.setupDrawCommand) {
+        cmd.overload<Lambda::DrawParam>().text("draw").required("status").required("type").execute(Lambda::Draw);
+    }
 
     return true;
 }

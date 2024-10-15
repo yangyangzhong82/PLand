@@ -69,7 +69,7 @@ ll::event::ListenerPtr mLiquidFlowEvent;                    // 流体流动 (mor
 ll::event::ListenerPtr mSculkCatalystAbsorbExperienceEvent; // 幽匿催发体吸收经验 (more_events)
 
 namespace land {
-bool PreCheck(LandDataPtr ptr, UUIDs uuid, bool ignoreOperator = false) {
+bool PreCheck(LandData_sptr ptr, UUIDs uuid, bool ignoreOperator = false) {
     if (!ignoreOperator && PLand::getInstance().isOperator(uuid)) {
         return true; // 是管理员
     } else if (!ptr) {
@@ -611,7 +611,7 @@ bool EventListener::setup() {
 
     mLiquidFlowEvent =
         bus->emplaceListener<more_events::LiquidFlowEvent>([db, logger](more_events::LiquidFlowEvent& ev) {
-            auto& sou  = ev.getLiquidPos();
+            auto& sou = ev.getLiquidPos();
             // auto& from = ev.getFlowFromPos();
             // logger->debug("[LiquidFlow] {} -> {}", sou.toString(), from.toString());
 

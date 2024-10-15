@@ -68,7 +68,7 @@ bool MyMod::disable() {
     logger.info("Saveing...");
 
     land::PLand::getInstance().save();
-    land::PLand::getInstance()._stopThread();
+    land::PLand::getInstance().mThread.request_stop();
     land::LandSelector::getInstance().uninit();
     land::LandScheduler::release();
     land::EventListener::release();

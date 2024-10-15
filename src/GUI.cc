@@ -486,7 +486,7 @@ void LandManagerGui::impl(Player& player, LandID id) {
 
     fm.sendTo(player);
 }
-void LandManagerGui::EditLandPermGui::impl(Player& player, LandDataPtr ptr) {
+void LandManagerGui::EditLandPermGui::impl(Player& player, LandData_sptr ptr) {
     CustomForm fm(PLUGIN_NAME + " | 编辑权限"_tr());
 
     auto& i18n = ll::i18n::getInstance();
@@ -513,7 +513,7 @@ void LandManagerGui::EditLandPermGui::impl(Player& player, LandDataPtr ptr) {
         mc::sendText(pl, "权限表已更新");
     });
 }
-void LandManagerGui::DeleteLandGui::impl(Player& player, LandDataPtr ptr) {
+void LandManagerGui::DeleteLandGui::impl(Player& player, LandData_sptr ptr) {
     int price = Calculate::calculateRefundsPrice(ptr->mOriginalBuyPrice, Config::cfg.land.refundRate);
 
     PlayerDeleteLandBeforeEvent ev(player, ptr->getLandID(), price);
@@ -553,7 +553,7 @@ void LandManagerGui::DeleteLandGui::impl(Player& player, LandDataPtr ptr) {
         } else mc::sendText(pl, "经济系统异常，操作失败"_tr());
     });
 }
-void LandManagerGui::EditLandNameGui::impl(Player& player, LandDataPtr ptr) {
+void LandManagerGui::EditLandNameGui::impl(Player& player, LandData_sptr ptr) {
     EditStringGui::impl(
         player,
         "修改领地名称"_tr(),
@@ -565,7 +565,7 @@ void LandManagerGui::EditLandNameGui::impl(Player& player, LandDataPtr ptr) {
         }
     );
 }
-void LandManagerGui::EditLandDescGui::impl(Player& player, LandDataPtr ptr) {
+void LandManagerGui::EditLandDescGui::impl(Player& player, LandData_sptr ptr) {
     EditStringGui::impl(
         player,
         "修改领地描述"_tr(),
@@ -577,7 +577,7 @@ void LandManagerGui::EditLandDescGui::impl(Player& player, LandDataPtr ptr) {
         }
     );
 }
-void LandManagerGui::EditLandOwnerGui::impl(Player& player, LandDataPtr ptr) {
+void LandManagerGui::EditLandOwnerGui::impl(Player& player, LandData_sptr ptr) {
     ChoosePlayerGui::impl(player, [ptr](Player& self, Player& target) {
         if (self == target) {
             mc::sendText(self, "不能将领地转让给自己, 左手倒右手哦!"_tr());
@@ -623,7 +623,7 @@ void LandManagerGui::EditLandOwnerGui::impl(Player& player, LandDataPtr ptr) {
         });
     });
 }
-void LandManagerGui::ReSelectLandGui::impl(Player& player, LandDataPtr ptr) {
+void LandManagerGui::ReSelectLandGui::impl(Player& player, LandData_sptr ptr) {
     ModalForm fm(
         PLUGIN_NAME + " | 重新选区"_tr(),
         "重新选区为完全重新选择领地的范围，非直接扩充/缩小现有领地范围。\n重新选择的价格计算方式为\"新范围价格 — 旧范围价值\"，是否继续？"_tr(
@@ -646,7 +646,7 @@ void LandManagerGui::ReSelectLandGui::impl(Player& player, LandDataPtr ptr) {
 
 
 // 编辑领地成员
-void EditLandMemberGui::impl(Player& player, LandDataPtr ptr) {
+void EditLandMemberGui::impl(Player& player, LandData_sptr ptr) {
     auto fm = SimpleFormEx::create<LandManagerGui, BackButtonPos::Upper>(ptr->getLandID());
 
     fm.appendButton("添加成员", "textures/ui/color_plus", [ptr](Player& self) { AddMemberGui::impl(self, ptr); });
@@ -665,7 +665,7 @@ void EditLandMemberGui::impl(Player& player, LandDataPtr ptr) {
 
     fm.sendTo(player);
 }
-void EditLandMemberGui::AddMemberGui::impl(Player& player, LandDataPtr ptr) {
+void EditLandMemberGui::AddMemberGui::impl(Player& player, LandData_sptr ptr) {
     ChoosePlayerGui::impl<EditLandMemberGui>(player, [ptr](Player& self, Player& target) {
         if (self == target) {
             mc::sendText(self, "不能添加自己为领地成员哦!"_tr());
@@ -710,7 +710,7 @@ void EditLandMemberGui::AddMemberGui::impl(Player& player, LandDataPtr ptr) {
         });
     });
 }
-void EditLandMemberGui::RemoveMemberGui::impl(Player& player, LandDataPtr ptr, UUIDs member) {
+void EditLandMemberGui::RemoveMemberGui::impl(Player& player, LandData_sptr ptr, UUIDs member) {
     LandMemberChangeBeforeEvent ev(player, member, ptr->getLandID(), false);
     ll::event::EventBus::getInstance().publish(ev);
     if (ev.isCancelled()) {
@@ -787,7 +787,7 @@ void LandOPManagerGui::impl(Player& player) {
         IChoosePlayerFromDB::impl(self, ManageLandWithPlayer::impl);
     });
     fm.appendButton("管理指定领地"_tr(), "textures/ui/magnifyingGlass", [](Player& self) {
-        IChooseLandFromDB::impl(self, "", [](Player& self, LandDataPtr ptr) {
+        IChooseLandFromDB::impl(self, "", [](Player& self, LandData_sptr ptr) {
             LandManagerGui::impl(self, ptr->getLandID());
         });
     });
@@ -795,7 +795,7 @@ void LandOPManagerGui::impl(Player& player) {
     fm.sendTo(player);
 }
 void LandOPManagerGui::ManageLandWithPlayer::impl(Player& player, UUIDs const& targetPlayer) {
-    IChooseLandFromDB::impl(player, targetPlayer, [](Player& self, LandDataPtr ptr) {
+    IChooseLandFromDB::impl(player, targetPlayer, [](Player& self, LandData_sptr ptr) {
         LandManagerGui::impl(self, ptr->getLandID());
     });
 }

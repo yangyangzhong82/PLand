@@ -130,7 +130,7 @@ bool                                   LandSelector::init() {
                 }
 
                 // 重新选区 & 绘制旧范围 (新范围无法绘制时绘制旧范围)
-                if (data.mBindLandData != nullptr && !data.mCanDraw) {
+                if (data.mBindLandData.lock() != nullptr && !data.mCanDraw) {
                     data.mOldRangeParticle.draw(*pl);
                 }
 
@@ -247,7 +247,7 @@ bool LandSelector::completeAndRelease(Player& player) {
 
     return true;
 }
-LandDataPtr LandSelector::makeLandFromSelector(Player& player) {
+LandData_sptr LandSelector::makeLandFromSelector(Player& player) {
     auto uid = player.getUuid().asString();
 
     auto iter = mSelectors.find(uid);
@@ -264,16 +264,16 @@ LandDataPtr LandSelector::makeLandFromSelector(Player& player) {
 // ReSelect
 bool LandSelector::isReSelector(Player& player) const {
     auto iter = mSelectors.find(player.getUuid().asString());
-    return iter != mSelectors.end() && iter->second.mBindLandData != nullptr;
+    return iter != mSelectors.end() && iter->second.mBindLandData.lock() != nullptr;
 }
-bool LandSelector::tryReSelect(Player& player, LandDataPtr land) {
+bool LandSelector::tryReSelect(Player& player, LandData_sptr land) {
     auto uid = player.getUuid().asString();
 
     mSelectors.emplace(UUIDs(uid), LandSelectorData{player, land});
     return true;
 }
 
-LandSelectorData::LandSelectorData(Player& player, LandDataPtr landData) {
+LandSelectorData::LandSelectorData(Player& player, LandData_sptr landData) {
     this->mPlayer       = &player;
     this->mDimid        = landData->mLandDimid;
     this->mDraw3D       = landData->mIs3DLand;

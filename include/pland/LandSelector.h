@@ -28,13 +28,13 @@ struct LandSelectorData {
     Particle mParticle;
 
     // 重新选区
-    LandDataPtr mBindLandData{nullptr}; // 绑定的LandData (此项不为空时，代表玩家正在重新选区<调整大小>)
-    Particle mOldRangeParticle;         // 旧的粒子范围
+    LandData_wptr mBindLandData; // 绑定的LandData (此项不为空时，代表玩家正在重新选区<调整大小>)
+    Particle mOldRangeParticle;  // 旧的粒子范围
 
     // constructor
     LDAPI LandSelectorData() = default;
     LDAPI LandSelectorData(Player& player, int dim, bool draw3D) : mPlayer(&player), mDimid(dim), mDraw3D(draw3D) {}
-    LDAPI LandSelectorData(Player& player, LandDataPtr landData);
+    LDAPI LandSelectorData(Player& player, LandData_sptr landData);
 };
 
 
@@ -59,16 +59,16 @@ public:
     LDAPI bool isSelectedPointA(Player& player) const;
     LDAPI bool isSelectedPointB(Player& player) const;
 
-    LDAPI bool isReSelector(Player& player) const;                // 是否是重新选区
-    LDAPI bool tryReSelect(Player& player, LandDataPtr landData); // 重新选区
+    LDAPI bool isReSelector(Player& player) const;                  // 是否是重新选区
+    LDAPI bool tryReSelect(Player& player, LandData_sptr landData); // 重新选区
 
     LDAPI bool tryStartSelect(Player& player, int dim, bool draw3D); // 开始选区
     LDAPI bool trySelectPointA(Player& player, BlockPos pos);        // 选择第一个点
     LDAPI bool trySelectPointB(Player& player, BlockPos pos);        // 选择第二个点
     LDAPI bool tryCancel(Player& player);                            // 取消选区
 
-    LDAPI bool        completeAndRelease(Player& player);   // 完成选择并释放
-    LDAPI LandDataPtr makeLandFromSelector(Player& player); // 从选择器中生成LandData
+    LDAPI bool          completeAndRelease(Player& player);   // 完成选择并释放
+    LDAPI LandData_sptr makeLandFromSelector(Player& player); // 从选择器中生成LandData
 };
 
 

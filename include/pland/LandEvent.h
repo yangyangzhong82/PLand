@@ -55,16 +55,16 @@ public:
 };
 class PlayerBuyLandAfterEvent final : public ll::event::Event {
 protected:
-    Player&     mPlayer;
-    LandDataPtr mLandData;
+    Player&       mPlayer;
+    LandData_sptr mLandData;
 
 public:
-    LDAPI explicit PlayerBuyLandAfterEvent(Player& player, LandDataPtr landData)
+    LDAPI explicit PlayerBuyLandAfterEvent(Player& player, LandData_sptr landData)
     : mPlayer(player),
       mLandData(landData) {}
 
-    LDAPI Player&     getPlayer() const;
-    LDAPI LandDataPtr getLandData() const;
+    LDAPI Player&       getPlayer() const;
+    LDAPI LandData_sptr getLandData() const;
 };
 
 
@@ -207,19 +207,19 @@ public:
 // 领地范围变动(LandBuyWithReSelectGui)
 class LandRangeChangeBeforeEvent final : public ll::event::Cancellable<ll::event::Event> {
 protected:
-    Player&            mPlayer;      // 操作者
-    LandDataPtr const& mLandData;    // 操作的领地数据
-    LandPos const&     mNewRange;    // 新范围
-    int const&         mNeedPay;     // 需要支付的价格
-    int const&         mRefundPrice; // 需要退的价格
+    Player&              mPlayer;      // 操作者
+    LandData_sptr const& mLandData;    // 操作的领地数据
+    LandPos const&       mNewRange;    // 新范围
+    int const&           mNeedPay;     // 需要支付的价格
+    int const&           mRefundPrice; // 需要退的价格
 
 public:
     LDAPI LandRangeChangeBeforeEvent(
-        Player&            player,
-        LandDataPtr const& landData,
-        LandPos const&     newRange,
-        int const&         needPay,
-        int const&         refundPrice
+        Player&              player,
+        LandData_sptr const& landData,
+        LandPos const&       newRange,
+        int const&           needPay,
+        int const&           refundPrice
     )
     : Cancellable(),
       mPlayer(player),
@@ -228,27 +228,27 @@ public:
       mNeedPay(needPay),
       mRefundPrice(refundPrice) {}
 
-    LDAPI Player&            getPlayer() const;
-    LDAPI LandDataPtr const& getLandData() const;
-    LDAPI LandPos const&     getNewRange() const;
-    LDAPI int const&         getNeedPay() const;
-    LDAPI int const&         getRefundPrice() const;
+    LDAPI Player&              getPlayer() const;
+    LDAPI LandData_sptr const& getLandData() const;
+    LDAPI LandPos const&       getNewRange() const;
+    LDAPI int const&           getNeedPay() const;
+    LDAPI int const&           getRefundPrice() const;
 };
 class LandRangeChangeAfterEvent final : public ll::event::Event {
 protected:
-    Player&            mPlayer;      // 操作者
-    LandDataPtr const& mLandData;    // 操作的领地数据
-    LandPos const&     mNewRange;    // 新范围
-    int const&         mNeedPay;     // 需要支付的价格
-    int const&         mRefundPrice; // 需要退的价格
+    Player&              mPlayer;      // 操作者
+    LandData_sptr const& mLandData;    // 操作的领地数据
+    LandPos const&       mNewRange;    // 新范围
+    int const&           mNeedPay;     // 需要支付的价格
+    int const&           mRefundPrice; // 需要退的价格
 
 public:
     LDAPI LandRangeChangeAfterEvent(
-        Player&            player,
-        LandDataPtr const& landData,
-        LandPos const&     newRange,
-        int const&         needPay,
-        int const&         refundPrice
+        Player&              player,
+        LandData_sptr const& landData,
+        LandPos const&       newRange,
+        int const&           needPay,
+        int const&           refundPrice
     )
     : mPlayer(player),
       mLandData(landData),
@@ -256,11 +256,11 @@ public:
       mNeedPay(needPay),
       mRefundPrice(refundPrice) {}
 
-    LDAPI Player&            getPlayer() const;
-    LDAPI LandDataPtr const& getLandData() const;
-    LDAPI LandPos const&     getNewRange() const;
-    LDAPI int const&         getNeedPay() const;
-    LDAPI int const&         getRefundPrice() const;
+    LDAPI Player&              getPlayer() const;
+    LDAPI LandData_sptr const& getLandData() const;
+    LDAPI LandPos const&       getNewRange() const;
+    LDAPI int const&           getNeedPay() const;
+    LDAPI int const&           getRefundPrice() const;
 };
 
 

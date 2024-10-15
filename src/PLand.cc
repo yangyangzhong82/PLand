@@ -123,7 +123,7 @@ bool PLand::removeOperator(UUIDs const& uuid) {
 }
 
 bool PLand::hasLand(LandID id) const { return mLandCache.find(id) != mLandCache.end(); }
-bool PLand::addLand(LandDataPtr land) {
+bool PLand::addLand(LandData_sptr land) {
     if (land == nullptr) {
         return false;
     }
@@ -165,7 +165,7 @@ bool PLand::removeLand(LandID landId) {
     mLandCache.erase(landIter);
     return true;
 }
-bool PLand::refreshLandRange(LandDataPtr ptr) {
+bool PLand::refreshLandRange(LandData_sptr ptr) {
     // 擦除旧映射
     for (auto& chunk : ptr->mPos.getChunks()) {
         auto& landVec = mLandMap[ptr->mLandDimid][getChunkID(chunk.x, chunk.z)];
@@ -188,22 +188,22 @@ bool PLand::refreshLandRange(LandDataPtr ptr) {
 }
 
 
-LandDataPtr PLand::getLand(LandID id) const {
+LandData_sptr PLand::getLand(LandID id) const {
     auto landIt = mLandCache.find(id);
     if (landIt != mLandCache.end()) {
         return landIt->second;
     }
     return nullptr;
 }
-std::vector<LandDataPtr> PLand::getLands() const {
-    std::vector<LandDataPtr> lands;
+std::vector<LandData_sptr> PLand::getLands() const {
+    std::vector<LandData_sptr> lands;
     for (auto& land : mLandCache) {
         lands.push_back(land.second);
     }
     return lands;
 }
-std::vector<LandDataPtr> PLand::getLands(LandDimid dimid) const {
-    std::vector<LandDataPtr> lands;
+std::vector<LandData_sptr> PLand::getLands(LandDimid dimid) const {
+    std::vector<LandData_sptr> lands;
     for (auto& land : mLandCache) {
         if (land.second->mLandDimid == dimid) {
             lands.push_back(land.second);
@@ -211,8 +211,8 @@ std::vector<LandDataPtr> PLand::getLands(LandDimid dimid) const {
     }
     return lands;
 }
-std::vector<LandDataPtr> PLand::getLands(UUIDs const& uuid) const {
-    std::vector<LandDataPtr> lands;
+std::vector<LandData_sptr> PLand::getLands(UUIDs const& uuid) const {
+    std::vector<LandData_sptr> lands;
     for (auto& land : mLandCache) {
         if (land.second->isLandOwner(uuid)) {
             lands.push_back(land.second);
@@ -220,8 +220,8 @@ std::vector<LandDataPtr> PLand::getLands(UUIDs const& uuid) const {
     }
     return lands;
 }
-std::vector<LandDataPtr> PLand::getLands(UUIDs const& uuid, LandDimid dimid) const {
-    std::vector<LandDataPtr> lands;
+std::vector<LandData_sptr> PLand::getLands(UUIDs const& uuid, LandDimid dimid) const {
+    std::vector<LandData_sptr> lands;
     for (auto& land : mLandCache) {
         if (land.second->mLandDimid == dimid && land.second->isLandOwner(uuid)) {
             lands.push_back(land.second);
@@ -245,7 +245,7 @@ LandPermType PLand::getPermType(UUIDs const& uuid, LandID id, bool ignoreOperato
 
 LandID PLand::generateLandID() { return static_cast<LandID>(mLandCache.size()) + 1; }
 
-LandDataPtr PLand::getLandAt(BlockPos const& pos, LandDimid dimid) const {
+LandData_sptr PLand::getLandAt(BlockPos const& pos, LandDimid dimid) const {
     ChunkID chunkId = getChunkID(pos.x >> 4, pos.z >> 4);
     auto    dimIt   = mLandMap.find(dimid); // 查找维度
     if (dimIt != mLandMap.end()) {
@@ -262,8 +262,8 @@ LandDataPtr PLand::getLandAt(BlockPos const& pos, LandDimid dimid) const {
     }
     return nullptr;
 }
-std::vector<LandDataPtr> PLand::getLandAt(BlockPos const& center, int radius, LandDimid dimid) const {
-    std::vector<LandDataPtr> lands;
+std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& center, int radius, LandDimid dimid) const {
+    std::vector<LandData_sptr> lands;
 
     int minChunkX = (center.x - radius) >> 4;
     int minChunkZ = (center.z - radius) >> 4;
@@ -289,8 +289,8 @@ std::vector<LandDataPtr> PLand::getLandAt(BlockPos const& center, int radius, La
     }
     return lands;
 }
-std::vector<LandDataPtr> PLand::getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const {
-    std::vector<LandDataPtr> lands;
+std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const {
+    std::vector<LandData_sptr> lands;
 
     int minChunkX = std::min(pos1.x, pos2.x) >> 4;
     int minChunkZ = std::min(pos1.z, pos2.z) >> 4;

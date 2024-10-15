@@ -85,7 +85,9 @@ struct LandPermTable {
     bool editSign{false};      // 编辑告示牌
 };
 
-using LandDataPtr = std::shared_ptr<class LandData>;
+
+using LandData_sptr = std::shared_ptr<class LandData>; // 共享指针
+using LandData_wptr = std::weak_ptr<class LandData>;   // 弱指针
 class LandData {
 public:
     int                version{2};                         // 版本号
@@ -102,8 +104,8 @@ public:
     int                mSalePrice{0};                      // 出售价格
     int                mOriginalBuyPrice{0};               // 原始购买价格
 
-    LDAPI static LandDataPtr make(); // 创建一个空领地数据(反射使用)
-    LDAPI static LandDataPtr make(LandPos const& pos, LandDimid dimid, bool is3D, UUIDs const& owner); // 新建领地数据
+    LDAPI static LandData_sptr make(); // 创建一个空领地数据(反射使用)
+    LDAPI static LandData_sptr make(LandPos const& pos, LandDimid dimid, bool is3D, UUIDs const& owner); // 新建领地数据
 
     // getters
     LDAPI LandPos const& getLandPos() const;

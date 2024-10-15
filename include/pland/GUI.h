@@ -68,29 +68,29 @@ public:
 
     class EditLandPermGui {
     public:
-        LDAPI static void impl(Player& player, LandDataPtr ptr);
+        LDAPI static void impl(Player& player, LandData_sptr ptr);
     };
 
     class DeleteLandGui {
     public:
-        LDAPI static void impl(Player& player, LandDataPtr ptr);
+        LDAPI static void impl(Player& player, LandData_sptr ptr);
     };
 
     class EditLandNameGui {
     public:
-        LDAPI static void impl(Player& player, LandDataPtr ptr);
+        LDAPI static void impl(Player& player, LandData_sptr ptr);
     };
     class EditLandDescGui {
     public:
-        LDAPI static void impl(Player& player, LandDataPtr ptr);
+        LDAPI static void impl(Player& player, LandData_sptr ptr);
     };
     class EditLandOwnerGui {
     public:
-        LDAPI static void impl(Player& player, LandDataPtr ptr);
+        LDAPI static void impl(Player& player, LandData_sptr ptr);
     };
     class ReSelectLandGui {
     public:
-        LDAPI static void impl(Player& player, LandDataPtr ptr);
+        LDAPI static void impl(Player& player, LandData_sptr ptr);
     };
 };
 
@@ -98,16 +98,16 @@ public:
 // 领地成员管理GUI
 class EditLandMemberGui {
 public:
-    LDAPI static void impl(Player& player, LandDataPtr ptr);
+    LDAPI static void impl(Player& player, LandData_sptr ptr);
 
     class AddMemberGui {
     public:
-        LDAPI static void impl(Player& player, LandDataPtr ptr);
+        LDAPI static void impl(Player& player, LandData_sptr ptr);
     };
 
     class RemoveMemberGui {
     public:
-        LDAPI static void impl(Player& player, LandDataPtr ptr, UUIDs members);
+        LDAPI static void impl(Player& player, LandData_sptr ptr, UUIDs members);
     };
 };
 
@@ -138,7 +138,7 @@ public:
     };
     class IChooseLandFromDB {
     public:
-        using ChooseLandCall = std::function<void(Player& self, LandDataPtr ptr)>;
+        using ChooseLandCall = std::function<void(Player& self, LandData_sptr ptr)>;
         LDAPI static void impl(Player& player, UUIDs const& target, ChooseLandCall callback);
     };
 };

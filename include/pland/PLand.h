@@ -27,7 +27,7 @@ public:
 
     //                 维度                         区块            领地
     std::unordered_map<LandDimid, std::unordered_map<ChunkID, std::vector<LandID>>> mLandMap;   // 领地映射表
-    std::unordered_map<LandID, LandDataPtr>                                         mLandCache; // 领地缓存
+    std::unordered_map<LandID, LandData_sptr>                                       mLandCache; // 领地缓存
 
     std::vector<UUIDs> mLandOperators; // 领地操作员
 
@@ -45,26 +45,26 @@ public:
     LDAPI bool removeOperator(UUIDs const& uuid);
 
     LDAPI bool hasLand(LandID id) const;
-    LDAPI bool addLand(LandDataPtr land);
+    LDAPI bool addLand(LandData_sptr land);
     LDAPI bool removeLand(LandID id);
 
-    LDAPI bool refreshLandRange(LandDataPtr ptr); // 刷新领地范围
+    LDAPI bool refreshLandRange(LandData_sptr ptr); // 刷新领地范围
 
-    LDAPI LandDataPtr getLand(LandID id) const;                                        // 获取领地数据
-    LDAPI std::vector<LandDataPtr> getLands() const;                                   // 获取所有领地数据
-    LDAPI std::vector<LandDataPtr> getLands(LandDimid dimid) const;                    // 获取维度领地数据
-    LDAPI std::vector<LandDataPtr> getLands(UUIDs const& uuid) const;                  // 获取玩家领地数据
-    LDAPI std::vector<LandDataPtr> getLands(UUIDs const& uuid, LandDimid dimid) const; // 获取玩家维度领地数据
+    LDAPI LandData_sptr getLand(LandID id) const;                                        // 获取领地数据
+    LDAPI std::vector<LandData_sptr> getLands() const;                                   // 获取所有领地数据
+    LDAPI std::vector<LandData_sptr> getLands(LandDimid dimid) const;                    // 获取维度领地数据
+    LDAPI std::vector<LandData_sptr> getLands(UUIDs const& uuid) const;                  // 获取玩家领地数据
+    LDAPI std::vector<LandData_sptr> getLands(UUIDs const& uuid, LandDimid dimid) const; // 获取玩家维度领地数据
 
     LDAPI LandPermType
     getPermType(UUIDs const& uuid, LandID id = 0, bool ignoreOperator = false) const; // 获取领地权限类型
 
     // 获取领地数据
-    LDAPI LandDataPtr getLandAt(BlockPos const& pos, LandDimid dimid) const;
+    LDAPI LandData_sptr getLandAt(BlockPos const& pos, LandDimid dimid) const;
     // 半径内的领地
-    LDAPI std::vector<LandDataPtr> getLandAt(BlockPos const& center, int radius, LandDimid dimid) const;
+    LDAPI std::vector<LandData_sptr> getLandAt(BlockPos const& center, int radius, LandDimid dimid) const;
     // 矩形内的领地
-    LDAPI std::vector<LandDataPtr> getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const;
+    LDAPI std::vector<LandData_sptr> getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const;
 
     LDAPI LandID generateLandID();
 

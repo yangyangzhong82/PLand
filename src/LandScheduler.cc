@@ -88,7 +88,7 @@ bool LandScheduler::setup() {
         auto&  player = ev.getPlayer();
         LandID landid = ev.getLandID();
 
-        LandDataPtr land = db->getLand(landid);
+        LandData_sptr land = db->getLand(landid);
         if (!land) {
             return;
         }

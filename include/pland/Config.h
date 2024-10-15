@@ -7,7 +7,7 @@ namespace land {
 enum class EconomyKit : int { LegacyMoney, ScoreBoard };
 
 struct Config {
-    int version{2};
+    int version{3};
     int logLevel{4};
 
     struct {
@@ -23,6 +23,9 @@ struct Config {
         int    minSpacing{16};  // 最小领地间距
         double refundRate{0.9}; // 退款率(1为全额退款)
         double discountRate{1}; // 折扣率(1为无折扣)
+
+        bool setupDrawCommand{false}; // 安装领地绘制命令
+        int  drawRange{64};           // 绘制 x 范围内的领地
 
         struct {
             bool enterTip{true};           // 进入领地提示
