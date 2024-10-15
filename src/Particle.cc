@@ -14,8 +14,13 @@ namespace land {
 Particle::Particle(BlockPos pos1, BlockPos pos2, int dimid, bool draw3D)
 : mPos(LandPos::make(pos1, pos2)),
   mDimid(dimid),
-  mDraw3D(draw3D) {}
-Particle::Particle(LandPos& pos, int dimid, bool draw3D) : mPos(LandPos(pos)), mDimid(dimid), mDraw3D(draw3D) {}
+  mDraw3D(draw3D),
+  mValid(true) {}
+Particle::Particle(LandPos& pos, int dimid, bool draw3D)
+: mPos(LandPos(pos)),
+  mDimid(dimid),
+  mDraw3D(draw3D),
+  mValid(true) {}
 
 
 bool Particle::draw(Player& player, bool refreshCache, bool usePlayerYDraw2D) {

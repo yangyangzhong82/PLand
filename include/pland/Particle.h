@@ -14,6 +14,7 @@ public:
     LandPos mPos;
     int     mDimid;
     bool    mDraw3D;
+    bool    mValid{false};
 
     std::vector<SpawnParticleEffectPacket> mPackets;
 
