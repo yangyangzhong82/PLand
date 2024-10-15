@@ -22,6 +22,10 @@
         "minSpacing": 16, // 领地最小间距
         "refundRate": 0.9, // 领地退地时返还的百分比
         "discountRate": 1.0, // 领地购买时的折扣率
+
+        "setupDrawCommand": true, // 是否注册领地范围绘制指令
+        "drawRange": 64, // 绘制查询领地范围 （以玩家为中心，此值不宜过大，过大可能导致性能问题）
+
         "tip": {
             "enterTip": true, // 是否启用进入领地提示
             "bottomContinuedTip": true, // 是否启用领地底部持续提示

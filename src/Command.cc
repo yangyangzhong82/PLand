@@ -200,6 +200,7 @@ static auto const Draw = [](CommandOrigin const& ori, CommandOutput& out, DrawPa
         mc::sendText(out, "领地绘制已关闭"_tr());
     } else {
         LandDraw::enable(player, param.type == DrawType::Current);
+        mc::sendText(out, "领地绘制已开启"_tr());
     }
 };
 

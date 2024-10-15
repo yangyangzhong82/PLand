@@ -18,7 +18,7 @@
 23:01:00.561 INFO [Server] - /pland set <a|b>
 ```
 
-?> 其中`pland` 为插件的顶层命令  
+?> 其中`pland` 为插件的顶层命令
 
 - `/pland <op/deop> <player: target>`
   - 添加或移除目标玩家的领地管理员权限。
@@ -27,19 +27,25 @@
   - 创建领地。
 
 - `/pland cancel`
-  - 取消领地创建  (需要先执行 `/pland new` 命令)。
+  - 取消领地创建 (需要先执行 `/pland new` 命令)。
 
 - `/pland set <a|b>`
-  - 设置领地位置  (需要先执行 `/pland new` 命令)。
+  - 设置领地位置 (需要先执行 `/pland new` 命令)。
 
 - `/pland buy`
   - 购买领地 (需要先执行 `/pland new` 命令)。
 
 - `/pland gui`
-  - 打开领地GUI。
+  - 打开领地 GUI。
 
 - `/pland mgr`
-  - 打开领地管理GUI (领地管理员)。
+  - 打开领地管理 GUI (领地管理员)。
 
 - `/pland reload`
   - 重载领地配置 (控制台)。
+
+- `/pland draw <disable|current|near>`
+  - 开启绘制领地范围(需在 `Config.json` 中设置 `setupDrawCommand: true`)
+    - `disable` 关闭绘制
+    - `current` 绘制当前所在领地范围
+    - `near` 绘制附近领地范围（范围由 `Config.json` 中的 `drawRange` 设置）
