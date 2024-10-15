@@ -45,32 +45,47 @@ void LandDraw::setup() {
                     continue;
                 }
 
-                for (auto& [uuid, data] : mDrawList) {
-                    auto player = level->getPlayer(uuid);
-                    if (!player) {
-                        mDrawList.erase(uuid); // 玩家下线
-                        continue;
-                    }
-
-                    data.second.clear();
-                    if (data.first) {
-                        // only draw current land
-                        auto land = db->getLandAt(player->getPosition(), player->getDimensionId());
-                        if (land) {
-                            auto pp = land->getLandPos();
-                            data.second.push_back(Particle{pp, land->getLandDimid(), land->is3DLand()});
+                // 迭代器安全遍历
+                for (auto it = mDrawList.begin(); it != mDrawList.end();) {
+                    try {
+                        if (it->first.isEmpty()) {
+                            it = mDrawList.erase(it);
+                            continue;
                         }
 
-                    } else {
-                        // draw all lands in range
-                        auto lds =
-                            db->getLandAt(player->getPosition(), Config::cfg.land.drawRange, player->getDimensionId());
-                        data.second.reserve(lds.size());
+                        auto& [uuid, data] = *it;
 
-                        for (auto& land : lds) {
-                            auto pp = land->getLandPos();
-                            data.second.push_back(Particle{pp, land->getLandDimid(), land->is3DLand()});
+                        auto player = level->getPlayer(uuid);
+                        if (!player) {
+                            it = mDrawList.erase(it); // 玩家下线
+                            continue;
                         }
+
+                        data.second.clear();
+                        if (data.first) {
+                            // only draw current land
+                            auto land = db->getLandAt(player->getPosition(), player->getDimensionId());
+                            if (land) {
+                                auto pp = land->getLandPos();
+                                data.second.push_back(Particle{pp, land->getLandDimid(), land->is3DLand()});
+                            }
+
+                        } else {
+                            // draw all lands in range
+                            auto lds = db->getLandAt(
+                                player->getPosition(),
+                                Config::cfg.land.drawRange,
+                                player->getDimensionId()
+                            );
+                            data.second.reserve(lds.size());
+
+                            for (auto& land : lds) {
+                                auto pp = land->getLandPos();
+                                data.second.push_back(Particle{pp, land->getLandDimid(), land->is3DLand()});
+                            }
+                        }
+                    } catch (...) {
+                        it = mDrawList.erase(it);
                     }
                 }
             } catch (...) {}
