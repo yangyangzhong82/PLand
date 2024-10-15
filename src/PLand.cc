@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <memory>
+#include <stop_token>
 #include <string>
 #include <utility>
 #include <vector>
@@ -54,7 +55,7 @@ bool PLand::init() {
     logger.info("已加载 {} 位操作员", mLandOperators.size());
     logger.info("已加载 {} 块领地数据", mLandCache.size());
 
-    _startThread(); // 启动保存线程
+    _initThread(); // 启动保存线程
     return _initCache();
 }
 bool PLand::save() {
@@ -86,15 +87,13 @@ bool PLand::_initCache() {
 
 
 // Thread
-void PLand::_stopThread() { mThreadCanRun = false; }
-void PLand::_startThread() {
-    auto thread = std::thread([this]() {
-        while (this->mThreadCanRun) {
+void PLand::_initThread() {
+    mThread = std::jthread([this](std::stop_token st) {
+        while (!st.stop_requested()) {
             std::this_thread::sleep_for(std::chrono::seconds(120)); // 2分钟保存一次
             this->save();
         }
     });
-    thread.detach();
 }
 
 

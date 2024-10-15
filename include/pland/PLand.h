@@ -7,6 +7,7 @@
 #include "pland/LandPos.h"
 #include <cstdint>
 #include <memory>
+#include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -36,9 +37,8 @@ public:
     LDAPI bool save();
     LDAPI bool _initCache(); // private
 
-    bool       mThreadCanRun{true}; // private
-    LDAPI void _startThread();      // private
-    LDAPI void _stopThread();       // private
+    std::jthread mThread;       // private
+    LDAPI void   _initThread(); // private
 
     LDAPI bool isOperator(UUIDs const& uuid) const;
     LDAPI bool addOperator(UUIDs const& uuid);
