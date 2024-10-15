@@ -1,5 +1,6 @@
 #include "pland/Command.h"
 #include "pland/Global.h"
+#include "pland/LandDraw.h"
 #include "pland/LandSelector.h"
 #include "pland/Particle.h"
 #include "pland/utils/MC.h"
@@ -187,10 +188,17 @@ struct DrawParam {
     DrawStatusType status;
     DrawType       type;
 };
-static auto const Draw = [](CommandOrigin const& ori, CommandOutput& out, DrawParam const& param) { 
-    // todo:
-    //   1. console && disable => disable all
-    //   2. other only player use    
+static auto const Draw = [](CommandOrigin const& ori, CommandOutput& out, DrawParam const& param) {
+    if (ori.getOriginType() == CommandOriginType::DedicatedServer) {
+        if (param.status == DrawStatusType::Disbale) {
+            LandDraw::disable();
+            mc::sendText(out, "领地绘制已关闭"_tr());
+            return;
+        }
+    }
+    CHECK_TYPE(ori, out, CommandOriginType::Player);
+    auto& player = *static_cast<Player*>(ori.getEntity());
+    LandDraw::enable(player, param.type == DrawType::Current);
 };
 
 
@@ -227,7 +235,7 @@ bool LandCommand::setup() {
     // pland buy 购买
     cmd.overload().text("buy").execute(Lambda::Buy);
 
-    // pland draw <disable|enbale> <near|current> 开启/关闭领地绘制
+    // pland draw <disable|near|current> 开启/关闭领地绘制
     if (Config::cfg.land.setupDrawCommand) {
         cmd.overload<Lambda::DrawParam>().text("draw").required("status").required("type").execute(Lambda::Draw);
     }

@@ -16,7 +16,7 @@ public:
     bool    mDraw3D;
     bool    mValid{false};
 
-    std::vector<SpawnParticleEffectPacket> mPackets;
+    std::vector<SpawnParticleEffectPacket> mPackets{};
 
     LDAPI Particle() = default;
     LDAPI Particle(LandPos& pos, int dimid, bool draw3D);
