@@ -81,7 +81,7 @@ void LandBuyGui::impl(Player& player) {
         return;
     }
 
-    if (dataPtr->mBindLandData) {
+    if (dataPtr->mBindLandData.lock()) {
         LandBuyWithReSelectGui::impl(player); // 重新选择领地，切换到另一个购买界面
         return;
     }
@@ -203,8 +203,8 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
     bool const& is3D    = dataPtr->mDraw3D;
 
 
-    int const& originalPrice   = dataPtr->mBindLandData->mOriginalBuyPrice; // 原始购买价格
-    int const  discountedPrice = Calculate::calculateDiscountPrice(         // 新范围购买价格
+    int const& originalPrice   = dataPtr->mBindLandData.lock()->mOriginalBuyPrice; // 原始购买价格
+    int const  discountedPrice = Calculate::calculateDiscountPrice(                // 新范围购买价格
         Calculate(dataPtr->mPos)
             .eval(
                 is3D ? Config::cfg.land.bought.threeDimensionl.calculate
@@ -219,7 +219,7 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
 
 
     // publish event
-    LandRangeChangeBeforeEvent ev(player, dataPtr->mBindLandData, dataPtr->mPos, needPay, refund);
+    LandRangeChangeBeforeEvent ev(player, dataPtr->mBindLandData.lock(), dataPtr->mPos, needPay, refund);
     ll::event::EventBus::getInstance().publish(ev);
     if (ev.isCancelled()) {
         return;
@@ -273,7 +273,7 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
         auto lands = db.getLandAt(data->mPos.mMin_A, data->mPos.mMax_B, data->mDimid);
         if (!lands.empty()) {
             for (auto& land : lands) {
-                if (land->getLandID() == data->mBindLandData->getLandID()) continue; // 跳过自己
+                if (land->getLandID() == data->mBindLandData.lock()->getLandID()) continue; // 跳过自己
                 if (LandPos::isCollision(land->mPos, data->mPos)) {
                     mc::sendText<mc::LogLevel::Error>(pl, "领地重叠，请重新选择"_tr());
                     return;
@@ -299,15 +299,15 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
         }
 
         auto landPtr = data->mBindLandData;
-        if (landPtr->_setLandPos(data->mPos)) {
-            landPtr->mOriginalBuyPrice = discountedPrice; // 保存购买价格
+        if (landPtr.lock()->_setLandPos(data->mPos)) {
+            landPtr.lock()->mOriginalBuyPrice = discountedPrice; // 保存购买价格
 
-            selector.completeAndRelease(pl); // 释放数据
-            db.refreshLandRange(landPtr);    // 刷新领地范围
+            selector.completeAndRelease(pl);     // 释放数据
+            db.refreshLandRange(landPtr.lock()); // 刷新领地范围
 
             mc::sendText<mc::LogLevel::Info>(pl, "领地范围修改成功"_tr());
 
-            LandRangeChangeAfterEvent ev(pl, landPtr, data->mPos, needPay, refund);
+            LandRangeChangeAfterEvent ev(pl, landPtr.lock(), data->mPos, needPay, refund);
             ll::event::EventBus::getInstance().publish(ev);
 
         } else mc::sendText<mc::LogLevel::Error>(pl, "领地范围修改失败"_tr());
