@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2024-10-31
+
+### Fixed
+
+- 修复领地绘制引发的崩溃
+
 ## [0.2.0] - 2024-10-16
 
 ### Added
