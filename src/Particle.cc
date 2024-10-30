@@ -23,36 +23,44 @@ Particle::Particle(LandPos& pos, int dimid, bool draw3D)
   mValid(true) {}
 
 
-bool Particle::draw(Player& player, bool refreshCache, bool usePlayerYDraw2D) {
-    if (mPackets.empty() || refreshCache) {
+bool Particle::draw(Player& player, bool refreshCache, bool usePlayerYDraw2D, bool dontCache) {
+    {
         static std::optional<class MolangVariableMap> molangVariables = std::nullopt;
 
         auto pos = mDraw3D ? mPos.getBorder() : mPos.getRange();
-
         auto dim = VanillaDimensions::toSerializedInt(mDimid);
 
-        mPackets.reserve(pos.size());
-        if (mDraw3D) {
-            for (auto& p : pos) {
-                mPackets.push_back(SpawnParticleEffectPacket(
-                    Vec3{p.x + 0.5, p.y + 0.5, p.z + 0.5},
-                    Config::cfg.selector.particle,
-                    (char)dim,
-                    molangVariables
-                ));
+        if (mPackets.empty() || refreshCache || dontCache) {
+            mPackets.reserve(pos.size());
+            if (mDraw3D) {
+                for (auto& p : pos) {
+                    auto pkt = SpawnParticleEffectPacket(
+                        Vec3{p.x + 0.5, p.y + 0.5, p.z + 0.5},
+                        Config::cfg.selector.particle,
+                        (char)dim,
+                        molangVariables
+                    );
+
+                    dontCache ? pkt.sendTo(player) : mPackets.push_back(pkt);
+                }
+            } else {
+                // 2D
+                float y  = usePlayerYDraw2D ? (float)(player.getFeetBlockPos().y) : pos[0].y;
+                y       += 0.5; // center
+                for (auto& p : pos) {
+                    auto pkt = SpawnParticleEffectPacket(
+                        Vec3{p.x + 0.5, y, p.z + 0.5},
+                        Config::cfg.selector.particle,
+                        (char)dim,
+                        molangVariables
+                    );
+
+                    dontCache ? pkt.sendTo(player) : mPackets.push_back(pkt);
+                }
             }
-        } else {
-            // 2D
-            float y  = usePlayerYDraw2D ? (float)(player.getFeetBlockPos().y + 1) : pos[0].y;
-            y       += 0.5; // center
-            for (auto& p : pos) {
-                mPackets.push_back(SpawnParticleEffectPacket(
-                    Vec3{p.x + 0.5, y, p.z + 0.5},
-                    Config::cfg.selector.particle,
-                    (char)dim,
-                    molangVariables
-                ));
-            }
+        }
+        if (dontCache) {
+            return true;
         }
     }
 

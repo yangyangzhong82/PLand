@@ -175,18 +175,12 @@ static auto const Reload = [](CommandOrigin const& ori, CommandOutput& out) {
     }
 };
 
-
-enum class DrawType : int {
-    Disbale = 0, // 关闭绘制
-    Near,        // 绘制附近领地
-    Current,     // 绘制当前领地
-};
 struct DrawParam {
-    DrawType type;
+    LandDraw::DrawType type;
 };
 static auto const Draw = [](CommandOrigin const& ori, CommandOutput& out, DrawParam const& param) {
     if (ori.getOriginType() == CommandOriginType::DedicatedServer) {
-        if (param.type == DrawType::Disbale) {
+        if (param.type == LandDraw::DrawType::Disable) {
             LandDraw::disable();
             mc::sendText(out, "领地绘制已关闭"_tr());
             return;
@@ -195,11 +189,11 @@ static auto const Draw = [](CommandOrigin const& ori, CommandOutput& out, DrawPa
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
 
-    if (param.type == DrawType::Disbale) {
+    if (param.type == LandDraw::DrawType::Disable) {
         LandDraw::disable(player);
         mc::sendText(out, "领地绘制已关闭"_tr());
     } else {
-        LandDraw::enable(player, param.type == DrawType::Current);
+        LandDraw::enable(player, param.type);
         mc::sendText(out, "领地绘制已开启"_tr());
     }
 };

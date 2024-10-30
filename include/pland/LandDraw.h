@@ -21,17 +21,16 @@ public:
     LandDraw& operator=(LandDraw&&)      = delete;
     LandDraw& operator=(const LandDraw&) = delete;
 
-    //                        uuid               cur / near           particles
-    LDAPI static std::unordered_map<UUIDm, std::pair<bool, std::vector<Particle>>> mDrawList;
-    LDAPI static std::jthread                                                      mThread;
-    LDAPI static std::mutex                                                        mMutex;
+    enum class DrawType : int { Disable = 0, CurrentLand, NearLand };
+
+    LDAPI static std::unordered_map<UUIDm, DrawType> mDrawType;
 
     LDAPI static void setup();   // 初始化
     LDAPI static void release(); // 释放资源
 
     LDAPI static void disable();
     LDAPI static void disable(Player& player);
-    LDAPI static void enable(Player& player, bool onlyDrawCurrentLand = true); // 开启绘制 (默认只绘制当前区块)
+    LDAPI static void enable(Player& player, DrawType type = DrawType::CurrentLand); // 开启绘制 (默认只绘制当前区块)
 };
 
 
