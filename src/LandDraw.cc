@@ -9,6 +9,7 @@
 #include "pland/PLand.h"
 #include "pland/Particle.h"
 #include <chrono>
+#include <mutex>
 #include <stop_token>
 #include <thread>
 #include <vector>
@@ -18,14 +19,22 @@ namespace land {
 
 std::unordered_map<UUIDm, std::pair<bool, std::vector<Particle>>> LandDraw::mDrawList;
 std::jthread                                                      LandDraw::mThread;
+std::mutex                                                        LandDraw::mMutex;
 
 
-void LandDraw::disable() { mDrawList.clear(); }
-void LandDraw::disable(Player& player) { mDrawList.erase(player.getUuid()); }
+void LandDraw::disable() {
+    std::lock_guard<std::mutex> lock(mMutex);
+    mDrawList.clear();
+}
+void LandDraw::disable(Player& player) {
+    std::lock_guard<std::mutex> lock(mMutex);
+    mDrawList.erase(player.getUuid());
+}
 
 void LandDraw::enable(Player& player, bool onlyDrawCurrentLand) {
-    auto& data = mDrawList[player.getUuid()];
-    data.first = onlyDrawCurrentLand;
+    std::lock_guard<std::mutex> lock(mMutex);
+    auto&                       data = mDrawList[player.getUuid()];
+    data.first                       = onlyDrawCurrentLand;
 }
 
 
@@ -53,6 +62,8 @@ void LandDraw::setup() {
                 if (!level) {
                     continue;
                 }
+
+                std::lock_guard<std::mutex> lock(mMutex);
 
                 // 迭代器安全遍历
                 for (auto it = mDrawList.begin(); it != mDrawList.end();) {
@@ -104,6 +115,7 @@ void LandDraw::setup() {
 
     // 主线程绘制粒子
     GlobalTickScheduler.add<ll::schedule::RepeatTask>(20_tick, []() {
+        std::lock_guard<std::mutex> lock(mMutex);
         ll::service::getLevel()->forEachPlayer([](Player& player) {
             if (!mDrawList.contains(player.getUuid())) {
                 return true;

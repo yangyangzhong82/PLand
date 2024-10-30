@@ -4,6 +4,7 @@
 #include "pLand/Particle.h"
 #include "pland/LandData.h"
 #include <memory>
+#include <mutex>
 #include <thread>
 #include <unordered_map>
 #include <vector>
@@ -23,6 +24,7 @@ public:
     //                        uuid               cur / near           particles
     LDAPI static std::unordered_map<UUIDm, std::pair<bool, std::vector<Particle>>> mDrawList;
     LDAPI static std::jthread                                                      mThread;
+    LDAPI static std::mutex                                                        mMutex;
 
     LDAPI static void setup();   // 初始化
     LDAPI static void release(); // 释放资源
