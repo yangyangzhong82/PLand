@@ -110,6 +110,10 @@ bool LandPos::hasPos(const BlockPos& pos, bool ignoreY) const {
     }
 }
 
+bool LandPos::operator==(LandPos const& pos) const { return mMin_A == pos.mMin_A && mMax_B == pos.mMax_B; }
+bool LandPos::operator!=(LandPos const& pos) const { return !(*this == pos); }
+
+
 bool LandPos::isCollision(const LandPos& pos1, const LandPos& pos2) {
     return !(
         pos1.mMax_B.x < pos2.mMin_A.x || pos1.mMin_A.x > pos2.mMax_B.x || pos1.mMax_B.y < pos2.mMin_A.y

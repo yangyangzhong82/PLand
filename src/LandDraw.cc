@@ -11,6 +11,7 @@
 #include <chrono>
 #include <stop_token>
 #include <thread>
+#include <vector>
 
 
 namespace land {
@@ -27,6 +28,14 @@ void LandDraw::enable(Player& player, bool onlyDrawCurrentLand) {
     data.first = onlyDrawCurrentLand;
 }
 
+
+template <typename T>
+void Push(std::vector<T>& vec, T&& arg) {
+    // 去重
+    if (std::find(vec.begin(), vec.end(), arg) == vec.end()) {
+        vec.push_back(std::forward<T>(arg));
+    }
+}
 
 void LandDraw::release() {
     disable();
@@ -60,6 +69,7 @@ void LandDraw::setup() {
                             it = mDrawList.erase(it); // 玩家下线
                             continue;
                         }
+                        auto& arr = data.second;
 
                         data.second.clear();
                         if (data.first) {
@@ -67,7 +77,7 @@ void LandDraw::setup() {
                             auto land = db->getLandAt(player->getPosition(), player->getDimensionId());
                             if (land) {
                                 auto pp = land->getLandPos();
-                                data.second.push_back(Particle{pp, land->getLandDimid(), land->is3DLand()});
+                                Push(arr, Particle{pp, land->getLandDimid(), land->is3DLand()});
                             }
 
                         } else {
@@ -81,7 +91,7 @@ void LandDraw::setup() {
 
                             for (auto& land : lds) {
                                 auto pp = land->getLandPos();
-                                data.second.push_back(Particle{pp, land->getLandDimid(), land->is3DLand()});
+                                Push(arr, Particle{pp, land->getLandDimid(), land->is3DLand()});
                             }
                         }
                     } catch (...) {

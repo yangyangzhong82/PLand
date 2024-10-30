@@ -25,7 +25,7 @@ Particle::Particle(LandPos& pos, int dimid, bool draw3D)
 
 bool Particle::draw(Player& player, bool refreshCache, bool usePlayerYDraw2D) {
     if (mPackets.empty() || refreshCache) {
-        static std::optional<class MolangVariableMap> molangVariables;
+        static std::optional<class MolangVariableMap> molangVariables = std::nullopt;
 
         auto pos = mDraw3D ? mPos.getBorder() : mPos.getRange();
 
@@ -43,7 +43,7 @@ bool Particle::draw(Player& player, bool refreshCache, bool usePlayerYDraw2D) {
             }
         } else {
             // 2D
-            float y  = usePlayerYDraw2D ? (float)(player.getFeetBlockPos().y + 5) : pos[0].y;
+            float y  = usePlayerYDraw2D ? (float)(player.getFeetBlockPos().y + 1) : pos[0].y;
             y       += 0.5; // center
             for (auto& p : pos) {
                 mPackets.push_back(SpawnParticleEffectPacket(
@@ -61,6 +61,11 @@ bool Particle::draw(Player& player, bool refreshCache, bool usePlayerYDraw2D) {
     }
     return true;
 }
+
+bool Particle::operator==(const Particle& other) const {
+    return mPos == other.mPos && mDimid == other.mDimid && mDraw3D == other.mDraw3D;
+}
+bool Particle::operator!=(const Particle& other) const { return !(*this == other); }
 
 
 } // namespace land

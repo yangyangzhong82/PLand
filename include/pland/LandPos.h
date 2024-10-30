@@ -52,6 +52,9 @@ public:
 
     LDAPI bool hasPos(BlockPos const& pos, bool ignoreY = false) const;
 
+    LDAPI bool operator==(LandPos const& pos) const;
+    LDAPI bool operator!=(LandPos const& pos) const;
+
     // 两个领地是否碰撞(重合)
     LDAPI static bool isCollision(LandPos const& pos1, LandPos const& pos2);
 

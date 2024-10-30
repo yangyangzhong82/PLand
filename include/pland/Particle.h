@@ -23,6 +23,10 @@ public:
     LDAPI Particle(BlockPos pos1, BlockPos pos2, int dimid, bool draw3D);
 
     LDAPI bool draw(Player& player, bool refreshCache = false, bool usePlayerYDraw2D = true);
+
+
+    LDAPI bool operator==(const Particle& other) const;
+    LDAPI bool operator!=(const Particle& other) const;
 };
 
 
