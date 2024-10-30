@@ -44,8 +44,10 @@
 - `/pland reload`
   - 重载领地配置 (控制台)。
 
-- `/pland draw <disable|current|near>`
+- `/pland draw <disable|current_land|near_land>`
   - 开启绘制领地范围(需在 `Config.json` 中设置 `setupDrawCommand: true`)
     - `disable` 关闭绘制
-    - `current` 绘制当前所在领地范围
-    - `near` 绘制附近领地范围（范围由 `Config.json` 中的 `drawRange` 设置）
+    - `current_land` 绘制当前所在领地范围
+    - `near_land` 绘制附近领地范围（范围由 `Config.json` 中的 `drawRange` 设置）
+
+
