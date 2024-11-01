@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2024-11-1
+
+### Fixed
+
+- 修复购买 2D 领地时范围验证错误
+
 ## [0.2.1] - 2024-10-31
 
 ### Fixed
