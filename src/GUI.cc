@@ -141,8 +141,11 @@ void LandBuyGui::impl(Player& player) {
         int const   width       = data->mPos.getWidth();
         int const   height      = data->mPos.getHeight();
         auto const& squareRange = Config::cfg.land.bought.squareRange;
-        if ((length < squareRange.min || width < squareRange.min)
-            || (length > squareRange.max || width > squareRange.max) || height < squareRange.minHeight) {
+        if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
+            (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
+            (data->mDraw3D && (height < squareRange.minHeight || height > pl.getDimension().getHeight())
+            ) // 高度必须大于最小值 && 小于世界高度 && 3D
+        ) {
             mc::sendText<mc::LogLevel::Error>(
                 pl,
                 "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}"_tr(
@@ -257,8 +260,11 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
         int const   width       = data->mPos.getWidth();
         int const   height      = data->mPos.getHeight();
         auto const& squareRange = Config::cfg.land.bought.squareRange;
-        if ((length < squareRange.min || width < squareRange.min)
-            || (length > squareRange.max || width > squareRange.max) || height < squareRange.minHeight) {
+        if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
+            (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
+            (data->mDraw3D && (height < squareRange.minHeight || height > pl.getDimension().getHeight())
+            ) // 高度必须大于最小值 && 小于世界高度 && 3D
+        ) {
             mc::sendText<mc::LogLevel::Error>(
                 pl,
                 "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}"_tr(
