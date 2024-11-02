@@ -40,7 +40,10 @@ jobs:
           name: ${{ github.event.repository.name }}-windows-x64-${{ github.sha }}
           path: |
             bin/
-            build/windows/x64/release/*.pdb
+
+      - uses: actions/upload-artifact@v4
+        with:
+          path: build/windows/x64/release/${{ github.event.repository.name }}.pdb
 
       # SDK相关任务
       - name: Create SDK directories
