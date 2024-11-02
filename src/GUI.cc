@@ -148,10 +148,13 @@ void LandBuyGui::impl(Player& player) {
         ) {
             mc::sendText<mc::LogLevel::Error>(
                 pl,
-                "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}"_tr(
+                "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}, 当前长宽高: {}x{}x{}"_tr(
                     squareRange.min,
                     squareRange.max,
-                    squareRange.minHeight
+                    squareRange.minHeight,
+                    length,
+                    width,
+                    height
                 )
             );
             return;

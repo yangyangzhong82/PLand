@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2024-11-2
+
+### Changed
+
+- `/pland op <target: Player>` 添加未找到玩家时错误提示
+- `/pland buy` 领地范围不合法提示添加当前范围信息
+
+### Fixed
+
+- 修复 `LandPos::getSquare`、`LandPos::getVolume` 计算错误
+
 ## [0.2.2] - 2024-11-1
 
 ### Fixed

@@ -97,6 +97,12 @@ static auto const Operator = [](CommandOrigin const& ori, CommandOutput& out, Op
     CHECK_TYPE(ori, out, CommandOriginType::DedicatedServer);
     auto& db  = PLand::getInstance();
     auto  pls = param.player.results(ori).data;
+
+    if (pls->empty()) {
+        mc::sendText<mc::LogLevel::Error>(out, "未找到任何玩家，请确保玩家在线后重试"_tr());
+        return;
+    }
+
     for (auto& pl : *pls) {
         if (!pl) {
             continue;
