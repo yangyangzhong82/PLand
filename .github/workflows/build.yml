@@ -50,6 +50,7 @@ jobs:
           name: ${{ github.event.repository.name }}-windows-x64-${{ github.sha }}
           path: |
             bin/
+            build/windows/x64/release/*.pdb
 
       # SDK相关任务
       - name: Create SDK directories
