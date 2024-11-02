@@ -28,8 +28,8 @@ PosBase PosBase::make(BlockPos const& pos) { return PosBase{pos.x, pos.y, pos.z}
 int LandPos::getDepth() const { return mMax_B.x - mMin_A.x; }
 int LandPos::getHeight() const { return mMax_B.y - mMin_A.y; }
 int LandPos::getWidth() const { return mMax_B.z - mMin_A.z; }
-int LandPos::getSquare() const { return getWidth() * getHeight() * getDepth(); }
-int LandPos::getVolume() const { return getSquare() * getDepth(); }
+int LandPos::getSquare() const { return getDepth() * getWidth(); }
+int LandPos::getVolume() const { return getSquare() * getHeight(); }
 
 
 void LandPos::fix() {
