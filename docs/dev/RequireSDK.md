@@ -1,5 +1,9 @@
 # 环境配置
 
+!> 本文为 C++ 开发环境配置  
+如果您需要在 LegacyScriptEngine-QuickJs 上调用 PLand 接口  
+可以使用 [PLand-LegacyRemoteCallApi](https://github.com/engsr6982/PLand-LegacyRemoteCallApi)
+
 !> 在开始之前，请确保您的 PC 上已经安装了以下软件：
 
 - Git
