@@ -16,9 +16,13 @@
 23:01:00.561 INFO [Server] - /pland new
 23:01:00.561 INFO [Server] - /pland reload
 23:01:00.561 INFO [Server] - /pland set <a|b>
+23:01:00.561 INFO [Server] - /pland draw <disable|current_land|near_land>
 ```
 
 ?> 其中`pland` 为插件的顶层命令
+
+- `/pland`
+  - 打开GUI
 
 - `/pland <op/deop> <player: target>`
   - 添加或移除目标玩家的领地管理员权限。
@@ -46,8 +50,8 @@
 
 - `/pland draw <disable|current_land|near_land>`
   - 开启绘制领地范围(需在 `Config.json` 中设置 `setupDrawCommand: true`)
-    - `disable` 关闭绘制
-    - `current_land` 绘制当前所在领地范围
+    - `disable` 关闭绘制(玩家执行关闭自己、控制台执行关闭所有玩家)
+    - `current_land` 绘制当前所在的领地范围
     - `near_land` 绘制附近领地范围（范围由 `Config.json` 中的 `drawRange` 设置）
 
 
