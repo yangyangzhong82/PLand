@@ -26,6 +26,7 @@
 #include "pland/wrapper/FormEx.h"
 #include <algorithm>
 #include <string>
+#include <unordered_set>
 
 
 using namespace ll::form;
@@ -819,7 +820,12 @@ void LandOPManagerGui::IChoosePlayerFromDB::impl(Player& player, ChoosePlayerCal
     auto const& infos = ll::service::PlayerInfo::getInstance();
     auto const  lands = db.getLands();
 
+    std::unordered_set<UUIDs> filtered; // 防止重复
     for (auto const& ptr : lands) {
+        if (filtered.contains(ptr->getLandOwner())) {
+            continue;
+        }
+        filtered.insert(ptr->getLandOwner());
         auto info = infos.fromUuid(UUIDm::fromString(ptr->getLandOwner()));
 
         fm.appendButton(info.has_value() ? info->name : ptr->getLandOwner(), [ptr, callback](Player& self) {
