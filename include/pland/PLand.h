@@ -7,6 +7,7 @@
 #include "pland/LandPos.h"
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <thread>
 #include <unordered_map>
 #include <utility>
@@ -28,6 +29,7 @@ public:
     //                 维度                         区块            领地
     std::unordered_map<LandDimid, std::unordered_map<ChunkID, std::vector<LandID>>> mLandMap;   // 领地映射表
     std::unordered_map<LandID, LandData_sptr>                                       mLandCache; // 领地缓存
+    mutable std::mutex                                                              mMutex;     // 领地缓存锁
 
     std::vector<UUIDs> mLandOperators; // 领地操作员
 
@@ -50,10 +52,11 @@ public:
 
     LDAPI bool refreshLandRange(LandData_sptr ptr); // 刷新领地范围
 
-    LDAPI LandData_sptr getLand(LandID id) const;                                        // 获取领地数据
-    LDAPI std::vector<LandData_sptr> getLands() const;                                   // 获取所有领地数据
-    LDAPI std::vector<LandData_sptr> getLands(LandDimid dimid) const;                    // 获取维度领地数据
-    LDAPI std::vector<LandData_sptr> getLands(UUIDs const& uuid) const;                  // 获取玩家领地数据
+    LDAPI LandData_wptr getLandWeakPtr(LandID id) const;                // 获取领地弱引用 (推荐)
+    LDAPI LandData_sptr getLand(LandID id) const;                       // 获取领地数据
+    LDAPI std::vector<LandData_sptr> getLands() const;                  // 获取所有领地数据
+    LDAPI std::vector<LandData_sptr> getLands(LandDimid dimid) const;   // 获取维度领地数据
+    LDAPI std::vector<LandData_sptr> getLands(UUIDs const& uuid) const; // 获取玩家领地数据
     LDAPI std::vector<LandData_sptr> getLands(UUIDs const& uuid, LandDimid dimid) const; // 获取玩家维度领地数据
 
     LDAPI LandPermType

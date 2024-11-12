@@ -39,6 +39,7 @@ bool PLand::init() {
 
 
     // load land data
+    std::unique_lock<std::mutex> lock(mMutex); // 获取锁
     mDB->iter([this](auto key, auto value) {
         if (key == DB_KEY_OPERATORS) return true; // skip operators
         auto json = JSON::parse(value);
@@ -49,7 +50,7 @@ bool PLand::init() {
         mLandCache.emplace(land->getLandID(), land);
         return true;
     });
-
+    lock.unlock(); // 释放锁
 
     auto& logger = my_mod::MyMod::getInstance().getSelf().getLogger();
     logger.info("已加载 {} 位操作员", mLandOperators.size());
@@ -59,6 +60,8 @@ bool PLand::init() {
     return _initCache();
 }
 bool PLand::save() {
+    std::lock_guard<std::mutex> lock(mMutex); // 获取锁
+
     mDB->set(DB_KEY_OPERATORS, JSON::stringify(JSON::structTojson(mLandOperators)));
 
     for (auto& [id, land] : mLandCache) {
@@ -68,6 +71,8 @@ bool PLand::save() {
     return true;
 }
 bool PLand::_initCache() {
+    std::lock_guard<std::mutex> lock(mMutex); // 获取锁
+
     for (auto& [id, land] : mLandCache) {
         auto& chunkMap = mLandMap[LandDimid(land->getLandDimid())]; // 区块表
 
@@ -130,6 +135,12 @@ bool PLand::addLand(LandData_sptr land) {
     if (land->mLandID != uint64_t(-1)) {
         return false; // land already added
     }
+
+    std::lock_guard<std::mutex> lock(mMutex); // 获取锁
+    if (hasLand(land->mLandID)) {
+        return false; // land already added
+    }
+
     land->mLandID = generateLandID();
     mLandCache.emplace(land->mLandID, land); // 添加到缓存
 
@@ -146,6 +157,8 @@ bool PLand::addLand(LandData_sptr land) {
     return true;
 }
 bool PLand::removeLand(LandID landId) {
+    std::lock_guard<std::mutex> lock(mMutex); // 获取锁
+
     auto landIter = mLandCache.find(landId);
     if (landIter == mLandCache.end()) {
         return false;
@@ -187,7 +200,13 @@ bool PLand::refreshLandRange(LandData_sptr ptr) {
     return true;
 }
 
-
+LandData_wptr PLand::getLandWeakPtr(LandID id) const {
+    auto landIt = mLandCache.find(id);
+    if (landIt != mLandCache.end()) {
+        return LandData_wptr(landIt->second);
+    }
+    return LandData_wptr{}; // 返回一个空的weak_ptr
+}
 LandData_sptr PLand::getLand(LandID id) const {
     auto landIt = mLandCache.find(id);
     if (landIt != mLandCache.end()) {
