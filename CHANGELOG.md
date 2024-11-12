@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4] - 2024-11-13
+
+### Changed
+
+- `IChoosePlayerFromDB` 表单增加去重
+- `PLand` 增加 `std::mutex` 保护资源
+
 ## [0.2.3] - 2024-11-2
 
 ### Changed
