@@ -69,13 +69,13 @@ bool MyMod::disable() {
     auto& logger = getSelf().getLogger();
     logger.info("Saveing...");
 
-    land::PLand::getInstance().save();
     land::PLand::getInstance().mThread.request_stop();
+    land::GlobalTickScheduler.clear();
+    land::PLand::getInstance().save();
     land::LandSelector::getInstance().uninit();
     land::LandScheduler::release();
     land::EventListener::release();
     land::LandDraw::release();
-    land::GlobalTickScheduler.clear();
 
     return true;
 }
