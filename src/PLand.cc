@@ -57,6 +57,7 @@ bool PLand::init() {
     logger.info("已加载 {} 位操作员", mLandOperators.size());
     logger.info("已加载 {} 块领地数据", mLandCache.size());
 
+    lock.unlock(); // 提前解锁，避免死锁
     _initThread(); // 启动保存线程
     return _initCache();
 }
@@ -72,7 +73,7 @@ bool PLand::save() {
     return true;
 }
 bool PLand::_initCache() {
-    std::shared_lock<std::shared_mutex> lock(mMutex); // 获取锁
+    std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
 
     for (auto& [id, land] : mLandCache) {
         auto& chunkMap = mLandMap[LandDimid(land->getLandDimid())]; // 区块表
@@ -111,15 +112,13 @@ PLand& PLand::getInstance() {
 
 bool PLand::isOperator(UUIDs const& uuid) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);
-
     return std::find(mLandOperators.begin(), mLandOperators.end(), uuid) != mLandOperators.end();
 }
 bool PLand::addOperator(UUIDs const& uuid) {
-    std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
-
     if (isOperator(uuid)) {
         return false;
     }
+    std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
     mLandOperators.push_back(uuid);
     return true;
 }
@@ -145,14 +144,14 @@ bool PLand::addLand(LandData_sptr land) {
     if (land->mLandID != uint64_t(-1)) {
         return false; // land already added
     }
-
-    std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
     if (hasLand(land->mLandID)) {
         return false; // land already added
     }
 
-    land->mLandID = generateLandID();
-    mLandCache.emplace(land->mLandID, land); // 添加到缓存
+    land->mLandID = generateLandID(); // 生成领地ID (独占锁)
+
+    std::unique_lock<std::shared_mutex> lock(mMutex); // fix deadlock
+    mLandCache.emplace(land->mLandID, land);          // 添加到缓存
 
     // 添加映射表
     auto chs = land->mPos.getChunks();
