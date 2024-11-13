@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <cstdint>
 #include <memory>
+#include <mutex>
+#include <shared_mutex>
 #include <stop_token>
 #include <string>
 #include <utility>
@@ -39,7 +41,7 @@ bool PLand::init() {
 
 
     // load land data
-    std::unique_lock<std::mutex> lock(mMutex); // 获取锁
+    std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
     mDB->iter([this](auto key, auto value) {
         if (key == DB_KEY_OPERATORS) return true; // skip operators
         auto json = JSON::parse(value);
@@ -50,7 +52,6 @@ bool PLand::init() {
         mLandCache.emplace(land->getLandID(), land);
         return true;
     });
-    lock.unlock(); // 释放锁
 
     auto& logger = my_mod::MyMod::getInstance().getSelf().getLogger();
     logger.info("已加载 {} 位操作员", mLandOperators.size());
@@ -60,7 +61,7 @@ bool PLand::init() {
     return _initCache();
 }
 bool PLand::save() {
-    std::lock_guard<std::mutex> lock(mMutex); // 获取锁
+    std::shared_lock<std::shared_mutex> lock(mMutex); // 获取锁
 
     mDB->set(DB_KEY_OPERATORS, JSON::stringify(JSON::structTojson(mLandOperators)));
 
@@ -71,7 +72,7 @@ bool PLand::save() {
     return true;
 }
 bool PLand::_initCache() {
-    std::lock_guard<std::mutex> lock(mMutex); // 获取锁
+    std::shared_lock<std::shared_mutex> lock(mMutex); // 获取锁
 
     for (auto& [id, land] : mLandCache) {
         auto& chunkMap = mLandMap[LandDimid(land->getLandDimid())]; // 区块表
@@ -109,9 +110,13 @@ PLand& PLand::getInstance() {
 
 
 bool PLand::isOperator(UUIDs const& uuid) const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+
     return std::find(mLandOperators.begin(), mLandOperators.end(), uuid) != mLandOperators.end();
 }
 bool PLand::addOperator(UUIDs const& uuid) {
+    std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
+
     if (isOperator(uuid)) {
         return false;
     }
@@ -119,6 +124,8 @@ bool PLand::addOperator(UUIDs const& uuid) {
     return true;
 }
 bool PLand::removeOperator(UUIDs const& uuid) {
+    std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
+
     auto iter = std::find(mLandOperators.begin(), mLandOperators.end(), uuid);
     if (iter == mLandOperators.end()) {
         return false;
@@ -127,7 +134,10 @@ bool PLand::removeOperator(UUIDs const& uuid) {
     return true;
 }
 
-bool PLand::hasLand(LandID id) const { return mLandCache.find(id) != mLandCache.end(); }
+bool PLand::hasLand(LandID id) const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+    return mLandCache.find(id) != mLandCache.end();
+}
 bool PLand::addLand(LandData_sptr land) {
     if (land == nullptr) {
         return false;
@@ -136,7 +146,7 @@ bool PLand::addLand(LandData_sptr land) {
         return false; // land already added
     }
 
-    std::lock_guard<std::mutex> lock(mMutex); // 获取锁
+    std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
     if (hasLand(land->mLandID)) {
         return false; // land already added
     }
@@ -157,7 +167,7 @@ bool PLand::addLand(LandData_sptr land) {
     return true;
 }
 bool PLand::removeLand(LandID landId) {
-    std::lock_guard<std::mutex> lock(mMutex); // 获取锁
+    std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
 
     auto landIter = mLandCache.find(landId);
     if (landIter == mLandCache.end()) {
@@ -179,6 +189,8 @@ bool PLand::removeLand(LandID landId) {
     return true;
 }
 bool PLand::refreshLandRange(LandData_sptr ptr) {
+    std::unique_lock<std::shared_mutex> lock(mMutex);
+
     // 擦除旧映射
     for (auto& chunk : ptr->mPos.getChunks()) {
         auto& landVec = mLandMap[ptr->mLandDimid][getChunkID(chunk.x, chunk.z)];
@@ -201,6 +213,8 @@ bool PLand::refreshLandRange(LandData_sptr ptr) {
 }
 
 LandData_wptr PLand::getLandWeakPtr(LandID id) const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+
     auto landIt = mLandCache.find(id);
     if (landIt != mLandCache.end()) {
         return LandData_wptr(landIt->second);
@@ -208,6 +222,8 @@ LandData_wptr PLand::getLandWeakPtr(LandID id) const {
     return LandData_wptr{}; // 返回一个空的weak_ptr
 }
 LandData_sptr PLand::getLand(LandID id) const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+
     auto landIt = mLandCache.find(id);
     if (landIt != mLandCache.end()) {
         return landIt->second;
@@ -215,6 +231,8 @@ LandData_sptr PLand::getLand(LandID id) const {
     return nullptr;
 }
 std::vector<LandData_sptr> PLand::getLands() const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+
     std::vector<LandData_sptr> lands;
     for (auto& land : mLandCache) {
         lands.push_back(land.second);
@@ -222,6 +240,8 @@ std::vector<LandData_sptr> PLand::getLands() const {
     return lands;
 }
 std::vector<LandData_sptr> PLand::getLands(LandDimid dimid) const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+
     std::vector<LandData_sptr> lands;
     for (auto& land : mLandCache) {
         if (land.second->mLandDimid == dimid) {
@@ -231,6 +251,8 @@ std::vector<LandData_sptr> PLand::getLands(LandDimid dimid) const {
     return lands;
 }
 std::vector<LandData_sptr> PLand::getLands(UUIDs const& uuid) const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+
     std::vector<LandData_sptr> lands;
     for (auto& land : mLandCache) {
         if (land.second->isLandOwner(uuid)) {
@@ -240,6 +262,8 @@ std::vector<LandData_sptr> PLand::getLands(UUIDs const& uuid) const {
     return lands;
 }
 std::vector<LandData_sptr> PLand::getLands(UUIDs const& uuid, LandDimid dimid) const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+
     std::vector<LandData_sptr> lands;
     for (auto& land : mLandCache) {
         if (land.second->mLandDimid == dimid && land.second->isLandOwner(uuid)) {
@@ -251,6 +275,8 @@ std::vector<LandData_sptr> PLand::getLands(UUIDs const& uuid, LandDimid dimid) c
 
 
 LandPermType PLand::getPermType(UUIDs const& uuid, LandID id, bool ignoreOperator) const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+
     if (!ignoreOperator && isOperator(uuid)) return LandPermType::Operator;
 
     auto land = getLand(id);
@@ -262,9 +288,14 @@ LandPermType PLand::getPermType(UUIDs const& uuid, LandID id, bool ignoreOperato
 }
 
 
-LandID PLand::generateLandID() { return static_cast<LandID>(mLandCache.size()) + 1; }
+LandID PLand::generateLandID() {
+    std::unique_lock<std::shared_mutex> lock(mMutex);
+    return static_cast<LandID>(mLandCache.size()) + 1;
+}
 
 LandData_sptr PLand::getLandAt(BlockPos const& pos, LandDimid dimid) const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+
     ChunkID chunkId = getChunkID(pos.x >> 4, pos.z >> 4);
     auto    dimIt   = mLandMap.find(dimid); // 查找维度
     if (dimIt != mLandMap.end()) {
@@ -282,6 +313,8 @@ LandData_sptr PLand::getLandAt(BlockPos const& pos, LandDimid dimid) const {
     return nullptr;
 }
 std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& center, int radius, LandDimid dimid) const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+
     std::vector<LandData_sptr> lands;
 
     int minChunkX = (center.x - radius) >> 4;
@@ -309,6 +342,8 @@ std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& center, int radius, 
     return lands;
 }
 std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+
     std::vector<LandData_sptr> lands;
 
     int minChunkX = std::min(pos1.x, pos2.x) >> 4;
