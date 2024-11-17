@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.6] - 2024-11-17
+
+### Changed
+
+- `PLand` 部分成员更改为 `private`
+
+### Fixed
+
+- 修复 `PLand::generateLandID` 可能生成重复的 ID
+- 修复 `PLand::addLand` 添加失败依然返回 true
+- 修复 `LandBuyGui::impl` 购买失败未返还经济
+
 ## [0.2.5] - 2024-11-15
 
 ### Fixed
