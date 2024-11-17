@@ -9,6 +9,7 @@
 #include "pland/utils/JSON.h"
 #include "pland/utils/Utils.h"
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -49,7 +50,12 @@ bool PLand::init() {
 
         JSON::jsonToStruct(json, *land);
 
-        mLandCache.emplace(land->getLandID(), land);
+        // 保证landID唯一
+        if (mNextID < land->getLandID()) {
+            mNextID.store(land->getLandID() + 1);
+        }
+
+        mLandCache.emplace(land->getLandID(), std::move(land));
         return true;
     });
 
@@ -138,20 +144,31 @@ bool PLand::hasLand(LandID id) const {
     return mLandCache.find(id) != mLandCache.end();
 }
 bool PLand::addLand(LandData_sptr land) {
-    if (land == nullptr) {
+    if (!land || land->mLandID != LandID(-1)) {
         return false;
     }
-    if (land->mLandID != uint64_t(-1)) {
-        return false; // land already added
-    }
-    if (hasLand(land->mLandID)) {
-        return false; // land already added
-    }
 
-    land->mLandID = generateLandID(); // 生成领地ID (独占锁)
+    LandID id = generateLandID();
+    if (hasLand(id)) {
+        for (size_t i = 0; i < 3; i++) {
+            id = generateLandID();
+            if (!hasLand(id)) {
+                break;
+            }
+        }
+    }
+    land->mLandID = id;
 
-    std::unique_lock<std::shared_mutex> lock(mMutex); // fix deadlock
-    mLandCache.emplace(land->mLandID, land);          // 添加到缓存
+    std::unique_lock<std::shared_mutex> lock(mMutex);
+    auto                                result = mLandCache.emplace(land->mLandID, land); // 添加到缓存
+    if (!result.second) {
+        my_mod::MyMod::getInstance().getSelf().getLogger().warn(
+            "添加领地失败, ID: {}, at: {}",
+            land->mLandID,
+            __LINE__
+        );
+        return false; // add failed
+    }
 
     // 添加映射表
     auto chs = land->mPos.getChunks();
@@ -287,11 +304,7 @@ LandPermType PLand::getPermType(UUIDs const& uuid, LandID id, bool ignoreOperato
 }
 
 
-LandID PLand::generateLandID() {
-    std::unique_lock<std::shared_mutex> lock(mMutex);
-    return static_cast<LandID>(mLandCache.size()) + 1;
-}
-
+LandID        PLand::generateLandID() { return mNextID++; }
 LandData_sptr PLand::getLandAt(BlockPos const& pos, LandDimid dimid) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);
 

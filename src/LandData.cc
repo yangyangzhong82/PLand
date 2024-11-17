@@ -1,4 +1,5 @@
 #include "pland/LandData.h"
+#include "pland/Global.h"
 #include <vector>
 
 namespace land {
@@ -83,7 +84,8 @@ LandPermType LandData::getPermType(UUIDs const& uuid) const {
 // static
 LandData_sptr LandData::make() { return std::make_shared<LandData>(); }
 LandData_sptr LandData::make(LandPos const& pos, LandDimid dimid, bool is3D, UUIDs const& owner) {
-    auto ptr = std::make_shared<LandData>();
+    auto ptr     = std::make_shared<LandData>();
+    ptr->mLandID = LandID(-1);
     ptr->_setLandPos(pos);
     ptr->mLandDimid = dimid;
     ptr->setIs3DLand(is3D);

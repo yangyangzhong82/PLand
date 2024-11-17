@@ -5,6 +5,7 @@
 #include "pland/Global.h"
 #include "pland/LandData.h"
 #include "pland/LandPos.h"
+#include <atomic>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -23,16 +24,18 @@ public:
     PLand(const PLand&)            = delete;
     PLand& operator=(const PLand&) = delete;
 
-
+private:
     std::unique_ptr<ll::data::KeyValueDB> mDB; // private
 
     //                 维度                         区块            领地
     std::unordered_map<LandDimid, std::unordered_map<ChunkID, std::vector<LandID>>> mLandMap;   // 领地映射表
     std::unordered_map<LandID, LandData_sptr>                                       mLandCache; // 领地缓存
     mutable std::shared_mutex                                                       mMutex;     // 领地缓存锁
+    std::atomic<LandID>                                                             mNextID{0};
 
     std::vector<UUIDs> mLandOperators; // 领地操作员
 
+public:
     LDAPI static PLand& getInstance();
 
     LDAPI bool init();

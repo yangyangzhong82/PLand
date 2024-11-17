@@ -185,12 +185,15 @@ void LandBuyGui::impl(Player& player) {
         if (db.addLand(landPtr)) {
             landPtr->mOriginalBuyPrice = discountedPrice; // 保存购买价格
             selector.completeAndRelease(pl);
-            mc::sendText<mc::LogLevel::Info>(pl, "购买成功"_tr());
+            mc::sendText<mc::LogLevel::Info>(pl, "购买领地成功"_tr());
 
             PlayerBuyLandAfterEvent ev(pl, landPtr);
             ll::event::EventBus::getInstance().publish(ev);
 
-        } else mc::sendText<mc::LogLevel::Error>(pl, "购买失败"_tr());
+        } else {
+            mc::sendText<mc::LogLevel::Error>(pl, "购买领地失败"_tr());
+            eco.add(pl, discountedPrice); // 补回经济
+        }
     });
     fm.appendButton("暂存订单"_tr(), "textures/ui/recipe_book_icon"); // close
     fm.appendButton("放弃订单"_tr(), "textures/ui/cancel", [](Player& pl) {
