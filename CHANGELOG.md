@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] - 2024-11-15
+
+### Fixed
+
+- 修复可能的死锁问题
+- 修复 PLand 多线程竞争问题
+
 ## [0.2.4] - 2024-11-13
 
 ### Changed
