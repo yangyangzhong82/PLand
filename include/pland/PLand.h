@@ -30,16 +30,17 @@ private:
     //                 维度                         区块            领地
     std::unordered_map<LandDimid, std::unordered_map<ChunkID, std::vector<LandID>>> mLandMap;   // 领地映射表
     std::unordered_map<LandID, LandData_sptr>                                       mLandCache; // 领地缓存
-    mutable std::shared_mutex                                                       mMutex;     // 领地缓存锁
     std::atomic<LandID>                                                             mNextID{0};
 
     std::vector<UUIDs> mLandOperators; // 领地操作员
 
 public:
+    mutable std::shared_mutex mMutex; // 领地缓存锁
+
     LDAPI static PLand& getInstance();
 
     LDAPI bool init();
-    LDAPI bool save();
+    LDAPI bool save(bool setupReadLock = true);
     LDAPI bool _initCache(); // private
 
     std::jthread mThread;       // private

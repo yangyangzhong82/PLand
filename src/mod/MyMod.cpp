@@ -69,9 +69,11 @@ bool MyMod::disable() {
     auto& logger = getSelf().getLogger();
     logger.info("Saveing...");
 
-    land::PLand::getInstance().mThread.request_stop();
+    land::PLand::getInstance().mThread.request_stop(); // 请求关闭线程
     land::GlobalTickScheduler.clear();
-    land::PLand::getInstance().save();
+
+    std::unique_lock<std::shared_mutex> lock(land::PLand::getInstance().mMutex); // 获取锁 (独占，防止线程继续写入)
+    land::PLand::getInstance().save(false);           // 保存数据 (不获取读锁)
     land::LandSelector::getInstance().uninit();
     land::LandScheduler::release();
     land::EventListener::release();
