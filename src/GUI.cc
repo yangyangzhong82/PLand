@@ -557,8 +557,9 @@ void LandManagerGui::DeleteLandGui::impl(Player& player, LandData_sptr ptr) {
         auto& eco = EconomySystem::getInstance();
 
         if (eco.add(pl, price)) {
-            db.removeLand(ptr->getLandID());
-            mc::sendText(pl, "删除领地成功!"_tr());
+            if (db.removeLand(ptr->getLandID())) {
+                mc::sendText(pl, "删除领地成功!"_tr());
+            } else mc::sendText(pl, "删除领地失败!"_tr());
 
             PlayerDeleteLandAfterEvent ev(pl, ptr->getLandID());
             ll::event::EventBus::getInstance().publish(ev);

@@ -201,8 +201,9 @@ bool PLand::removeLand(LandID landId) {
         }
     }
 
-    // 擦除缓存
-    mLandCache.erase(landIter);
+    mLandCache.erase(landIter);             // 删除缓存
+    this->mDB->del(std::to_string(landId)); // 删除数据库记录
+
     return true;
 }
 bool PLand::refreshLandRange(LandData_sptr ptr) {
