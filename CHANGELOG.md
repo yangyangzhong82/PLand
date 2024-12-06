@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.7] - 2024-12-6
+
+### Fixed
+
+- 修复删除领地时出现回档问题 [#5]
+
 ## [0.2.6] - 2024-11-17
 
 ### Changed
