@@ -40,7 +40,7 @@ public:
     LDAPI static PLand& getInstance();
 
     LDAPI bool init();
-    LDAPI bool save();       // 此方法为非线程安全，使用时请注意加锁
+    LDAPI bool save();
     LDAPI bool _initCache(); // private
 
     std::jthread mThread;       // private
