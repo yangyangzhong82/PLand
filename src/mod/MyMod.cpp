@@ -71,8 +71,6 @@ bool MyMod::disable() {
 
     land::PLand::getInstance().mThread.request_stop(); // 请求关闭线程
     land::GlobalTickScheduler.clear();
-
-    std::unique_lock<std::shared_mutex> lock(land::PLand::getInstance().mMutex); // 获取锁 (独占，防止线程继续写入)
     land::PLand::getInstance().save();
     land::LandSelector::getInstance().uninit();
     land::LandScheduler::release();

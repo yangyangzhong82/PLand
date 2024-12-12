@@ -68,6 +68,7 @@ bool PLand::init() {
     return _initCache();
 }
 bool PLand::save() {
+    std::shared_lock<std::shared_mutex> lock(mMutex); // 获取锁
     mDB->set(DB_KEY_OPERATORS, JSON::stringify(JSON::structTojson(mLandOperators)));
 
     for (auto& [id, land] : mLandCache) {
@@ -103,7 +104,6 @@ void PLand::_initThread() {
         while (!st.stop_requested()) {
             std::this_thread::sleep_for(std::chrono::seconds(120)); // 2分钟保存一次
             if (!st.stop_requested()) {
-                std::shared_lock<std::shared_mutex> lock(mMutex); // 获取锁
                 this->save();
             }
         }
