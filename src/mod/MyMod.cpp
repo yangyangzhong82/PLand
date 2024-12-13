@@ -67,11 +67,12 @@ bool MyMod::enable() {
 
 bool MyMod::disable() {
     auto& logger = getSelf().getLogger();
-    logger.info("Saveing...");
-
+    logger.info("Stopping thread and saving data...");
     land::PLand::getInstance().mThread.request_stop(); // 请求关闭线程
     land::GlobalTickScheduler.clear();
+    logger.debug("[Main] Saving land data...");
     land::PLand::getInstance().save();
+    logger.debug("[Main] Land data saved.");
     land::LandSelector::getInstance().uninit();
     land::LandScheduler::release();
     land::EventListener::release();

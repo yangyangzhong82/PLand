@@ -32,11 +32,10 @@ private:
     std::unordered_map<LandID, LandData_sptr>                                       mLandCache; // 领地缓存
     std::atomic<LandID>                                                             mNextID{0};
 
-    std::vector<UUIDs> mLandOperators; // 领地操作员
+    std::vector<UUIDs>        mLandOperators; // 领地操作员
+    mutable std::shared_mutex mMutex;         // 领地缓存锁
 
 public:
-    mutable std::shared_mutex mMutex; // 领地缓存锁
-
     LDAPI static PLand& getInstance();
 
     LDAPI bool init();
