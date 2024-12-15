@@ -37,7 +37,6 @@ bool MyMod::load() {
     logger.info(R"( |_|     |______|\__,_||_| |_| \__,_|)");
     logger.info(R"(                                     )");
     logger.info("Loading...");
-    logger.info("Build Time: {}", BUILD_TIME);
 
     ll::i18n::load(getSelf().getLangDir());
 

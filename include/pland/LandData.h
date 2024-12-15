@@ -90,19 +90,21 @@ using LandData_sptr = std::shared_ptr<class LandData>; // 共享指针
 using LandData_wptr = std::weak_ptr<class LandData>;   // 弱指针
 class LandData {
 public:
-    int                version{2};                         // 版本号
+    int                version{3};                         // 版本号
     LandPos            mPos;                               // 领地对角坐标
     LandID             mLandID{static_cast<uint64_t>(-1)}; // 领地唯一ID  (由 PLand::addLand() 时分配)
     LandDimid          mLandDimid;                         // 领地所在维度
     bool               mIs3DLand;                          // 是否为3D领地
     LandPermTable      mLandPermTable;                     // 领地权限
-    UUIDs              mLandOwner;                         // 领地主人
+    UUIDs              mLandOwner;                         // 领地主人(默认UUID,其余情况看mOwnerDataIsXUID)
     std::vector<UUIDs> mLandMembers;                       // 领地成员
     std::string        mLandName{"Unnamed territories"};   // 领地名称
     std::string        mLandDescribe{"No description"};    // 领地描述
     bool               mIsSaleing{false};                  // 是否正在出售
     int                mSalePrice{0};                      // 出售价格
     int                mOriginalBuyPrice{0};               // 原始购买价格
+    bool               mIsConvertedLand{false};            // 是否为转换后的领地(其它插件创建的领地)
+    bool mOwnerDataIsXUID{false}; // 领地主人数据是否为XUID (如果为true，则主人上线自动转换为UUID)
 
     LDAPI static LandData_sptr make(); // 创建一个空领地数据(反射使用)
     LDAPI static LandData_sptr make(LandPos const& pos, LandDimid dimid, bool is3D, UUIDs const& owner); // 新建领地数据

@@ -17,12 +17,13 @@
 23:01:00.561 INFO [Server] - /pland reload
 23:01:00.561 INFO [Server] - /pland set <a|b>
 23:01:00.561 INFO [Server] - /pland draw <disable|current_land|near_land>
+17:35:08.110 INFO [Server] - /pland import <clearDb: Boolean> <relationship_file: string> <data_file: string>
 ```
 
 ?> 其中`pland` 为插件的顶层命令
 
 - `/pland`
-  - 打开GUI
+  - 打开 GUI
 
 - `/pland <op/deop> <player: target>`
   - 添加或移除目标玩家的领地管理员权限。
@@ -54,4 +55,8 @@
     - `current_land` 绘制当前所在的领地范围
     - `near_land` 绘制附近领地范围（范围由 `Config.json` 中的 `drawRange` 设置）
 
-
+- `/pland import <clearDb: Boolean> <relationship_file: string> <data_file: string>`
+  - 导入 iland 领地数据(控制台)
+    - `clearDb` 是否清空数据库
+    - `relationship_file` 领地关系文件(路径)
+    - `data_file` 领地数据文件(路径)

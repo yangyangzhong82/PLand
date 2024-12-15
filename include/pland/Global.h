@@ -3,6 +3,7 @@
 #include "ll/api/schedule/Scheduler.h"
 #include "mc/deps/core/mce/UUID.h"
 #include "mc/world/ActorUniqueID.h"
+#include <filesystem>
 
 
 namespace land {
@@ -14,11 +15,12 @@ using LandDimid = int;         // 领地所在维度
 using UUIDm     = mce::UUID;   // class
 using UUIDs     = std::string; // string
 
+
 enum class LandPermType : int {
-    Operator, // 领地操作员（管理）
-    Owner,    // 领地主人
-    Member,   // 领地成员
-    Guest,    // 访客
+    Operator = 0, // 领地操作员（管理）
+    Owner,        // 领地主人
+    Member,       // 领地成员
+    Guest,        // 访客
 };
 
 
@@ -26,7 +28,7 @@ enum class LandPermType : int {
 using string = std::string;
 using ll::i18n_literals::operator""_tr;
 using ll::chrono_literals::operator""_tick; // 1s = 20_tick
-
+namespace fs = std::filesystem;
 
 // 全局共享资源 (这些对象在 Mod 初始化时创建，在 Mod 退出时销毁)
 extern ll::schedule::GameTickScheduler GlobalTickScheduler; // 全局定时器

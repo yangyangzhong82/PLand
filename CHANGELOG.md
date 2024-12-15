@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2024-12-15
+
+### Added
+
+- 支持从 iLand 导入数据
+- LandData 新增 `mIsConvertedLand`、`mOwnerDataIsXUID` 字段
+- 新增 `ActorHurtEvent` 事件处理
+
 ## [0.2.7] - 2024-12-6
 
 ### Fixed

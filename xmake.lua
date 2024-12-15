@@ -47,7 +47,6 @@ target("PLand") -- Change this to your mod name.
     set_languages("c++20")
 
     add_defines("PLUGIN_NAME=\"[PLand] \"")
-    add_defines("BUILD_TIME=\"" .. os.date('%Y-%m-%d %H:%M:%S') .. "\"")
 
     if is_mode("debug") then
         add_defines("DEBUG", "LL_I18N_COLLECT_STRINGS")

@@ -2,15 +2,6 @@
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/Listener.h"
 #include "ll/api/event/ListenerBase.h"
-#include "ll/api/event/player/PlayerAttackEvent.h"
-#include "ll/api/event/player/PlayerDestroyBlockEvent.h"
-#include "ll/api/event/player/PlayerInteractBlockEvent.h"
-#include "ll/api/event/player/PlayerJoinEvent.h"
-#include "ll/api/event/player/PlayerPickUpItemEvent.h"
-#include "ll/api/event/player/PlayerPlaceBlockEvent.h"
-#include "ll/api/event/player/PlayerUseItemEvent.h"
-#include "ll/api/event/world/FireSpreadEvent.h"
-#include "ll/api/event/world/SpawnMobEvent.h"
 #include "mc/network/packet/UpdateBlockPacket.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/world/level/material/Material.h"
@@ -22,7 +13,16 @@
 #include "pland/PLand.h"
 #include "pland/utils/MC.h"
 #include <functional>
-#include <unordered_map>
+
+#include "ll/api/event/entity/ActorHurtEvent.h"
+#include "ll/api/event/player/PlayerAttackEvent.h"
+#include "ll/api/event/player/PlayerDestroyBlockEvent.h"
+#include "ll/api/event/player/PlayerInteractBlockEvent.h"
+#include "ll/api/event/player/PlayerJoinEvent.h"
+#include "ll/api/event/player/PlayerPickUpItemEvent.h"
+#include "ll/api/event/player/PlayerPlaceBlockEvent.h"
+#include "ll/api/event/player/PlayerUseItemEvent.h"
+#include "ll/api/event/world/FireSpreadEvent.h"
 
 
 #include "more_events/ActorRideEvent.h"
@@ -43,6 +43,8 @@
 #include "more_events/WitherDestroyBlockEvent.h"
 
 
+ll::event::ListenerPtr mPlayerJoinEvent;                    // 玩家加入服务器
+ll::event::ListenerPtr mActorHurtEvent;                     // 实体受伤
 ll::event::ListenerPtr mPlayerDestroyBlockEvent;            // 玩家尝试破坏方块
 ll::event::ListenerPtr mPlayerPlaceingBlockEvent;           // 玩家尝试放置方块
 ll::event::ListenerPtr mPlayerUseItemOnEvent;               // 玩家对方块使用物品（点击右键）
@@ -87,6 +89,44 @@ bool EventListener::setup() {
     auto* logger = &my_mod::MyMod::getInstance().getSelf().getLogger();
 
     // Minecraft events (ll)
+    mPlayerJoinEvent = bus->emplaceListener<ll::event::PlayerJoinEvent>([db, logger](ll::event::PlayerJoinEvent& ev) {
+        if (ev.self().isSimulatedPlayer()) return;
+        auto lands = db->getLands(ev.self().getXuid()); // xuid 查询
+        if (lands.empty()) return;
+        logger->info("Update land owner data from xuid to uuid for player {}", ev.self().getRealName());
+        auto uuid = ev.self().getUuid().asString();
+        for (auto& land : lands) {
+            if (land->mIsConvertedLand && land->mOwnerDataIsXUID) {
+                land->mLandOwner       = uuid; // xuid -> uuid
+                land->mOwnerDataIsXUID = false;
+            }
+        }
+    });
+
+    mActorHurtEvent = bus->emplaceListener<ll::event::ActorHurtEvent>([db, logger](ll::event::ActorHurtEvent& ev) {
+        logger->debug("[ActorHurt] mob: {}", ev.self().getTypeName());
+        auto& self = ev.self();
+
+        auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
+        if (land) {
+            auto const& et  = self.getTypeName();
+            auto const& tab = land->getLandPermTableConst();
+            if (tab.allowAttackPlayer && self.isPlayer()) return true;
+            if (tab.allowAttackAnimal && AnimalEntityMap.contains(et)) return true;
+            if (tab.allowAttackMob && !AnimalEntityMap.contains(et)) return true;
+        }
+
+        if (self.isPlayer()) {
+            auto const pl = self.getWeakEntity().tryUnwrap<Player>();
+            if (pl.has_value()) {
+                if (PreCheck(land, pl->getUuid().asString())) return true;
+            }
+        }
+
+        ev.cancel();
+        return true;
+    });
+
     mPlayerDestroyBlockEvent =
         bus->emplaceListener<ll::event::PlayerDestroyBlockEvent>([db, logger](ll::event::PlayerDestroyBlockEvent& ev) {
             auto& player   = ev.self();
@@ -651,6 +691,8 @@ bool EventListener::setup() {
 bool EventListener::release() {
     auto& bus = ll::event::EventBus::getInstance();
 
+    bus.removeListener(mPlayerJoinEvent);
+    bus.removeListener(mActorHurtEvent);
     bus.removeListener(mPlayerDestroyBlockEvent);
     bus.removeListener(mPlayerPlaceingBlockEvent);
     bus.removeListener(mPlayerUseItemOnEvent);

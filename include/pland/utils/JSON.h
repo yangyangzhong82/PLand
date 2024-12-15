@@ -3,6 +3,7 @@
 #include "ll/api/reflection/Serialization.h"
 #include "nlohmann/json.hpp"
 #include "nlohmann/json_fwd.hpp"
+#include <algorithm>
 #include <iostream>
 #include <string_view>
 
@@ -51,6 +52,14 @@ public:
         if (noNeedMerge || std::invoke(std::forward<F>(fixer), obj, j)) {
             ll::reflection::deserialize(obj, j).value();
         }
+    }
+
+    template <class T, class J = nlohmann::ordered_json>
+    static void jsonToStructTryPatch(J& json, T& obj) {
+        auto  patch      = ll::reflection::serialize<J>(obj); // obj -> patch
+        auto& patchValue = patch.value();
+        patchValue.merge_patch(json);         // patch -> json
+        jsonToStructNoMerge(patchValue, obj); // json -> obj
     }
 
     template <HasVersion T, class J>

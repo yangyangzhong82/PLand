@@ -1,4 +1,6 @@
 #include "pland/Command.h"
+#include "mc/enums/LogLevel.h"
+#include "pland/DataConverter.h"
 #include "pland/Global.h"
 #include "pland/LandDraw.h"
 #include "pland/LandSelector.h"
@@ -27,6 +29,7 @@
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/chunk/LevelChunk.h"
 #include "mc/world/level/dimension/Dimension.h"
+#include <filesystem>
 #include <ll/api/Logger.h>
 #include <ll/api/command/Command.h>
 #include <ll/api/command/CommandHandle.h>
@@ -205,6 +208,35 @@ static auto const Draw = [](CommandOrigin const& ori, CommandOutput& out, DrawPa
 };
 
 
+struct ImportParam {
+    bool   clearDb;
+    string relationship_file;
+    string data_file;
+};
+static auto const Import = [](CommandOrigin const& ori, CommandOutput& out, ImportParam const& param) {
+    CHECK_TYPE(ori, out, CommandOriginType::DedicatedServer);
+
+    if (!fs::exists(param.relationship_file)) {
+        out.error("未找到 relationship.json 文件"_tr());
+        return;
+    }
+    if (!fs::exists(param.data_file)) {
+        out.error("未找到 data.json 文件"_tr());
+        return;
+    }
+    if (fs::path(param.relationship_file).filename() != "relationship.json") {
+        out.error("relationship.json 文件名错误"_tr());
+        return;
+    }
+
+    if (iLandConverter(param.relationship_file, param.data_file, param.clearDb).execute()) {
+        out.success("导入成功"_tr());
+    } else {
+        out.error("导入失败"_tr());
+    }
+};
+
+
 }; // namespace Lambda
 
 
@@ -242,6 +274,14 @@ bool LandCommand::setup() {
     if (Config::cfg.land.setupDrawCommand) {
         cmd.overload<Lambda::DrawParam>().text("draw").required("type").execute(Lambda::Draw);
     }
+
+    // pland import <land_type> <clear_db> <Args...>
+    cmd.overload<Lambda::ImportParam>()
+        .text("import")
+        .required("clearDb")
+        .required("relationship_file")
+        .required("data_file")
+        .execute(Lambda::Import);
 
     return true;
 }
