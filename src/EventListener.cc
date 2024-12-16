@@ -108,6 +108,7 @@ bool EventListener::setup() {
         auto& self = ev.self();
 
         auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
+        if (!land) return true;
         if (land) {
             auto const& et  = self.getTypeName();
             auto const& tab = land->getLandPermTableConst();
@@ -497,6 +498,7 @@ bool EventListener::setup() {
             auto& self = ev.getSelf();
 
             auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
+            if (!land) return true;
             if (land) {
                 auto const& et  = self.getTypeName();
                 auto const& tab = land->getLandPermTableConst();
