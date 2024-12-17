@@ -124,6 +124,7 @@ PLand& PLand::getInstance() {
 
 
 bool PLand::isOperator(UUIDs const& uuid) const {
+    if (uuid.empty()) return false;
     std::shared_lock<std::shared_mutex> lock(mMutex);
     return std::find(mLandOperators.begin(), mLandOperators.end(), uuid) != mLandOperators.end();
 }

@@ -13,6 +13,7 @@
 #include "pland/PLand.h"
 #include "pland/utils/MC.h"
 #include <functional>
+#include <optional>
 
 #include "ll/api/event/entity/ActorHurtEvent.h"
 #include "ll/api/event/player/PlayerAttackEvent.h"
@@ -71,11 +72,11 @@ ll::event::ListenerPtr mLiquidFlowEvent;                    // 流体流动 (mor
 ll::event::ListenerPtr mSculkCatalystAbsorbExperienceEvent; // 幽匿催发体吸收经验 (more_events)
 
 namespace land {
-bool PreCheck(LandData_sptr ptr, UUIDs uuid, bool ignoreOperator = false) {
-    if (!ignoreOperator && PLand::getInstance().isOperator(uuid)) {
-        return true; // 是管理员
-    } else if (!ptr) {
+inline bool PreCheck(LandData_sptr ptr, UUIDs uuid = "", bool ignoreOperator = false) {
+    if (!ptr) {
         return true; // 此位置没有领地
+    } else if (!ignoreOperator && PLand::getInstance().isOperator(uuid)) {
+        return true; // 是管理员
     } else if (ptr->getPermType(uuid) != LandPermType::Guest) {
         return true; // 有权限 (主人/成员)
     }
@@ -108,7 +109,7 @@ bool EventListener::setup() {
         auto& self = ev.self();
 
         auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
-        if (!land) return true;
+        if (PreCheck(land)) return true; // land not found
         if (land) {
             auto const& et  = self.getTypeName();
             auto const& tab = land->getLandPermTableConst();
@@ -241,7 +242,7 @@ bool EventListener::setup() {
         auto& pos = ev.pos();
 
         auto land = db->getLandAt(pos, ev.blockSource().getDimensionId());
-        if (PreCheck(land, "")) {
+        if (PreCheck(land)) {
             return true;
         }
 
@@ -445,6 +446,7 @@ bool EventListener::setup() {
 
         auto const& typeName = ev.getRided().getTypeName();
         auto        land     = db->getLandAt(passenger.getPosition(), passenger.getDimensionId());
+        if (PreCheck(land)) return true; // land not found
         // 特殊处理：
         if (land) {
             auto& tab = land->getLandPermTableConst();
@@ -484,6 +486,7 @@ bool EventListener::setup() {
         logger->debug("[FarmDecay] Pos: {}", ev.getPos().toString());
 
         auto land = db->getLandAt(ev.getPos(), ev.getBlockSource().getDimensionId());
+        if (PreCheck(land)) return true; // land not found
         if (land) {
             if (land->getLandPermTableConst().allowFarmDecay) return true;
         }
@@ -498,7 +501,7 @@ bool EventListener::setup() {
             auto& self = ev.getSelf();
 
             auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
-            if (!land) return true;
+            if (PreCheck(land)) return true; // land not found
             if (land) {
                 auto const& et  = self.getTypeName();
                 auto const& tab = land->getLandPermTableConst();
@@ -552,6 +555,7 @@ bool EventListener::setup() {
 
             auto land = db->getLandAt(ev.getPos(), ev.getRegion().getDimensionId());
             if (land && land->getLandPermTableConst().usePressurePlate) return;
+            if (PreCheck(land)) return; // land not found
 
             auto& entity = ev.getEntity();
             if (entity.isPlayer()) {
@@ -576,6 +580,7 @@ bool EventListener::setup() {
 
             auto& type = ev.getProjectileType();
             auto  land = db->getLandAt(actor->getPosition(), actor->getDimensionId());
+            if (PreCheck(land)) return; // land not found
             if (land) {
                 auto& tab = land->getLandPermTableConst();
                 if (type == "minecraft:fishing_hook" && tab.useFishingHook) return;       // 钓鱼竿
@@ -605,6 +610,7 @@ bool EventListener::setup() {
             logger->debug("[RedstoneUpdate] Pos: {}", ev.getPos().toString());
 
             auto land = db->getLandAt(ev.getPos(), ev.getBlockSource().getDimensionId());
+            if (PreCheck(land)) return true; // land not found
             if (land) {
                 if (land->getLandPermTableConst().allowRedstoneUpdate) return true;
             }

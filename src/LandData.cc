@@ -75,6 +75,7 @@ bool LandData::isAABBInLand(BlockPos const& pos1, BlockPos const& pos2) const {
 
 
 LandPermType LandData::getPermType(UUIDs const& uuid) const {
+    if (uuid.empty()) return LandPermType::Guest; // empty uuid is guest
     if (isLandOwner(uuid)) return LandPermType::Owner;
     if (isLandMember(uuid)) return LandPermType::Member;
     return LandPermType::Guest;
