@@ -6,16 +6,30 @@ add_repositories("engsr6982-repo https://github.com/engsr6982/xmake-repo.git")
 -- add_requires("levilamina x.x.x") for a specific version
 -- add_requires("levilamina develop") to use develop version
 -- please note that you should add bdslibrary yourself if using dev version
-add_requires("levilamina 0.13.5")
-add_requires("exprtk 2022.01.01")
-add_requires("legacymoney 0.8.3")
-add_requires("more_events 0.2.0")
+add_requires("exprtk 0.0.3")
+add_requires("legacymoney 0.9.0-rc.1")
+-- add_requires("more_events 0.2.0") --deprecated
+add_requires("levibuildscript")
+
+if is_config("target_type", "server") then
+    add_requires("levilamina 1.0.0-rc.1", {configs = {target_type = "server"}})
+else
+    add_requires("levilamina 1.0.0-rc.1", {configs = {target_type = "client"}})
+end
 
 if not has_config("vs_runtime") then
     set_runtimes("MD")
 end
 
+option("target_type")
+    set_default("server")
+    set_showmenu(true)
+    set_values("server", "client")
+option_end()
+
 target("PLand") -- Change this to your mod name.
+    add_rules("@levibuildscript/linkrule")
+    add_rules("@levibuildscript/modpacker")
     add_cxflags(
         "/EHa",
         "/utf-8",
@@ -33,7 +47,7 @@ target("PLand") -- Change this to your mod name.
     add_packages(
         "levilamina",
         "exprtk",
-        "more_events",
+        -- "more_events",
         "legacymoney"
     )
 
@@ -41,7 +55,7 @@ target("PLand") -- Change this to your mod name.
     -- add_includedirs("D:/Projects/MoreEvents/bin/include")
     -- add_links("D:/Projects/MoreEvents/bin/lib/*.lib")
 
-    add_shflags("/DELAYLOAD:bedrock_server.dll") -- To use symbols provided by SymbolProvider.
+    -- add_shflags("/DELAYLOAD:bedrock_server.dll") -- To use symbols provided by SymbolProvider.
     set_exceptions("none") -- To avoid conflicts with /EHa.
     set_kind("shared")
     set_languages("c++20")
@@ -56,19 +70,9 @@ target("PLand") -- Change this to your mod name.
     end 
 
     after_build(function (target)
-        local mod_packer = import("scripts.after_build")
-
-        local tag = os.iorun("git describe --tags --abbrev=0 --always")
-        local major, minor, patch, suffix = tag:match("v(%d+)%.(%d+)%.(%d+)(.*)")
-        if not major then
-            print("Failed to parse version tag, using 0.0.0")
-            major, minor, patch = 0, 0, 0
-        end
-        local mod_define = {
-            modName = target:name(),
-            modFile = path.filename(target:targetfile()),
-            modVersion = major .. "." .. minor .. "." .. patch,
-        }
-        
-        mod_packer.pack_mod(target,mod_define)
+        local bindir = path.join(os.projectdir(), "bin")
+        local outputdir = path.join(bindir, target:name())
+        -- Lang
+        local langdir = path.join(os.projectdir(), "assets", "lang")
+        os.cp(langdir, outputdir)
     end)
