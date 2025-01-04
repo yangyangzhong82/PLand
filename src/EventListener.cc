@@ -26,22 +26,22 @@
 #include "ll/api/event/world/FireSpreadEvent.h"
 
 
-#include "more_events/ActorRideEvent.h"
-#include "more_events/ArmorStandSwapItemEvent.h"
-#include "more_events/ExplodeEvent.h"
-#include "more_events/FarmDecayEvent.h"
-#include "more_events/LiquidFlowEvent.h"
-#include "more_events/MobHurtEffectEvent.h"
-#include "more_events/MossFertilizerEvent.h"
-#include "more_events/PistonTryPushEvent.h"
-#include "more_events/PlayerAttackBlockEvent.h"
-#include "more_events/PlayerDropItemEvent.h"
-#include "more_events/PlayerUseItemFrameEvent.h"
-#include "more_events/PressurePlateTriggerEvent.h"
-#include "more_events/ProjectileSpawnEvent.h"
-#include "more_events/RedstoneUpdateEvent.h"
-#include "more_events/SculkCatalystAbsorbExperienceEvent.h"
-#include "more_events/WitherDestroyBlockEvent.h"
+// #include "more_events/ActorRideEvent.h"
+// #include "more_events/ArmorStandSwapItemEvent.h"
+// #include "more_events/ExplodeEvent.h"
+// #include "more_events/FarmDecayEvent.h"
+// #include "more_events/LiquidFlowEvent.h"
+// #include "more_events/MobHurtEffectEvent.h"
+// #include "more_events/MossFertilizerEvent.h"
+// #include "more_events/PistonTryPushEvent.h"
+// #include "more_events/PlayerAttackBlockEvent.h"
+// #include "more_events/PlayerDropItemEvent.h"
+// #include "more_events/PlayerUseItemFrameEvent.h"
+// #include "more_events/PressurePlateTriggerEvent.h"
+// #include "more_events/ProjectileSpawnEvent.h"
+// #include "more_events/RedstoneUpdateEvent.h"
+// #include "more_events/SculkCatalystAbsorbExperienceEvent.h"
+// #include "more_events/WitherDestroyBlockEvent.h"
 
 
 ll::event::ListenerPtr mPlayerJoinEvent;                    // 玩家加入服务器
@@ -347,7 +347,7 @@ bool EventListener::setup() {
                 return true;
             });
 
-            BlockPos const&  pos   = val.mBlockPos;
+            BlockPos const&  pos   = val.mBlock;
             ItemStack const& item  = ev.item();
             Block const&     block = player.getDimensionBlockSource().getBlock(pos);
 

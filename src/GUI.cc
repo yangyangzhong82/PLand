@@ -504,9 +504,10 @@ void LandManagerGui::EditLandPermGui::impl(Player& player, LandData_sptr ptr) {
 
     auto& i18n = ll::i18n::getInstance();
 
-    auto js = JSON::structTojson(ptr->getLandPermTableConst());
+    auto localCode = ll::i18n::defaultLocaleCode();
+    auto js        = JSON::structTojson(ptr->getLandPermTableConst());
     for (auto& [k, v] : js.items()) {
-        fm.appendToggle(k, (string)i18n->get(k), v);
+        fm.appendToggle(k, (string)i18n.get(k, localCode), v);
     }
 
     fm.sendTo(player, [ptr](Player& pl, CustomFormResult const& res, FormCancelReason) {

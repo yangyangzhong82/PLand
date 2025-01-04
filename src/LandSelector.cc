@@ -2,11 +2,10 @@
 #include "ll/api/chrono/GameChrono.h"
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/ListenerBase.h"
+#include "ll/api/event/player/PlayerDisconnectEvent.h"
 #include "ll/api/event/player/PlayerInteractBlockEvent.h"
-#include "ll/api/event/player/PlayerLeaveEvent.h"
-#include "ll/api/schedule/Scheduler.h"
-#include "ll/api/schedule/Task.h"
-#include "mc/world/item/registry/ItemStack.h"
+#include "mc/server/ServerPlayer.h"
+#include "mc/world/item/ItemStack.h"
 #include "mod/MyMod.h"
 #include "pland/Config.h"
 #include "pland/GUI.h"
@@ -17,6 +16,7 @@
 #include "pland/utils/MC.h"
 #include <optional>
 #include <unordered_map>
+
 
 #include "mc/network/packet/SetTitlePacket.h"
 
@@ -88,60 +88,61 @@ bool                                   LandSelector::init() {
             }
         });
 
-    mPlayerLeave = bus.emplaceListener<ll::event::PlayerLeaveEvent>([this](ll::event::PlayerLeaveEvent const& ev) {
-        auto iter = this->mSelectors.find(ev.self().getUuid().asString());
-        if (iter != this->mSelectors.end()) {
-            this->mSelectors.erase(iter);
-        }
-    });
+    mPlayerLeave =
+        bus.emplaceListener<ll::event::PlayerDisconnectEvent>([this](ll::event::PlayerDisconnectEvent const& ev) {
+            auto iter = this->mSelectors.find(ev.self().getUuid().asString());
+            if (iter != this->mSelectors.end()) {
+                this->mSelectors.erase(iter);
+            }
+        });
 
     using ll::chrono_literals::operator""_tick; // 1s = 20_tick
-    GlobalTickScheduler.add<ll::schedule::RepeatTask>(20_tick, [this]() {
-        for (auto& [uuid, data] : mSelectors) {
-            try {
-                auto pl = data.mPlayer; // 玩家指针
-                if (pl == nullptr) {
-                    mSelectors.erase(uuid); // 玩家断开连接
-                    continue;
-                }
+    // GlobalTickScheduler.add<ll::schedule::RepeatTask>(20_tick, [this]() {
+    //     for (auto& [uuid, data] : mSelectors) {
+    //         try {
+    //             auto pl = data.mPlayer; // 玩家指针
+    //             if (pl == nullptr) {
+    //                 mSelectors.erase(uuid); // 玩家断开连接
+    //                 continue;
+    //             }
 
-                SetTitlePacket titlePacket(SetTitlePacket::TitleType::Title);
-                SetTitlePacket subTitlePacket(SetTitlePacket::TitleType::Subtitle);
-                if (!data.mSelectedPointA) {
-                    titlePacket.mTitleText = "[ 选区器 ]"_tr();
-                    subTitlePacket.mTitleText = "使用 /pland set a 或使用 {} 选择点A"_tr(Config::cfg.selector.tool);
+    //             SetTitlePacket titlePacket(SetTitlePacket::TitleType::Title);
+    //             SetTitlePacket subTitlePacket(SetTitlePacket::TitleType::Subtitle);
+    //             if (!data.mSelectedPointA) {
+    //                 titlePacket.mTitleText    = "[ 选区器 ]"_tr();
+    //                 subTitlePacket.mTitleText = "使用 /pland set a 或使用 {} 选择点A"_tr(Config::cfg.selector.tool);
 
-                } else if (!data.mSelectedPointB) {
-                    titlePacket.mTitleText = "[ 选区器 ]"_tr();
-                    subTitlePacket.mTitleText = "使用 /pland set b 或使用 {} 选择点B"_tr(Config::cfg.selector.tool);
+    //             } else if (!data.mSelectedPointB) {
+    //                 titlePacket.mTitleText    = "[ 选区器 ]"_tr();
+    //                 subTitlePacket.mTitleText = "使用 /pland set b 或使用 {} 选择点B"_tr(Config::cfg.selector.tool);
 
-                } else if (data.mCanDraw && Config::cfg.selector.drawParticle) {
-                    titlePacket.mTitleText    = "[ 选区完成 ]"_tr();
-                    subTitlePacket.mTitleText = "使用 /pland buy 呼出购买菜单"_tr(Config::cfg.selector.tool);
+    //             } else if (data.mCanDraw && Config::cfg.selector.drawParticle) {
+    //                 titlePacket.mTitleText    = "[ 选区完成 ]"_tr();
+    //                 subTitlePacket.mTitleText = "使用 /pland buy 呼出购买菜单"_tr(Config::cfg.selector.tool);
 
-                    // 绘制粒子
-                    if (!data.mIsInitedParticle) {
-                        data.mParticle.mDimid  = data.mDimid;
-                        data.mParticle.mDraw3D = data.mDraw3D;
-                        data.mParticle.mPos    = data.mPos;
-                        data.mIsInitedParticle = true;
-                    }
-                    data.mParticle.draw(*pl);
-                }
+    //                 // 绘制粒子
+    //                 if (!data.mIsInitedParticle) {
+    //                     data.mParticle.mDimid  = data.mDimid;
+    //                     data.mParticle.mDraw3D = data.mDraw3D;
+    //                     data.mParticle.mPos    = data.mPos;
+    //                     data.mIsInitedParticle = true;
+    //                 }
+    //                 data.mParticle.draw(*pl);
+    //             }
 
-                // 重新选区 & 绘制旧范围 (新范围无法绘制时绘制旧范围)
-                if (data.mBindLandData.lock() != nullptr && !data.mCanDraw) {
-                    data.mOldRangeParticle.draw(*pl);
-                }
+    //             // 重新选区 & 绘制旧范围 (新范围无法绘制时绘制旧范围)
+    //             if (data.mBindLandData.lock() != nullptr && !data.mCanDraw) {
+    //                 data.mOldRangeParticle.draw(*pl);
+    //             }
 
-                titlePacket.sendTo(*pl);
-                subTitlePacket.sendTo(*pl);
-            } catch (...) {
-                mSelectors.erase(uuid);
-                continue;
-            }
-        }
-    });
+    //             titlePacket.sendTo(*pl);
+    //             subTitlePacket.sendTo(*pl);
+    //         } catch (...) {
+    //             mSelectors.erase(uuid);
+    //             continue;
+    //         }
+    //     }
+    // });
     return true;
 }
 bool LandSelector::uninit() {

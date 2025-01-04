@@ -1,12 +1,11 @@
 #include "pland/LandScheduler.h"
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/ListenerBase.h"
-#include "ll/api/event/player/PlayerLeaveEvent.h"
-#include "ll/api/schedule/Task.h"
+#include "ll/api/event/player/PlayerDisconnectEvent.h"
 #include "ll/api/service/Bedrock.h"
 #include "ll/api/service/PlayerInfo.h"
-#include "mc/deps/core/mce/UUID.h"
 #include "mc/network/packet/SetTitlePacket.h"
+#include "mc/server/ServerPlayer.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/ChunkPos.h"
 #include "mc/world/level/Level.h"
@@ -15,6 +14,7 @@
 #include "pland/Global.h"
 #include "pland/LandEvent.h"
 #include "pland/PLand.h"
+
 
 
 namespace land {
@@ -29,47 +29,47 @@ std::unordered_map<UUIDm, LandID>    LandScheduler::mLandidMap; // 玩家当前�
 bool LandScheduler::setup() {
     auto* bus = &ll::event::EventBus::getInstance();
 
-    GlobalTickScheduler.add<ll::schedule::RepeatTask>(5_tick, [bus]() {
-        ll::service::getLevel()->forEachPlayer([bus](Player& player) {
-            if (player.isSimulatedPlayer()) return true; // 模拟玩家不处理
-            auto& db   = PLand::getInstance();
-            auto& uuid = player.getUuid();
+    // GlobalTickScheduler.add<ll::schedule::RepeatTask>(5_tick, [bus]() {
+    //     ll::service::getLevel()->forEachPlayer([bus](Player& player) {
+    //         if (player.isSimulatedPlayer()) return true; // 模拟玩家不处理
+    //         auto& db   = PLand::getInstance();
+    //         auto& uuid = player.getUuid();
 
-            auto& curPos = player.getPosition(); // 获取玩家当前位置
+    //         auto& curPos = player.getPosition(); // 获取玩家当前位置
 
-            int  curDimid  = player.getDimensionId();        // 获取玩家当前维度
-            int& lastDimid = LandScheduler::mDimidMap[uuid]; // 获取玩家上一次的维度
+    //         int  curDimid  = player.getDimensionId();        // 获取玩家当前维度
+    //         int& lastDimid = LandScheduler::mDimidMap[uuid]; // 获取玩家上一次的维度
 
-            auto& lastLandID = LandScheduler::mLandidMap[uuid]; // 获取玩家上一次所在的领地ID
+    //         auto& lastLandID = LandScheduler::mLandidMap[uuid]; // 获取玩家上一次所在的领地ID
 
-            auto   land      = db.getLandAt(curPos, curDimid);
-            LandID curLandID = land ? land->getLandID() : -1; // 如果没有领地,设置为-1
+    //         auto   land      = db.getLandAt(curPos, curDimid);
+    //         LandID curLandID = land ? land->getLandID() : -1; // 如果没有领地,设置为-1
 
-            // 处理维度变化
-            if (curDimid != lastDimid) {
-                if (lastLandID != (LandID)-1) {
-                    bus->publish(PlayerLeaveLandEvent(player, lastLandID)); // 离开上一个维度的领地
-                }
-                lastDimid = curDimid;
-            }
+    //         // 处理维度变化
+    //         if (curDimid != lastDimid) {
+    //             if (lastLandID != (LandID)-1) {
+    //                 bus->publish(PlayerLeaveLandEvent(player, lastLandID)); // 离开上一个维度的领地
+    //             }
+    //             lastDimid = curDimid;
+    //         }
 
-            // 处理领地变化
-            if (curLandID != lastLandID) {
-                if (lastLandID != (LandID)-1) {
-                    bus->publish(PlayerLeaveLandEvent(player, lastLandID)); // 离开上一个领地
-                }
-                if (curLandID != (LandID)-1) {
-                    bus->publish(PlayerEnterLandEvent(player, curLandID)); // 进入新领地
-                }
-                lastLandID = curLandID;
-            }
+    //         // 处理领地变化
+    //         if (curLandID != lastLandID) {
+    //             if (lastLandID != (LandID)-1) {
+    //                 bus->publish(PlayerLeaveLandEvent(player, lastLandID)); // 离开上一个领地
+    //             }
+    //             if (curLandID != (LandID)-1) {
+    //                 bus->publish(PlayerEnterLandEvent(player, curLandID)); // 进入新领地
+    //             }
+    //             lastLandID = curLandID;
+    //         }
 
-            return true;
-        });
-    });
+    //         return true;
+    //     });
+    // });
 
     mPlayerLeaveServerListener =
-        bus->emplaceListener<ll::event::player::PlayerLeaveEvent>([](ll::event::player::PlayerLeaveEvent& ev) {
+        bus->emplaceListener<ll::event::PlayerDisconnectEvent>([](ll::event::PlayerDisconnectEvent& ev) {
             auto& uuid = ev.self().getUuid();
             LandScheduler::mDimidMap.erase(uuid);
             LandScheduler::mLandidMap.erase(uuid);
@@ -115,44 +115,45 @@ bool LandScheduler::setup() {
     });
 
     if (Config::cfg.land.tip.bottomContinuedTip) {
-        GlobalTickScheduler.add<ll::schedule::RepeatTask>(
-            Config::cfg.land.tip.bottomTipFrequency * 20_tick,
-            [logger, infos, db]() {
-                auto level = ll::service::getLevel();
-                if (!level) {
-                    return;
-                }
+        // GlobalTickScheduler.add<ll::schedule::RepeatTask>(
+        //     Config::cfg.land.tip.bottomTipFrequency * 20_tick,
+        //     [logger, infos, db]() {
+        //         auto level = ll::service::getLevel();
+        //         if (!level) {
+        //             return;
+        //         }
 
-                SetTitlePacket pkt(SetTitlePacket::TitleType::Actionbar);
+        //         SetTitlePacket pkt(SetTitlePacket::TitleType::Actionbar);
 
-                auto& landIds = LandScheduler::mLandidMap;
-                for (auto& [curPlayerUUID, landid] : landIds) {
-                    if (landid == (LandID)-1) {
-                        continue;
-                    }
+        //         auto& landIds = LandScheduler::mLandidMap;
+        //         for (auto& [curPlayerUUID, landid] : landIds) {
+        //             if (landid == (LandID)-1) {
+        //                 continue;
+        //             }
 
-                    auto player = level->getPlayer(curPlayerUUID);
-                    if (!player) {
-                        continue;
-                    }
+        //             auto player = level->getPlayer(curPlayerUUID);
+        //             if (!player) {
+        //                 continue;
+        //             }
 
-                    auto land = db->getLand(landid);
-                    if (!land) {
-                        continue;
-                    }
+        //             auto land = db->getLand(landid);
+        //             if (!land) {
+        //                 continue;
+        //             }
 
-                    auto const owner = UUIDm::fromString(land->getLandOwner());
-                    auto       info  = infos->fromUuid(owner);
-                    if (land->isLandOwner(curPlayerUUID.asString())) {
-                        pkt.mTitleText = "[Land] 当前正在领地 {}"_tr(land->getLandName());
-                    } else {
-                        pkt.mTitleText = "[Land] 这里是 {} 的领地"_tr(info.has_value() ? info->name : owner.asString());
-                    }
+        //             auto const owner = UUIDm::fromString(land->getLandOwner());
+        //             auto       info  = infos->fromUuid(owner);
+        //             if (land->isLandOwner(curPlayerUUID.asString())) {
+        //                 pkt.mTitleText = "[Land] 当前正在领地 {}"_tr(land->getLandName());
+        //             } else {
+        //                 pkt.mTitleText = "[Land] 这里是 {} 的领地"_tr(info.has_value() ? info->name :
+        //                 owner.asString());
+        //             }
 
-                    pkt.sendTo(*player);
-                }
-            }
-        );
+        //             pkt.sendTo(*player);
+        //         }
+        //     }
+        // );
     }
 
     return true;

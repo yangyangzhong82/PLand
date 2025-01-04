@@ -2,9 +2,8 @@
 #include "LLMoney.h"
 #include "ll/api/i18n/I18n.h"
 #include "ll/api/service/Bedrock.h"
-#include "mc/deps/core/mce/UUID.h"
-#include "mc/world/actor/player/PlayerScoreSetFunction.h"
 #include "mc/world/level/Level.h"
+#include "mc/world/scores/PlayerScoreSetFunction.h"
 #include "mc/world/scores/ScoreInfo.h"
 #include "pland/Config.h"
 #include "pland/utils/MC.h"
@@ -13,6 +12,7 @@
 #include <mc/world/scores/Objective.h>
 #include <mc/world/scores/Scoreboard.h>
 #include <mc/world/scores/ScoreboardId.h>
+
 
 
 namespace land {
@@ -29,7 +29,7 @@ int ScoreBoard_Get(Player& player, string const& scoreName) {
     if (!id.isValid()) {
         scoreboard.createScoreboardId(player);
     }
-    return obj->getPlayerScore(id).mScore;
+    return obj->getPlayerScore(id).mValue;
 }
 
 bool ScoreBoard_Set(Player& player, int score, string const& scoreName) {

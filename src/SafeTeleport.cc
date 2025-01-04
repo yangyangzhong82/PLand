@@ -1,6 +1,5 @@
 #include "pland/SafeTeleport.h"
-#include "ll/api/schedule/Task.h"
-#include "mc/math/Vec3.h"
+#include "mc/deps/core/math/Vec3.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/ChunkPos.h"
@@ -13,6 +12,7 @@
 #include <cstdint>
 #include <unordered_map>
 #include <vector>
+
 
 
 namespace land {
@@ -111,29 +111,29 @@ public:
 
 
     void execute(uint64_t id) {
-        GlobalTickScheduler.add<ll::schedule::DelayTask>(10_tick, [id, this]() {
-            auto iter = mTeleportQueue.find(id);
-            if (iter == mTeleportQueue.end()) {
-                return;
-            }
+        // GlobalTickScheduler.add<ll::schedule::DelayTask>(10_tick, [id, this]() {
+        //     auto iter = mTeleportQueue.find(id);
+        //     if (iter == mTeleportQueue.end()) {
+        //         return;
+        //     }
 
-            auto& dt = iter->second;
-            dt.mPlayer->teleport(Vec3(dt.mTargetPos.x, 666, dt.mTargetPos.z), dt.mTargetDimid); // 临时传送
+        //     auto& dt = iter->second;
+        //     dt.mPlayer->teleport(Vec3(dt.mTargetPos.x, 666, dt.mTargetPos.z), dt.mTargetDimid); // 临时传送
 
-            auto& bs = dt.mPlayer->getDimensionBlockSource();
-            if (bs.isChunkFullyLoaded(ChunkPos(dt.mTargetPos), bs.getChunkSource())) {
-                findSafePos(dt);
-                remove(id);
-            } else {
-                if (++dt.mScheduleCounter > TeleportData::SCHEDULE_COUNTER_MAX) {
-                    mc::sendText<mc::LogLevel::Info>(*dt.mPlayer, "无法找到安全位置, 区块加载超时"_tr());
-                    dt.mPlayer->teleport(dt.mSourcePos, dt.mTargetDimid); //  返回原位置
-                    remove(id);
-                    return;
-                }
-                execute(id);
-            }
-        });
+        //     auto& bs = dt.mPlayer->getDimensionBlockSource();
+        //     if (bs.isChunkFullyLoaded(ChunkPos(dt.mTargetPos), bs.getChunkSource())) {
+        //         findSafePos(dt);
+        //         remove(id);
+        //     } else {
+        //         if (++dt.mScheduleCounter > TeleportData::SCHEDULE_COUNTER_MAX) {
+        //             mc::sendText<mc::LogLevel::Info>(*dt.mPlayer, "无法找到安全位置, 区块加载超时"_tr());
+        //             dt.mPlayer->teleport(dt.mSourcePos, dt.mTargetDimid); //  返回原位置
+        //             remove(id);
+        //             return;
+        //         }
+        //         execute(id);
+        //     }
+        // });
     }
 
 
