@@ -1,7 +1,9 @@
 #pragma once
 #include "Global.h"
-#include "mc/math/Vec3.h"
+#include "mc/deps/core/math/Vec3.h"
 #include "mc/world/actor/player/Player.h"
+
+
 namespace land {
 
 
