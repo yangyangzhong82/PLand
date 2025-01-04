@@ -1,14 +1,16 @@
 #pragma once
 #include "Global.h"
+#include "ll/api/io/LogLevel.h"
 #include <vector>
+
 
 namespace land {
 
 enum class EconomyKit : int { LegacyMoney, ScoreBoard };
 
 struct Config {
-    int version{3};
-    int logLevel{4};
+    int              version{3};
+    ll::io::LogLevel logLevel{4};
 
     struct {
         bool       enabled{true};                // 是否启用
