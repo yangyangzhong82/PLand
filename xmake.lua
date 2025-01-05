@@ -6,16 +6,16 @@ add_repositories("engsr6982-repo https://github.com/engsr6982/xmake-repo.git")
 -- add_requires("levilamina x.x.x") for a specific version
 -- add_requires("levilamina develop") to use develop version
 -- please note that you should add bdslibrary yourself if using dev version
-add_requires("exprtk 0.0.3")
-add_requires("legacymoney 0.9.0-rc.1")
--- add_requires("more_events 0.2.0") --deprecated
-add_requires("levibuildscript")
-
 if is_config("target_type", "server") then
     add_requires("levilamina 1.0.0-rc.1", {configs = {target_type = "server"}})
 else
     add_requires("levilamina 1.0.0-rc.1", {configs = {target_type = "client"}})
 end
+
+add_requires("exprtk 0.0.3")
+add_requires("legacymoney 0.9.0-rc.1")
+-- add_requires("more_events 0.2.0") --deprecated
+add_requires("levibuildscript")
 
 if not has_config("vs_runtime") then
     set_runtimes("MD")
