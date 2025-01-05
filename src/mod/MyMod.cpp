@@ -46,7 +46,7 @@ bool MyMod::load() {
 
 #ifdef DEBUG
     logger.warn("Debug Mode");
-    logger.consoleLevel = 5;
+    logger.setLevel(ll::io::LogLevel::Debug);
 #endif
 
     return true;
