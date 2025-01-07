@@ -2,8 +2,10 @@
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/Listener.h"
 #include "ll/api/event/ListenerBase.h"
+#include "mc/deps/core/math/Vec3.h"
 #include "mc/network/packet/UpdateBlockPacket.h"
 #include "mc/server/ServerPlayer.h"
+#include "mc/world/level/BlockPos.h"
 #include "mc/world/level/material/Material.h"
 #include "mc/world/phys/AABB.h"
 #include "mc/world/phys/HitResult.h"
@@ -29,22 +31,22 @@
 #include "ll/api/event/world/FireSpreadEvent.h"
 
 
-// #include "more_events/ActorRideEvent.h"
-// #include "more_events/ArmorStandSwapItemEvent.h"
-// #include "more_events/ExplodeEvent.h"
-// #include "more_events/FarmDecayEvent.h"
-// #include "more_events/LiquidFlowEvent.h"
+#include "ila/event/minecraft/actor/ActorRideEvent.h"
+#include "ila/event/minecraft/actor/ArmorStandSwapItemEvent.h"
+#include "ila/event/minecraft/world/ExplosionEvent.h"
+#include "ila/event/minecraft/world/FarmDecayEvent.h"
+#include "ila/event/minecraft/world/LiquidTryFlowEvent.h"
 // #include "more_events/MobHurtEffectEvent.h"
-// #include "more_events/MossFertilizerEvent.h"
-// #include "more_events/PistonTryPushEvent.h"
-// #include "more_events/PlayerAttackBlockEvent.h"
-// #include "more_events/PlayerDropItemEvent.h"
-// #include "more_events/PlayerUseItemFrameEvent.h"
-// #include "more_events/PressurePlateTriggerEvent.h"
-// #include "more_events/ProjectileSpawnEvent.h"
-// #include "more_events/RedstoneUpdateEvent.h"
+#include "ila/event/minecraft/actor/ActorTriggerPressurePlateEvent.h"
+#include "ila/event/minecraft/actor/ProjectileCreateEvent.h"
+#include "ila/event/minecraft/player/PlayerAttackBlockEvent.h"
+#include "ila/event/minecraft/player/PlayerDropItemEvent.h"
+#include "ila/event/minecraft/player/PlayerOperatedItemFrame.h"
+#include "ila/event/minecraft/world/MossGrowthEvent.h"
+#include "ila/event/minecraft/world/PistonPushEvent.h"
+#include "ila/event/minecraft/world/RedstoneUpdateEvent.h"
 // #include "more_events/SculkCatalystAbsorbExperienceEvent.h"
-// #include "more_events/WitherDestroyBlockEvent.h"
+#include "ila/event/minecraft/world/WitherDestroyEvent.h"
 
 
 ll::event::ListenerPtr mPlayerJoinEvent;                    // 玩家加入服务器
@@ -377,121 +379,128 @@ bool EventListener::setup() {
         });
 
     // Minecraft events (MoreEvents)
-    // mPlayerAttackBlockEvent =
-    //     bus->emplaceListener<more_events::PlayerAttackBlockEvent>([db,
-    //                                                                logger](more_events::PlayerAttackBlockEvent& ev) {
-    //         optional_ref<Player> pl = ev.getPlayer();
-    //         if (!pl.has_value()) return true;
+    mPlayerAttackBlockEvent = bus->emplaceListener<ila::mc::PlayerAttackBlockBeforeEvent>(
+        [db, logger](ila::mc::PlayerAttackBlockBeforeEvent& ev) {
+            optional_ref<Player> pl = ev.self();
+            if (!pl.has_value()) return true;
 
-    //         Player& player = pl.value();
+            Player& player = pl.value();
 
-    //         logger->debug("[AttackBlock] {}", ev.getPos().toString());
+            logger->debug("[AttackBlock] {}", ev.getPos().toString());
 
-    //         auto land = db->getLandAt(ev.getPos(), player.getDimensionId());
-    //         if (PreCheck(land, player.getUuid().asString())) {
-    //             return true;
-    //         }
+            auto land = db->getLandAt(ev.getPos(), player.getDimensionId());
+            if (PreCheck(land, player.getUuid().asString())) {
+                return true;
+            }
 
-    //         auto const& bl = player.getDimensionBlockSourceConst().getBlock(ev.getPos()).getTypeName();
-    //         if (land->getLandPermTableConst().allowAttackDragonEgg && bl == "minecraft:dragon_egg") return true;
+            auto const& bl = player.getDimensionBlockSourceConst().getBlock(ev.getPos()).getTypeName();
+            if (land->getLandPermTableConst().allowAttackDragonEgg && bl == "minecraft:dragon_egg") return true;
 
-    //         ev.cancel();
-    //         return true;
-    //     });
+            ev.cancel();
+            return true;
+        }
+    );
 
-    // mArmorStandSwapItemEvent =
-    //     bus->emplaceListener<more_events::ArmorStandSwapItemEvent>([db,
-    //                                                                 logger](more_events::ArmorStandSwapItemEvent& ev) {
-    //         Player& player = ev.getPlayer();
+    mArmorStandSwapItemEvent = bus->emplaceListener<ila::mc::ArmorStandSwapItemBeforeEvent>(
+        [db, logger](ila::mc::ArmorStandSwapItemBeforeEvent& ev) {
+            Player& player = ev.getPlayer();
 
-    //         logger->debug("[ArmorStandSwapItem]: executed");
+            logger->debug("[ArmorStandSwapItem]: executed");
 
-    //         auto land = db->getLandAt(ev.getArmorStand().getPosition(), player.getDimensionId());
-    //         if (PreCheck(land, player.getUuid().asString())) {
-    //             return true;
-    //         }
+            auto land = db->getLandAt(ev.self().getPosition(), player.getDimensionId());
+            if (PreCheck(land, player.getUuid().asString())) {
+                return true;
+            }
 
-    //         if (land->getLandPermTableConst().useArmorStand) return true;
+            if (land->getLandPermTableConst().useArmorStand) return true;
 
-    //         ev.cancel();
-    //         return true;
-    //     });
+            ev.cancel();
+            return true;
+        }
+    );
 
-    // mPlayerDropItemEvent =
-    //     bus->emplaceListener<more_events::PlayerDropItemEvent>([db, logger](more_events::PlayerDropItemEvent& ev) {
-    //         Player& player = ev.getPlayer();
+    mPlayerDropItemEvent =
+        bus->emplaceListener<ila::mc::PlayerDropItemBeforeEvent>([db, logger](ila::mc::PlayerDropItemBeforeEvent& ev) {
+            Player& player = ev.self();
 
-    //         logger->debug("[PlayerDropItem]: executed");
+            logger->debug("[PlayerDropItem]: executed");
 
-    //         auto land = db->getLandAt(player.getPosition(), player.getDimensionId());
-    //         if (PreCheck(land, player.getUuid().asString())) {
-    //             return true;
-    //         }
+            auto land = db->getLandAt(player.getPosition(), player.getDimensionId());
+            if (PreCheck(land, player.getUuid().asString())) {
+                return true;
+            }
 
-    //         if (land->getLandPermTableConst().allowDropItem) return true;
+            if (land->getLandPermTableConst().allowDropItem) return true;
 
-    //         ev.cancel();
-    //         return true;
-    //     });
+            ev.cancel();
+            return true;
+        });
 
-    // mActorRideEvent = bus->emplaceListener<more_events::ActorRideEvent>([db, logger](more_events::ActorRideEvent& ev) {
-    //     logger->debug("[ActorRide]: executed");
-    //     Actor& passenger = ev.getPassenger();
+    mActorRideEvent =
+        bus->emplaceListener<ila::mc::ActorRideBeforeEvent>([db, logger](ila::mc::ActorRideBeforeEvent& ev) {
+            logger->debug("[ActorRide]: executed");
+            Actor& passenger = ev.self();
 
-    //     if (!passenger.isPlayer()) {
-    //         return true; // 忽略非玩家骑乘事件
-    //     }
+            if (!passenger.isPlayer()) {
+                return true; // 忽略非玩家骑乘事件
+            }
 
-    //     auto const& typeName = ev.getRided().getTypeName();
-    //     auto        land     = db->getLandAt(passenger.getPosition(), passenger.getDimensionId());
-    //     if (PreCheck(land)) return true; // land not found
-    //     // 特殊处理：
-    //     if (land) {
-    //         auto& tab = land->getLandPermTableConst();
-    //         if (typeName == "minecraft:minecart" || typeName == "minecraft:boat") {
-    //             if (tab.allowRideTrans) return true;
-    //         } else {
-    //             if (tab.allowRideEntity) return true;
-    //         }
-    //     }
+            auto const& typeName = ev.getTarget().getTypeName();
+            auto        land     = db->getLandAt(passenger.getPosition(), passenger.getDimensionId());
+            if (PreCheck(land)) return true; // land not found
+            // 特殊处理：
+            if (land) {
+                auto& tab = land->getLandPermTableConst();
+                if (typeName == "minecraft:minecart" || typeName == "minecraft:boat") {
+                    if (tab.allowRideTrans) return true;
+                } else {
+                    if (tab.allowRideEntity) return true;
+                }
+            }
 
-    //     if (passenger.isPlayer()) {
-    //         auto player = passenger.getWeakEntity().tryUnwrap<Player>();
-    //         if (player.has_value() && PreCheck(land, player->getUuid().asString())) {
-    //             return true;
-    //         }
-    //     }
+            if (passenger.isPlayer()) {
+                auto player = passenger.getWeakEntity().tryUnwrap<Player>();
+                if (player.has_value() && PreCheck(land, player->getUuid().asString())) {
+                    return true;
+                }
+            }
 
-    //     ev.cancel();
-    //     return true;
-    // });
+            ev.cancel();
+            return true;
+        });
 
-    // mExplodeEvent = bus->emplaceListener<more_events::ExplodeEvent>([db, logger](more_events::ExplodeEvent& ev) {
-    //     logger->debug("[Explode] Pos: {}", ev.getPos().toString());
+    mExplodeEvent =
+        bus->emplaceListener<ila::mc::ExplosionBeforeEvent>([db, logger](ila::mc::ExplosionBeforeEvent& ev) {
+            logger->debug("[Explode] Pos: {}", ev.getExplosion().mPos->toString());
 
-    //     auto lands = db->getLandAt(ev.getPos(), (int)(ev.getExplosionRadius() + 1), ev.getRegion().getDimensionId());
-    //     for (auto& p : lands) {
-    //         if (!p->getLandPermTableConst().allowExplode) {
-    //             ev.cancel();
-    //             break;
-    //         }
-    //     }
+            auto lands = db->getLandAt(
+                BlockPos{ev.getExplosion().mPos},
+                (int)(ev.getExplosion().mRadius + 1.0),
+                ev.blockSource().getDimensionId()
+            );
+            for (auto& p : lands) {
+                if (!p->getLandPermTableConst().allowExplode) {
+                    ev.cancel();
+                    break;
+                }
+            }
 
-    //     return true;
-    // });
+            return true;
+        });
 
-    // mFarmDecayEvent = bus->emplaceListener<more_events::FarmDecayEvent>([db, logger](more_events::FarmDecayEvent& ev) {
-    //     logger->debug("[FarmDecay] Pos: {}", ev.getPos().toString());
+    mFarmDecayEvent =
+        bus->emplaceListener<ila::mc::FarmDecayBeforeEvent>([db, logger](ila::mc::FarmDecayBeforeEvent& ev) {
+            logger->debug("[FarmDecay] Pos: {}", ev.getPos().toString());
 
-    //     auto land = db->getLandAt(ev.getPos(), ev.getBlockSource().getDimensionId());
-    //     if (PreCheck(land)) return true; // land not found
-    //     if (land) {
-    //         if (land->getLandPermTableConst().allowFarmDecay) return true;
-    //     }
+            auto land = db->getLandAt(ev.getPos(), ev.blockSource().getDimensionId());
+            if (PreCheck(land)) return true; // land not found
+            if (land) {
+                if (land->getLandPermTableConst().allowFarmDecay) return true;
+            }
 
-    //     ev.cancel();
-    //     return true;
-    // });
+            ev.cancel();
+            return true;
+        });
 
     // mMobHurtEffectEvent =
     //     bus->emplaceListener<more_events::MobHurtEffectEvent>([db, logger](more_events::MobHurtEffectEvent& ev) {
@@ -519,11 +528,12 @@ bool EventListener::setup() {
     //         return true;
     //     });
 
+    // TODO: ila 事件库未提供当前活塞坐标
     // mPistonTryPushEvent =
-    //     bus->emplaceListener<more_events::PistonTryPushEvent>([db, logger](more_events::PistonTryPushEvent& ev) {
+    //     bus->emplaceListener<ila::mc::PistonPushBeforeEvent>([db, logger](ila::mc::PistonPushBeforeEvent& ev) {
     //         auto const& piston = ev.getPistonPos();
     //         auto const& push   = ev.getPushPos();
-    //         auto&       region = ev.getRegion();
+    //         auto&       region = ev.blockSource();
 
     //         logger->debug("[PistonTryPush] piston: {}, push: {}", piston.toString(), push.toString());
 
@@ -534,141 +544,141 @@ bool EventListener::setup() {
     //         }
     //     });
 
-    // mPlayerUseItemFrameEvent =
-    //     bus->emplaceListener<more_events::PlayerUseItemFrameEvent>([db,
-    //                                                                 logger](more_events::PlayerUseItemFrameEvent& ev) {
-    //         logger->debug("[PlayerUseItemFrame] pos: {}", ev.getPos().toString());
+    mPlayerUseItemFrameEvent = bus->emplaceListener<ila::mc::PlayerOperatedItemFrameBeforeEvent>(
+        [db, logger](ila::mc::PlayerOperatedItemFrameBeforeEvent& ev) {
+            logger->debug("[PlayerUseItemFrame] pos: {}", ev.getBlockPos().toString());
 
-    //         auto land = db->getLandAt(ev.getPos(), ev.getPlayer()->getDimensionId());
-    //         if (PreCheck(land, ev.getPlayer()->getUuid().asString())) return;
+            auto land = db->getLandAt(ev.getBlockPos(), ev.self().getDimensionId());
+            if (PreCheck(land, ev.self().getUuid().asString())) return;
 
-    //         if (land->getLandPermTableConst().useItemFrame) return;
+            if (land->getLandPermTableConst().useItemFrame) return;
 
-    //         ev.cancel();
-    //     });
+            ev.cancel();
+        }
+    );
 
-    // mPressurePlateTriggerEvent = bus->emplaceListener<more_events::PressurePlateTriggerEvent>(
-    //     [db, logger](more_events::PressurePlateTriggerEvent& ev) {
-    //         logger->debug("[PressurePlateTrigger] pos: {}", ev.getPos().toString());
+    mPressurePlateTriggerEvent = bus->emplaceListener<ila::mc::ActorTriggerPressurePlateBeforeEvent>(
+        [db, logger](ila::mc::ActorTriggerPressurePlateBeforeEvent& ev) {
+            logger->debug("[PressurePlateTrigger] pos: {}", ev.getPos().toString());
 
-    //         auto land = db->getLandAt(ev.getPos(), ev.getRegion().getDimensionId());
-    //         if (land && land->getLandPermTableConst().usePressurePlate) return;
-    //         if (PreCheck(land)) return; // land not found
+            auto land = db->getLandAt(ev.getPos(), ev.self().getDimensionId());
+            if (land && land->getLandPermTableConst().usePressurePlate) return;
+            if (PreCheck(land)) return; // land not found
 
-    //         auto& entity = ev.getEntity();
-    //         if (entity.isPlayer()) {
-    //             auto pl = entity.getWeakEntity().tryUnwrap<Player>();
-    //             if (pl.has_value()) {
-    //                 if (PreCheck(land, pl->getUuid().asString())) return;
-    //             }
-    //         }
+            auto& entity = ev.self();
+            if (entity.isPlayer()) {
+                auto pl = entity.getWeakEntity().tryUnwrap<Player>();
+                if (pl.has_value()) {
+                    if (PreCheck(land, pl->getUuid().asString())) return;
+                }
+            }
 
-    //         ev.cancel();
-    //         return;
-    //     }
-    // );
+            ev.cancel();
+            return;
+        }
+    );
 
-    // mProjectileSpawnEvent =
-    //     bus->emplaceListener<more_events::ProjectileSpawnEvent>([db, logger](more_events::ProjectileSpawnEvent& ev) {
-    //         logger->debug("[ProjectileSpawn] type: {}", ev.getProjectileType());
-    //         Actor* actor = ev.getSpawner();
-    //         if (!actor) {
-    //             return;
-    //         }
+    mProjectileSpawnEvent =
+        bus->emplaceListener<ila::mc::ProjectileCreateBeforeEvent>([db,
+                                                                    logger](ila::mc::ProjectileCreateBeforeEvent& ev) {
+            logger->debug("[ProjectileSpawn] type: {}", ev.self().getTypeName());
+            Actor* actor = &ev.self();
+            if (!actor) {
+                return;
+            }
 
-    //         auto& type = ev.getProjectileType();
-    //         auto  land = db->getLandAt(actor->getPosition(), actor->getDimensionId());
-    //         if (PreCheck(land)) return; // land not found
-    //         if (land) {
-    //             auto& tab = land->getLandPermTableConst();
-    //             if (type == "minecraft:fishing_hook" && tab.useFishingHook) return;       // 钓鱼竿
-    //             if (type == "minecraft:splash_potion" && tab.allowThrowPotion) return;    // 喷溅药水
-    //             if (type == "minecraft:lingering_potion" && tab.allowThrowPotion) return; // 滞留药水
-    //             if (type == "minecraft:thrown_trident" && tab.allowThrowTrident) return;  // 三叉戟
-    //             if (type == "minecraft:arrow" && tab.allowShoot) return;                  // 箭
-    //             if (type == "minecraft:crossbow" && tab.allowShoot) return;               // 弩射烟花
-    //             if (type == "minecraft:snowball" && tab.allowThrowSnowball) return;       // 雪球
-    //             if (type == "minecraft:ender_pearl" && tab.allowThrowEnderPearl) return;  // 末影珍珠
-    //             if (type == "minecraft:egg" && tab.allowThrowEgg) return;                 // 鸡蛋
-    //         }
+            auto& type = ev.self().getTypeName();
+            auto  land = db->getLandAt(actor->getPosition(), actor->getDimensionId());
+            if (PreCheck(land)) return; // land not found
+            if (land) {
+                auto& tab = land->getLandPermTableConst();
+                if (type == "minecraft:fishing_hook" && tab.useFishingHook) return;       // 钓鱼竿
+                if (type == "minecraft:splash_potion" && tab.allowThrowPotion) return;    // 喷溅药水
+                if (type == "minecraft:lingering_potion" && tab.allowThrowPotion) return; // 滞留药水
+                if (type == "minecraft:thrown_trident" && tab.allowThrowTrident) return;  // 三叉戟
+                if (type == "minecraft:arrow" && tab.allowShoot) return;                  // 箭
+                if (type == "minecraft:crossbow" && tab.allowShoot) return;               // 弩射烟花
+                if (type == "minecraft:snowball" && tab.allowThrowSnowball) return;       // 雪球
+                if (type == "minecraft:ender_pearl" && tab.allowThrowEnderPearl) return;  // 末影珍珠
+                if (type == "minecraft:egg" && tab.allowThrowEgg) return;                 // 鸡蛋
+            }
 
-    //         if (actor->isPlayer()) {
-    //             auto pl = actor->getWeakEntity().tryUnwrap<Player>();
-    //             if (pl.has_value()) {
-    //                 if (PreCheck(land, pl->getUuid().asString())) return;
-    //             }
-    //         }
+            if (actor->isPlayer()) {
+                auto pl = actor->getWeakEntity().tryUnwrap<Player>();
+                if (pl.has_value()) {
+                    if (PreCheck(land, pl->getUuid().asString())) return;
+                }
+            }
 
-    //         ev.cancel();
-    //         return;
-    //     });
+            ev.cancel();
+            return;
+        });
 
-    // mRedstoneUpdateEvent =
-    //     bus->emplaceListener<more_events::RedstoneUpdateEvent>([db, logger](more_events::RedstoneUpdateEvent& ev) {
-    //         logger->debug("[RedstoneUpdate] Pos: {}", ev.getPos().toString());
+    mRedstoneUpdateEvent =
+        bus->emplaceListener<ila::mc::RedstoneUpdateBeforeEvent>([db, logger](ila::mc::RedstoneUpdateBeforeEvent& ev) {
+            logger->debug("[RedstoneUpdate] Pos: {}", ev.getPos().toString());
 
-    //         auto land = db->getLandAt(ev.getPos(), ev.getBlockSource().getDimensionId());
-    //         if (PreCheck(land)) return true; // land not found
-    //         if (land) {
-    //             if (land->getLandPermTableConst().allowRedstoneUpdate) return true;
-    //         }
+            auto land = db->getLandAt(ev.getPos(), ev.blockSource().getDimensionId());
+            if (PreCheck(land)) return true; // land not found
+            if (land) {
+                if (land->getLandPermTableConst().allowRedstoneUpdate) return true;
+            }
 
-    //         ev.cancel();
-    //         return true;
-    //     });
+            ev.cancel();
+            return true;
+        });
 
-    // mWitherDestroyBlockEvent =
-    //     bus->emplaceListener<more_events::WitherDestroyBlockEvent>([db,
-    //                                                                 logger](more_events::WitherDestroyBlockEvent& ev) {
-    //         logger->debug("[WitherDestroyBlock] executed");
-    //         auto& aabb = ev.getAABB();
+    mWitherDestroyBlockEvent =
+        bus->emplaceListener<ila::mc::WitherDestroyBeforeEvent>([db, logger](ila::mc::WitherDestroyBeforeEvent& ev) {
+            logger->debug("[WitherDestroyBlock] executed");
+            auto& aabb = ev.getBox();
 
-    //         auto lands = db->getLandAt(aabb.min, aabb.max, ev.getRegion().getDimensionId());
-    //         for (auto const& p : lands) {
-    //             if (!p->getLandPermTableConst().allowWitherDestroy) {
-    //                 ev.cancel();
-    //                 break;
-    //             }
-    //         }
+            auto lands = db->getLandAt(aabb.min, aabb.max, ev.blockSource().getDimensionId());
+            for (auto const& p : lands) {
+                if (!p->getLandPermTableConst().allowWitherDestroy) {
+                    ev.cancel();
+                    break;
+                }
+            }
 
-    //         return true;
-    //     });
+            return true;
+        });
 
-    // mMossFertilizerEvent =
-    //     bus->emplaceListener<more_events::MossFertilizerEvent>([db, logger](more_events::MossFertilizerEvent& ev) {
-    //         logger->debug("[MossSpread] {}", ev.getPos().toString());
+    mMossFertilizerEvent =
+        bus->emplaceListener<ila::mc::MossGrowthBeforeEvent>([db, logger](ila::mc::MossGrowthBeforeEvent& ev) {
+            logger->debug("[MossSpread] {}", ev.getPos().toString());
 
-    //         auto const& pos = ev.getPos();
+            auto const& pos = ev.getPos();
 
-    //         auto land = db->getLandAt(pos, ev.getRegion().getDimensionId());
-    //         if (!land || land->getLandPermTableConst().useBoneMeal) {
-    //             return;
-    //         }
+            auto land = db->getLandAt(pos, ev.blockSource().getDimensionId());
+            if (!land || land->getLandPermTableConst().useBoneMeal) {
+                return;
+            }
 
-    //         auto lds = db->getLandAt(pos - 2, pos + 2, ev.getRegion().getDimensionId());
-    //         for (auto const& p : lds) {
-    //             if (p->getLandPermTableConst().useBoneMeal) {
-    //                 return;
-    //             }
-    //         }
+            auto lds = db->getLandAt(pos - 2, pos + 2, ev.blockSource().getDimensionId());
+            for (auto const& p : lds) {
+                if (p->getLandPermTableConst().useBoneMeal) {
+                    return;
+                }
+            }
 
-    //         ev.cancel();
-    //     });
+            ev.cancel();
+        });
 
-    // mLiquidFlowEvent =
-    //     bus->emplaceListener<more_events::LiquidFlowEvent>([db, logger](more_events::LiquidFlowEvent& ev) {
-    //         auto& sou = ev.getLiquidPos();
-    //         // auto& from = ev.getFlowFromPos();
-    //         // logger->debug("[LiquidFlow] {} -> {}", sou.toString(), from.toString());
+    mLiquidFlowEvent =
+        bus->emplaceListener<ila::mc::LiquidTryFlowBeforeEvent>([db, logger](ila::mc::LiquidTryFlowBeforeEvent& ev) {
+            auto& sou = ev.getPos();
+            // auto& from = ev.getFlowFromPos();
+            // logger->debug("[LiquidFlow] {} -> {}", sou.toString(), from.toString());
 
-    //         auto land = db->getLandAt(sou, ev.getBlockSource().getDimensionId());
-    //         if (land) {
-    //             if (!land->getLandPermTableConst().allowLiquidFlow) {
-    //                 ev.cancel();
-    //                 return;
-    //             }
-    //         }
-    //     });
+            auto land = db->getLandAt(sou, ev.blockSource().getDimensionId());
+            if (land) {
+                if (!land->getLandPermTableConst().allowLiquidFlow) {
+                    ev.cancel();
+                    return;
+                }
+            }
+        });
 
     // mSculkCatalystAbsorbExperienceEvent = bus->emplaceListener<more_events::SculkCatalystAbsorbExperienceEvent>(
     //     [db, logger](more_events::SculkCatalystAbsorbExperienceEvent& ev) {
