@@ -32,20 +32,21 @@
 
 
 #include "ila/event/minecraft/actor/ActorRideEvent.h"
-#include "ila/event/minecraft/actor/ArmorStandSwapItemEvent.h"
-#include "ila/event/minecraft/world/ExplosionEvent.h"
-#include "ila/event/minecraft/world/FarmDecayEvent.h"
-#include "ila/event/minecraft/world/LiquidTryFlowEvent.h"
-// #include "more_events/MobHurtEffectEvent.h"
 #include "ila/event/minecraft/actor/ActorTriggerPressurePlateEvent.h"
+#include "ila/event/minecraft/actor/ArmorStandSwapItemEvent.h"
 #include "ila/event/minecraft/actor/ProjectileCreateEvent.h"
+#include "ila/event/minecraft/level/SculkCatalystAbsorbExperienceEvent.h"
 #include "ila/event/minecraft/player/PlayerAttackBlockEvent.h"
 #include "ila/event/minecraft/player/PlayerDropItemEvent.h"
 #include "ila/event/minecraft/player/PlayerOperatedItemFrame.h"
+#include "ila/event/minecraft/world/ExplosionEvent.h"
+#include "ila/event/minecraft/world/FarmDecayEvent.h"
+#include "ila/event/minecraft/world/LiquidTryFlowEvent.h"
 #include "ila/event/minecraft/world/MossGrowthEvent.h"
 #include "ila/event/minecraft/world/PistonPushEvent.h"
 #include "ila/event/minecraft/world/RedstoneUpdateEvent.h"
-// #include "more_events/SculkCatalystAbsorbExperienceEvent.h"
+#include "ila/event/minecraft/world/SculkBlockGrowthEvent.h"
+#include "ila/event/minecraft/world/SculkSpreadEvent.h"
 #include "ila/event/minecraft/world/WitherDestroyEvent.h"
 
 
@@ -59,22 +60,24 @@ ll::event::ListenerPtr mPlayerAttackEntityEvent;            // 玩家攻击实�
 ll::event::ListenerPtr mPlayerPickUpItemEvent;              // 玩家捡起物品
 ll::event::ListenerPtr mPlayerInteractBlockEvent;           // 方块接受玩家互动
 ll::event::ListenerPtr mPlayerUseItemEvent;                 // 玩家使用物品
-ll::event::ListenerPtr mArmorStandSwapItemEvent;            // 玩家交换盔甲架物品 (more_events)
-ll::event::ListenerPtr mPlayerAttackBlockEvent;             // 玩家攻击方块 (more_events)
-ll::event::ListenerPtr mPlayerDropItemEvent;                // 玩家丢弃物品 (more_events)
-ll::event::ListenerPtr mActorRideEvent;                     // 实体骑乘 (more_events)
-ll::event::ListenerPtr mExplodeEvent;                       // 爆炸 (more_events)
-ll::event::ListenerPtr mFarmDecayEvent;                     // 农田退化 (more_events)
-ll::event::ListenerPtr mMobHurtEffectEvent;                 // 实体受伤效果 (more_events)
-ll::event::ListenerPtr mPistonTryPushEvent;                 // 活塞尝试推动方块 (more_events)
-ll::event::ListenerPtr mPlayerUseItemFrameEvent;            // 玩家使用物品展示框 (more_events)
-ll::event::ListenerPtr mPressurePlateTriggerEvent;          // 压力板触发 (more_events)
-ll::event::ListenerPtr mProjectileSpawnEvent;               // 投掷物生成 (more_events)
-ll::event::ListenerPtr mRedstoneUpdateEvent;                // 红石更新 (more_events)
-ll::event::ListenerPtr mWitherDestroyBlockEvent;            // 凋零破坏方块 (more_events)
-ll::event::ListenerPtr mMossFertilizerEvent;                // 苔藓施肥 (more_events)
-ll::event::ListenerPtr mLiquidFlowEvent;                    // 流体流动 (more_events)
-ll::event::ListenerPtr mSculkCatalystAbsorbExperienceEvent; // 幽匿催发体吸收经验 (more_events)
+ll::event::ListenerPtr mArmorStandSwapItemEvent;            // 玩家交换盔甲架物品 (iListenAttentively)
+ll::event::ListenerPtr mPlayerAttackBlockEvent;             // 玩家攻击方块 (iListenAttentively)
+ll::event::ListenerPtr mPlayerDropItemEvent;                // 玩家丢弃物品 (iListenAttentively)
+ll::event::ListenerPtr mActorRideEvent;                     // 实体骑乘 (iListenAttentively)
+ll::event::ListenerPtr mExplodeEvent;                       // 爆炸 (iListenAttentively)
+ll::event::ListenerPtr mFarmDecayEvent;                     // 农田退化 (iListenAttentively)
+ll::event::ListenerPtr mMobHurtEffectEvent;                 // 实体受伤效果 (iListenAttentively)
+ll::event::ListenerPtr mPistonTryPushEvent;                 // 活塞尝试推动方块 (iListenAttentively)
+ll::event::ListenerPtr mPlayerUseItemFrameEvent;            // 玩家使用物品展示框 (iListenAttentively)
+ll::event::ListenerPtr mPressurePlateTriggerEvent;          // 压力板触发 (iListenAttentively)
+ll::event::ListenerPtr mProjectileSpawnEvent;               // 投掷物生成 (iListenAttentively)
+ll::event::ListenerPtr mRedstoneUpdateEvent;                // 红石更新 (iListenAttentively)
+ll::event::ListenerPtr mWitherDestroyBlockEvent;            // 凋零破坏方块 (iListenAttentively)
+ll::event::ListenerPtr mMossFertilizerEvent;                // 苔藓施肥 (iListenAttentively)
+ll::event::ListenerPtr mLiquidFlowEvent;                    // 流体流动 (iListenAttentively)
+ll::event::ListenerPtr mSculkCatalystAbsorbExperienceEvent; // 幽匿催发体吸收经验 (iListenAttentively)
+// ll::event::ListenerPtr mSculkBlockGrowthEvent;              // 幽匿尖啸体生成 (iListenAttentively)
+// ll::event::ListenerPtr mSculkSpreadEvent;                   // 幽匿蔓延 (iListenAttentively)
 
 namespace land {
 inline bool PreCheck(LandData_sptr ptr, UUIDs uuid = "", bool ignoreOperator = false) {
@@ -502,6 +505,7 @@ bool EventListener::setup() {
             return true;
         });
 
+    // TODO: ila 事件库未提供此事件
     // mMobHurtEffectEvent =
     //     bus->emplaceListener<more_events::MobHurtEffectEvent>([db, logger](more_events::MobHurtEffectEvent& ev) {
     //         logger->debug("[MobHurtEffect] mob: {}", ev.getSelf().getTypeName());
@@ -699,6 +703,20 @@ bool EventListener::setup() {
     //         ev.cancel();
     //     }
     // );
+
+    // mSculkBlockGrowthEvent =
+    //     bus->emplaceListener<ila::mc::SculkBlockGrowthBeforeEvent>([db,
+    //                                                                 logger](ila::mc::SculkBlockGrowthBeforeEvent& ev) {
+    //         auto& pos = ev.getPos();
+    //         logger->debug("[SculkBlockGrowth] {}", pos.toString());
+    //         ev.cancel();
+    //     });
+
+    // mSculkSpreadEvent =
+    //     bus->emplaceListener<ila::mc::SculkSpreadBeforeEvent>([db, logger](ila::mc::SculkSpreadBeforeEvent& ev) {
+    //         logger->debug("[SculkSpread] {} -> {}", ev.getSelfPos().toString(), ev.getTargetPos().toString());
+    //         ev.cancel();
+    //     });
 
     return true;
 }
