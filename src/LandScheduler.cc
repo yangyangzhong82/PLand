@@ -120,45 +120,45 @@ bool LandScheduler::setup() {
     });
 
     if (Config::cfg.land.tip.bottomContinuedTip) {
-        // GlobalTickScheduler.add<ll::schedule::RepeatTask>(
-        //     Config::cfg.land.tip.bottomTipFrequency * 20_tick,
-        //     [logger, infos, db]() {
-        //         auto level = ll::service::getLevel();
-        //         if (!level) {
-        //             return;
-        //         }
+        // repeat task
+        ll::coro::keepThis([logger, infos, db]() -> ll::coro::CoroTask<> {
+            while (GlobalRepeatCoroTaskRunning) {
+                co_await (Config::cfg.land.tip.bottomTipFrequency * 20_tick);
+                auto level = ll::service::getLevel();
+                if (!level) {
+                    continue;
+                }
 
-        //         SetTitlePacket pkt(SetTitlePacket::TitleType::Actionbar);
+                SetTitlePacket pkt(SetTitlePacket::TitleType::Actionbar);
 
-        //         auto& landIds = LandScheduler::mLandidMap;
-        //         for (auto& [curPlayerUUID, landid] : landIds) {
-        //             if (landid == (LandID)-1) {
-        //                 continue;
-        //             }
+                auto& landIds = LandScheduler::mLandidMap;
+                for (auto& [curPlayerUUID, landid] : landIds) {
+                    if (landid == (LandID)-1) {
+                        continue;
+                    }
 
-        //             auto player = level->getPlayer(curPlayerUUID);
-        //             if (!player) {
-        //                 continue;
-        //             }
+                    auto player = level->getPlayer(curPlayerUUID);
+                    if (!player) {
+                        continue;
+                    }
 
-        //             auto land = db->getLand(landid);
-        //             if (!land) {
-        //                 continue;
-        //             }
+                    auto land = db->getLand(landid);
+                    if (!land) {
+                        continue;
+                    }
 
-        //             auto const owner = UUIDm::fromString(land->getLandOwner());
-        //             auto       info  = infos->fromUuid(owner);
-        //             if (land->isLandOwner(curPlayerUUID.asString())) {
-        //                 pkt.mTitleText = "[Land] 当前正在领地 {}"_tr(land->getLandName());
-        //             } else {
-        //                 pkt.mTitleText = "[Land] 这里是 {} 的领地"_tr(info.has_value() ? info->name :
-        //                 owner.asString());
-        //             }
+                    auto const owner = UUIDm::fromString(land->getLandOwner());
+                    auto       info  = infos->fromUuid(owner);
+                    if (land->isLandOwner(curPlayerUUID.asString())) {
+                        pkt.mTitleText = "[Land] 当前正在领地 {}"_tr(land->getLandName());
+                    } else {
+                        pkt.mTitleText = "[Land] 这里是 {} 的领地"_tr(info.has_value() ? info->name : owner.asString());
+                    }
 
-        //             pkt.sendTo(*player);
-        //         }
-        //     }
-        // );
+                    pkt.sendTo(*player);
+                }
+            }
+        }).launch(ll::thread::ServerThreadExecutor::getDefault());
     }
 
     return true;
