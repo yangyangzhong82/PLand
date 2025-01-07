@@ -44,21 +44,21 @@ bool PLand::init() {
 
     // load land data
     std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
-    // mDB->iter([this](auto key, auto value) {
-    //     if (key == DB_KEY_OPERATORS) return true; // skip operators
-    //     auto json = JSON::parse(value);
-    //     auto land = LandData::make();
+    ll::coro::Generator<std::pair<std::string_view, std::string_view>> iter = mDB->iter();
+    for (auto [key, value] : iter) {
+        if (key == DB_KEY_OPERATORS) continue; // skip operators
+        auto json = JSON::parse(value);
+        auto land = LandData::make();
 
-    //     JSON::jsonToStruct(json, *land);
+        JSON::jsonToStruct(json, *land);
 
-    //     // 保证landID唯一
-    //     if (mNextID < land->getLandID()) {
-    //         mNextID.store(land->getLandID() + 1);
-    //     }
+        // 保证landID唯一
+        if (mNextID < land->getLandID()) {
+            mNextID.store(land->getLandID() + 1);
+        }
 
-    //     mLandCache.emplace(land->getLandID(), std::move(land));
-    //     return true;
-    // });
+        mLandCache.emplace(land->getLandID(), std::move(land));
+    }
 
     auto& logger = my_mod::MyMod::getInstance().getSelf().getLogger();
     logger.info("已加载 {} 位操作员", mLandOperators.size());
