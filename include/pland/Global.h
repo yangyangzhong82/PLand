@@ -4,6 +4,7 @@
 #include "ll/api/i18n/I18n.h"
 #include "mc/common/ActorUniqueID.h"
 #include "mc/platform/UUID.h"
+#include <atomic>
 #include <filesystem>
 
 
@@ -31,6 +32,7 @@ using ll::i18n_literals::operator""_tr;
 using ll::chrono_literals::operator""_tick; // 1s = 20_tick
 namespace fs = std::filesystem;
 
+extern std::atomic<bool> GlobalRepeatCoroTaskRunning;
 
 } // namespace land
 
