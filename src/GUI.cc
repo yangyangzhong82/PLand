@@ -121,7 +121,7 @@ void LandBuyGui::impl(Player& player) {
 
     fm.appendButton("确认购买"_tr(), "textures/ui/realms_green_check", [discountedPrice](Player& pl) {
         auto& eco = EconomySystem::getInstance();
-        if (eco.get(pl) < discountedPrice) {
+        if (eco.get(pl) < discountedPrice && Config::cfg.economy.enabled) {
             mc::sendText<mc::LogLevel::Error>(pl, "您的余额不足，无法购买"_tr());
             return; // 预检查经济
         }
@@ -251,7 +251,7 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
 
     fm.appendButton("确认购买"_tr(), "textures/ui/realms_green_check", [needPay, refund, discountedPrice](Player& pl) {
         auto& eco = EconomySystem::getInstance();
-        if (needPay > 0 && eco.get(pl) < needPay) {
+        if ((needPay > 0 && eco.get(pl) < needPay) && Config::cfg.economy.enabled) {
             mc::sendText<mc::LogLevel::Error>(pl, "您的余额不足，无法购买"_tr());
             return; // 预检查经济
         }
@@ -503,8 +503,8 @@ void LandManagerGui::EditLandPermGui::impl(Player& player, LandData_sptr ptr) {
     CustomForm fm(PLUGIN_NAME + " | 编辑权限"_tr());
 
     auto& i18n = ll::i18n::getInstance();
-    
-    auto js        = JSON::structTojson(ptr->getLandPermTableConst());
+
+    auto js = JSON::structTojson(ptr->getLandPermTableConst());
     for (auto& [k, v] : js.items()) {
         fm.appendToggle(k, (string)i18n.get(k, ll::i18n::getDefaultLocaleCode()), v);
     }
