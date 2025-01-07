@@ -2,19 +2,22 @@ add_rules("mode.debug", "mode.release")
 
 add_repositories("liteldev-repo https://github.com/LiteLDev/xmake-repo.git")
 add_repositories("engsr6982-repo https://github.com/engsr6982/xmake-repo.git")
+add_repositories("miracleforest-repo https://github.com/MiracleForest/xmake-repo.git")
 
 -- add_requires("levilamina x.x.x") for a specific version
 -- add_requires("levilamina develop") to use develop version
 -- please note that you should add bdslibrary yourself if using dev version
 if is_config("target_type", "server") then
-    add_requires("levilamina 1.0.0-rc.1", {configs = {target_type = "server"}})
+    add_requires("levilamina 1.0.0-rc.2", {configs = {target_type = "server"}})
 else
-    add_requires("levilamina 1.0.0-rc.1", {configs = {target_type = "client"}})
+    add_requires("levilamina 1.0.0-rc.2", {configs = {target_type = "client"}})
 end
 add_requires("levibuildscript")
 add_requires("exprtk 0.0.3")
 add_requires("legacymoney 0.9.0-rc.1")
--- add_requires("more_events 0.2.0") --deprecated
+add_requires("ilistenattentively 0.2.0")
+add_requireconfs("**.magic_enum", {override = true, version = "0.9.7"}) -- override ilistenattentively's magic_enum version
+add_requireconfs("**.levilamina", {override = true, version = "1.0.0-rc.2", configs = {target_type = "server"}}) -- override ilistenattentively's levilamina version
 
 if not has_config("vs_runtime") then
     set_runtimes("MD")
@@ -46,15 +49,10 @@ target("PLand") -- Change this to your mod name.
     add_packages(
         "levilamina",
         "exprtk",
-        -- "more_events",
+        "ilistenattentively",
         "legacymoney"
     )
 
-    -- MoreEvents test
-    -- add_includedirs("D:/Projects/MoreEvents/bin/include")
-    -- add_links("D:/Projects/MoreEvents/bin/lib/*.lib")
-
-    -- add_shflags("/DELAYLOAD:bedrock_server.dll") -- To use symbols provided by SymbolProvider.
     set_exceptions("none") -- To avoid conflicts with /EHa.
     set_kind("shared")
     set_languages("c++20")
