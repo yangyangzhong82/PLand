@@ -5,7 +5,7 @@
     "type": "native",
     "dependencies": [
         {
-            "name": "MoreEvents"
+            "name": "iListenAttentively"
         }
     ]
 }
