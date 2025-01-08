@@ -10,7 +10,7 @@ enum class EconomyKit : int { LegacyMoney, ScoreBoard };
 
 struct Config {
     int              version{3};
-    ll::io::LogLevel logLevel{4};
+    ll::io::LogLevel logLevel{ll::io::LogLevel::Info};
 
     struct {
         bool       enabled{true};                // 是否启用
