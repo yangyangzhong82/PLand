@@ -34,11 +34,12 @@
 #include "ila/event/minecraft/actor/ActorRideEvent.h"
 #include "ila/event/minecraft/actor/ActorTriggerPressurePlateEvent.h"
 #include "ila/event/minecraft/actor/ArmorStandSwapItemEvent.h"
+#include "ila/event/minecraft/actor/MobHurtEffectEvent.h"
 #include "ila/event/minecraft/actor/ProjectileCreateEvent.h"
-#include "ila/event/minecraft/level/SculkCatalystAbsorbExperienceEvent.h"
+// #include "ila/event/minecraft/level/SculkCatalystAbsorbExperienceEvent.h"
 #include "ila/event/minecraft/player/PlayerAttackBlockEvent.h"
 #include "ila/event/minecraft/player/PlayerDropItemEvent.h"
-#include "ila/event/minecraft/player/PlayerOperatedItemFrame.h"
+#include "ila/event/minecraft/player/PlayerOperatedItemFrameEvent.h"
 #include "ila/event/minecraft/world/ExplosionEvent.h"
 #include "ila/event/minecraft/world/FarmDecayEvent.h"
 #include "ila/event/minecraft/world/LiquidTryFlowEvent.h"
@@ -50,34 +51,34 @@
 #include "ila/event/minecraft/world/WitherDestroyEvent.h"
 
 
-ll::event::ListenerPtr mPlayerJoinEvent;                    // 玩家加入服务器
-ll::event::ListenerPtr mActorHurtEvent;                     // 实体受伤
-ll::event::ListenerPtr mPlayerDestroyBlockEvent;            // 玩家尝试破坏方块
-ll::event::ListenerPtr mPlayerPlaceingBlockEvent;           // 玩家尝试放置方块
-ll::event::ListenerPtr mPlayerUseItemOnEvent;               // 玩家对方块使用物品（点击右键）
-ll::event::ListenerPtr mFireSpreadEvent;                    // 火焰蔓延
-ll::event::ListenerPtr mPlayerAttackEntityEvent;            // 玩家攻击实体
-ll::event::ListenerPtr mPlayerPickUpItemEvent;              // 玩家捡起物品
-ll::event::ListenerPtr mPlayerInteractBlockEvent;           // 方块接受玩家互动
-ll::event::ListenerPtr mPlayerUseItemEvent;                 // 玩家使用物品
-ll::event::ListenerPtr mArmorStandSwapItemEvent;            // 玩家交换盔甲架物品 (iListenAttentively)
-ll::event::ListenerPtr mPlayerAttackBlockEvent;             // 玩家攻击方块 (iListenAttentively)
-ll::event::ListenerPtr mPlayerDropItemEvent;                // 玩家丢弃物品 (iListenAttentively)
-ll::event::ListenerPtr mActorRideEvent;                     // 实体骑乘 (iListenAttentively)
-ll::event::ListenerPtr mExplodeEvent;                       // 爆炸 (iListenAttentively)
-ll::event::ListenerPtr mFarmDecayEvent;                     // 农田退化 (iListenAttentively)
-ll::event::ListenerPtr mMobHurtEffectEvent;                 // 实体受伤效果 (iListenAttentively)
-ll::event::ListenerPtr mPistonTryPushEvent;                 // 活塞尝试推动方块 (iListenAttentively)
-ll::event::ListenerPtr mPlayerUseItemFrameEvent;            // 玩家使用物品展示框 (iListenAttentively)
-ll::event::ListenerPtr mPressurePlateTriggerEvent;          // 压力板触发 (iListenAttentively)
-ll::event::ListenerPtr mProjectileSpawnEvent;               // 投掷物生成 (iListenAttentively)
-ll::event::ListenerPtr mRedstoneUpdateEvent;                // 红石更新 (iListenAttentively)
-ll::event::ListenerPtr mWitherDestroyBlockEvent;            // 凋零破坏方块 (iListenAttentively)
-ll::event::ListenerPtr mMossFertilizerEvent;                // 苔藓施肥 (iListenAttentively)
-ll::event::ListenerPtr mLiquidFlowEvent;                    // 流体流动 (iListenAttentively)
-ll::event::ListenerPtr mSculkCatalystAbsorbExperienceEvent; // 幽匿催发体吸收经验 (iListenAttentively)
-// ll::event::ListenerPtr mSculkBlockGrowthEvent;              // 幽匿尖啸体生成 (iListenAttentively)
-// ll::event::ListenerPtr mSculkSpreadEvent;                   // 幽匿蔓延 (iListenAttentively)
+ll::event::ListenerPtr mPlayerJoinEvent;           // 玩家加入服务器
+ll::event::ListenerPtr mActorHurtEvent;            // 实体受伤
+ll::event::ListenerPtr mPlayerDestroyBlockEvent;   // 玩家尝试破坏方块
+ll::event::ListenerPtr mPlayerPlaceingBlockEvent;  // 玩家尝试放置方块
+ll::event::ListenerPtr mPlayerUseItemOnEvent;      // 玩家对方块使用物品（点击右键）
+ll::event::ListenerPtr mFireSpreadEvent;           // 火焰蔓延
+ll::event::ListenerPtr mPlayerAttackEntityEvent;   // 玩家攻击实体
+ll::event::ListenerPtr mPlayerPickUpItemEvent;     // 玩家捡起物品
+ll::event::ListenerPtr mPlayerInteractBlockEvent;  // 方块接受玩家互动
+ll::event::ListenerPtr mPlayerUseItemEvent;        // 玩家使用物品
+ll::event::ListenerPtr mArmorStandSwapItemEvent;   // 玩家交换盔甲架物品 (iListenAttentively)
+ll::event::ListenerPtr mPlayerAttackBlockEvent;    // 玩家攻击方块 (iListenAttentively)
+ll::event::ListenerPtr mPlayerDropItemEvent;       // 玩家丢弃物品 (iListenAttentively)
+ll::event::ListenerPtr mActorRideEvent;            // 实体骑乘 (iListenAttentively)
+ll::event::ListenerPtr mExplodeEvent;              // 爆炸 (iListenAttentively)
+ll::event::ListenerPtr mFarmDecayEvent;            // 农田退化 (iListenAttentively)
+ll::event::ListenerPtr mMobHurtEffectEvent;        // 实体受伤效果 (iListenAttentively)
+ll::event::ListenerPtr mPistonTryPushEvent;        // 活塞尝试推动方块 (iListenAttentively)
+ll::event::ListenerPtr mPlayerUseItemFrameEvent;   // 玩家使用物品展示框 (iListenAttentively)
+ll::event::ListenerPtr mPressurePlateTriggerEvent; // 压力板触发 (iListenAttentively)
+ll::event::ListenerPtr mProjectileSpawnEvent;      // 投掷物生成 (iListenAttentively)
+ll::event::ListenerPtr mRedstoneUpdateEvent;       // 红石更新 (iListenAttentively)
+ll::event::ListenerPtr mWitherDestroyBlockEvent;   // 凋零破坏方块 (iListenAttentively)
+ll::event::ListenerPtr mMossFertilizerEvent;       // 苔藓施肥 (iListenAttentively)
+ll::event::ListenerPtr mLiquidFlowEvent;           // 流体流动 (iListenAttentively)
+// ll::event::ListenerPtr mSculkCatalystAbsorbExperienceEvent; // 幽匿催发体吸收经验 (iListenAttentively)
+ll::event::ListenerPtr mSculkBlockGrowthEvent; // 幽匿尖啸体生成 (iListenAttentively)
+ll::event::ListenerPtr mSculkSpreadEvent;      // 幽匿蔓延 (iListenAttentively)
 
 namespace land {
 inline bool PreCheck(LandData_sptr ptr, UUIDs uuid = "", bool ignoreOperator = false) {
@@ -505,48 +506,46 @@ bool EventListener::setup() {
             return true;
         });
 
-    // TODO: ila 事件库未提供此事件
-    // mMobHurtEffectEvent =
-    //     bus->emplaceListener<more_events::MobHurtEffectEvent>([db, logger](more_events::MobHurtEffectEvent& ev) {
-    //         logger->debug("[MobHurtEffect] mob: {}", ev.getSelf().getTypeName());
-    //         auto& self = ev.getSelf();
+    mMobHurtEffectEvent =
+        bus->emplaceListener<ila::mc::MobHurtEffectBeforeEvent>([db, logger](ila::mc::MobHurtEffectBeforeEvent& ev) {
+            logger->debug("[MobHurtEffect] mob: {}", ev.self().getTypeName());
+            auto& self = ev.self();
 
-    //         auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
-    //         if (PreCheck(land)) return true; // land not found
-    //         if (land) {
-    //             auto const& et  = self.getTypeName();
-    //             auto const& tab = land->getLandPermTableConst();
-    //             if (tab.allowAttackPlayer && self.isPlayer()) return true;
-    //             if (tab.allowAttackAnimal && AnimalEntityMap.contains(et)) return true;
-    //             if (tab.allowAttackMob && !AnimalEntityMap.contains(et)) return true;
-    //         }
+            auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
+            if (PreCheck(land)) return true; // land not found
+            if (land) {
+                auto const& et  = self.getTypeName();
+                auto const& tab = land->getLandPermTableConst();
+                if (tab.allowAttackPlayer && self.isPlayer()) return true;
+                if (tab.allowAttackAnimal && AnimalEntityMap.contains(et)) return true;
+                if (tab.allowAttackMob && !AnimalEntityMap.contains(et)) return true;
+            }
 
-    //         if (self.isPlayer()) {
-    //             auto const pl = self.getWeakEntity().tryUnwrap<Player>();
-    //             if (pl.has_value()) {
-    //                 if (PreCheck(land, pl->getUuid().asString())) return true;
-    //             }
-    //         }
+            if (self.isPlayer()) {
+                auto const pl = self.getWeakEntity().tryUnwrap<Player>();
+                if (pl.has_value()) {
+                    if (PreCheck(land, pl->getUuid().asString())) return true;
+                }
+            }
 
-    //         ev.cancel();
-    //         return true;
-    //     });
+            ev.cancel();
+            return true;
+        });
 
-    // TODO: ila 事件库未提供当前活塞坐标
-    // mPistonTryPushEvent =
-    //     bus->emplaceListener<ila::mc::PistonPushBeforeEvent>([db, logger](ila::mc::PistonPushBeforeEvent& ev) {
-    //         auto const& piston = ev.getPistonPos();
-    //         auto const& push   = ev.getPushPos();
-    //         auto&       region = ev.blockSource();
+    mPistonTryPushEvent =
+        bus->emplaceListener<ila::mc::PistonPushBeforeEvent>([db, logger](ila::mc::PistonPushBeforeEvent& ev) {
+            auto const& piston = ev.getPistonPos();
+            auto const& push   = ev.getPushPos();
+            auto&       region = ev.blockSource();
 
-    //         logger->debug("[PistonTryPush] piston: {}, push: {}", piston.toString(), push.toString());
+            logger->debug("[PistonTryPush] piston: {}, push: {}", piston.toString(), push.toString());
 
-    //         auto land  = db->getLandAt(push, region.getDimensionId());
-    //         auto land2 = db->getLandAt(piston, region.getDimensionId());
-    //         if (land && !land->getLandPermTableConst().allowPistonPush && land != land2) {
-    //             ev.cancel();
-    //         }
-    //     });
+            auto land  = db->getLandAt(push, region.getDimensionId());
+            auto land2 = db->getLandAt(piston, region.getDimensionId());
+            if (land && !land->getLandPermTableConst().allowPistonPush && land != land2) {
+                ev.cancel();
+            }
+        });
 
     mPlayerUseItemFrameEvent = bus->emplaceListener<ila::mc::PlayerOperatedItemFrameBeforeEvent>(
         [db, logger](ila::mc::PlayerOperatedItemFrameBeforeEvent& ev) {
@@ -704,19 +703,34 @@ bool EventListener::setup() {
     //     }
     // );
 
-    // mSculkBlockGrowthEvent =
-    //     bus->emplaceListener<ila::mc::SculkBlockGrowthBeforeEvent>([db,
-    //                                                                 logger](ila::mc::SculkBlockGrowthBeforeEvent& ev) {
-    //         auto& pos = ev.getPos();
-    //         logger->debug("[SculkBlockGrowth] {}", pos.toString());
-    //         ev.cancel();
-    //     });
+    mSculkBlockGrowthEvent =
+        bus->emplaceListener<ila::mc::SculkBlockGrowthBeforeEvent>([db,
+                                                                    logger](ila::mc::SculkBlockGrowthBeforeEvent& ev) {
+            auto& pos = ev.getPos();
+            logger->debug("[SculkBlockGrowth] {}", pos.toString());
 
-    // mSculkSpreadEvent =
-    //     bus->emplaceListener<ila::mc::SculkSpreadBeforeEvent>([db, logger](ila::mc::SculkSpreadBeforeEvent& ev) {
-    //         logger->debug("[SculkSpread] {} -> {}", ev.getSelfPos().toString(), ev.getTargetPos().toString());
-    //         ev.cancel();
-    //     });
+            auto land = db->getLandAt(pos, ev.blockSource().getDimensionId());
+            if (land) {
+                if (!land->getLandPermTableConst().allowSculkBlockGrowth) {
+                    ev.cancel();
+                }
+            }
+        });
+
+    mSculkSpreadEvent =
+        bus->emplaceListener<ila::mc::SculkSpreadBeforeEvent>([db, logger](ila::mc::SculkSpreadBeforeEvent& ev) {
+            logger->debug("[SculkSpread] {} -> {}", ev.getSelfPos().toString(), ev.getTargetPos().toString());
+
+            auto sou = db->getLandAt(ev.getSelfPos(), ev.blockSource().getDimensionId());
+            auto tar = db->getLandAt(ev.getTargetPos(), ev.blockSource().getDimensionId());
+
+            if (!sou && !tar) return; // 领地外蔓延
+            if (sou && tar) return;   // 领地内蔓延
+            if (sou && !tar) return;  // 领地内蔓延到外
+            if (!sou && tar) {
+                ev.cancel(); // 外蔓延到领地内
+            }
+        });
 
     return true;
 }
@@ -749,6 +763,11 @@ bool EventListener::release() {
     bus.removeListener(mProjectileSpawnEvent);
     bus.removeListener(mRedstoneUpdateEvent);
     bus.removeListener(mWitherDestroyBlockEvent);
+    bus.removeListener(mMossFertilizerEvent);
+    bus.removeListener(mLiquidFlowEvent);
+    // bus.removeListener(mSculkCatalystAbsorbExperienceEvent);
+    bus.removeListener(mSculkBlockGrowthEvent);
+    bus.removeListener(mSculkSpreadEvent);
 
     return true;
 }

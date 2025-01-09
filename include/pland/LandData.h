@@ -37,6 +37,7 @@ struct LandPermTable {
     bool allowAttackEnderCrystal{false}; // 允许攻击末地水晶
     bool allowDestroyArmorStand{false};  // 允许破坏盔甲架
     bool allowLiquidFlow{true};          // 允许液体流动
+    bool allowSculkBlockGrowth{true};    // 允许幽匿尖啸体生长
 
     bool useAnvil{false};            // 使用铁砧
     bool useBarrel{false};           // 使用木桶
@@ -90,7 +91,7 @@ using LandData_sptr = std::shared_ptr<class LandData>; // 共享指针
 using LandData_wptr = std::weak_ptr<class LandData>;   // 弱指针
 class LandData {
 public:
-    int                version{3};                         // 版本号
+    int                version{4};                         // 版本号
     LandPos            mPos;                               // 领地对角坐标
     LandID             mLandID{static_cast<uint64_t>(-1)}; // 领地唯一ID  (由 PLand::addLand() 时分配)
     LandDimid          mLandDimid;                         // 领地所在维度
@@ -104,7 +105,7 @@ public:
     int                mSalePrice{0};                      // 出售价格
     int                mOriginalBuyPrice{0};               // 原始购买价格
     bool               mIsConvertedLand{false};            // 是否为转换后的领地(其它插件创建的领地)
-    bool mOwnerDataIsXUID{false}; // 领地主人数据是否为XUID (如果为true，则主人上线自动转换为UUID)
+    bool               mOwnerDataIsXUID{false}; // 领地主人数据是否为XUID (如果为true，则主人上线自动转换为UUID)
 
     LDAPI static LandData_sptr make(); // 创建一个空领地数据(反射使用)
     LDAPI static LandData_sptr make(LandPos const& pos, LandDimid dimid, bool is3D, UUIDs const& owner); // 新建领地数据
