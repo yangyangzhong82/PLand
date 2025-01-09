@@ -17,6 +17,10 @@
 
 namespace land {
 
+struct PlayerSettings {
+    bool showEnterLandTitle{true};     // 是否显示进入领地提示
+    bool showBottomContinuedTip{true}; // 是否持续显示底部提示
+};
 
 class PLand {
 public:
@@ -32,8 +36,9 @@ private:
     std::unordered_map<LandID, LandData_sptr>                                       mLandCache; // 领地缓存
     std::atomic<LandID>                                                             mNextID{0};
 
-    std::vector<UUIDs>        mLandOperators; // 领地操作员
-    mutable std::shared_mutex mMutex;         // 领地缓存锁
+    std::vector<UUIDs>                        mLandOperators;  // 领地操作员
+    std::unordered_map<UUIDs, PlayerSettings> mPlayerSettings; // 玩家设置
+    mutable std::shared_mutex                 mMutex;          // 领地缓存锁
 
 public:
     LDAPI static PLand& getInstance();
@@ -49,17 +54,21 @@ public:
     LDAPI bool addOperator(UUIDs const& uuid);
     LDAPI bool removeOperator(UUIDs const& uuid);
 
+    LDAPI bool            hasPlayerSettings(UUIDs const& uuid) const;
+    LDAPI PlayerSettings* getPlayerSettings(UUIDs const& uuid);
+    LDAPI bool            setPlayerSettings(UUIDs const& uuid, PlayerSettings settings);
+
     LDAPI bool hasLand(LandID id) const;
     LDAPI bool addLand(LandData_sptr land);
     LDAPI bool removeLand(LandID id);
 
     LDAPI bool refreshLandRange(LandData_sptr ptr); // 刷新领地范围
 
-    LDAPI LandData_wptr getLandWeakPtr(LandID id) const;                // 获取领地弱引用 (推荐)
-    LDAPI LandData_sptr getLand(LandID id) const;                       // 获取领地数据
-    LDAPI std::vector<LandData_sptr> getLands() const;                  // 获取所有领地数据
-    LDAPI std::vector<LandData_sptr> getLands(LandDimid dimid) const;   // 获取维度领地数据
-    LDAPI std::vector<LandData_sptr> getLands(UUIDs const& uuid) const; // 获取玩家领地数据
+    LDAPI LandData_wptr getLandWeakPtr(LandID id) const;                                 // 获取领地弱引用 (推荐)
+    LDAPI LandData_sptr getLand(LandID id) const;                                        // 获取领地数据
+    LDAPI std::vector<LandData_sptr> getLands() const;                                   // 获取所有领地数据
+    LDAPI std::vector<LandData_sptr> getLands(LandDimid dimid) const;                    // 获取维度领地数据
+    LDAPI std::vector<LandData_sptr> getLands(UUIDs const& uuid) const;                  // 获取玩家领地数据
     LDAPI std::vector<LandData_sptr> getLands(UUIDs const& uuid, LandDimid dimid) const; // 获取玩家维度领地数据
 
     LDAPI LandPermType

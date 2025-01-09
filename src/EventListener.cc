@@ -101,14 +101,19 @@ bool EventListener::setup() {
     // Minecraft events (ll)
     mPlayerJoinEvent = bus->emplaceListener<ll::event::PlayerJoinEvent>([db, logger](ll::event::PlayerJoinEvent& ev) {
         if (ev.self().isSimulatedPlayer()) return;
+        if (!db->hasPlayerSettings(ev.self().getUuid().asString())) {
+            db->setPlayerSettings(ev.self().getUuid().asString(), PlayerSettings{}); // 新玩家
+        }
+
         auto lands = db->getLands(ev.self().getXuid()); // xuid 查询
-        if (lands.empty()) return;
-        logger->info("Update land owner data from xuid to uuid for player {}", ev.self().getRealName());
-        auto uuid = ev.self().getUuid().asString();
-        for (auto& land : lands) {
-            if (land->mIsConvertedLand && land->mOwnerDataIsXUID) {
-                land->mLandOwner       = uuid; // xuid -> uuid
-                land->mOwnerDataIsXUID = false;
+        if (!lands.empty()) {
+            logger->info("Update land owner data from xuid to uuid for player {}", ev.self().getRealName());
+            auto uuid = ev.self().getUuid().asString();
+            for (auto& land : lands) {
+                if (land->mIsConvertedLand && land->mOwnerDataIsXUID) {
+                    land->mLandOwner       = uuid; // xuid -> uuid
+                    land->mOwnerDataIsXUID = false;
+                }
             }
         }
     });

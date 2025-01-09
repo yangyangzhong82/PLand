@@ -25,6 +25,7 @@
 #include "pland/utils/Utils.h"
 #include "pland/wrapper/FormEx.h"
 #include <algorithm>
+#include <cstdint>
 #include <string>
 #include <unordered_set>
 
@@ -453,9 +454,29 @@ void LandMainGui::impl(Player& player) {
     fm.appendButton("领地传送", "textures/ui/icon_recipe_nature", [](Player& pl) {
         ChooseLandGui::impl<LandMainGui>(pl, LandTeleportGui::impl);
     });
+    fm.appendButton("个人设置", "textures/ui/icon_recipe_nature", [](Player& pl) { EditPlayerSettingGui::impl(pl); });
 
     fm.appendButton("关闭", "textures/ui/cancel");
     fm.sendTo(player);
+}
+
+
+void EditPlayerSettingGui::impl(Player& player) {
+    auto setting = PLand::getInstance().getPlayerSettings(player.getUuid().asString());
+
+    CustomForm fm(PLUGIN_NAME + ("| 玩家设置"_tr()));
+
+    fm.appendToggle("showEnterLandTitle", "是否显示进入领地提示"_tr(), setting->showEnterLandTitle);
+    fm.appendToggle("showBottomContinuedTip", "是否持续显示底部提示"_tr(), setting->showBottomContinuedTip);
+
+    fm.sendTo(player, [setting](Player& pl, CustomFormResult res, FormCancelReason) {
+        if (!res) {
+            return;
+        }
+        setting->showEnterLandTitle     = std::get<uint64_t>(res->at("showEnterLandTitle"));
+        setting->showBottomContinuedTip = std::get<uint64_t>(res->at("showBottomContinuedTip"));
+        mc::sendText<mc::LogLevel::Info>(pl, "设置已保存"_tr());
+    });
 }
 
 

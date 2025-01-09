@@ -16,6 +16,7 @@
 #include "pland/Global.h"
 #include "pland/LandEvent.h"
 #include "pland/PLand.h"
+#include <cstdio>
 
 
 namespace land {
@@ -90,7 +91,12 @@ bool LandScheduler::setup() {
             return;
         }
 
-        auto&  player = ev.getPlayer();
+        auto& player = ev.getPlayer();
+        if (auto settings = db->getPlayerSettings(player.getUuid().asString());
+            settings && !settings->showEnterLandTitle) {
+            return; // 如果玩家设置不显示进入领地提示,则不显示
+        }
+
         LandID landid = ev.getLandID();
 
         LandData_sptr land = db->getLand(landid);
@@ -140,6 +146,10 @@ bool LandScheduler::setup() {
                     auto player = level->getPlayer(curPlayerUUID);
                     if (!player) {
                         continue;
+                    }
+                    if (auto settings = db->getPlayerSettings(player->getUuid().asString());
+                        settings && !settings->showBottomContinuedTip) {
+                        continue; // 如果玩家设置不显示底部提示，则跳过
                     }
 
                     auto land = db->getLand(landid);
