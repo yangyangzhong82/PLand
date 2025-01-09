@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-01-09
+
+### Changed
+
+- 适配 LeviLamina 1.0.0-rc.2
+- 新增权限 `allowSculkBlockGrowth`
+
 ## [0.3.1] - 2024-12-17
 
 ### Fixed

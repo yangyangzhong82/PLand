@@ -9,7 +9,7 @@
 ```json
 {
     "version": 2, // 配置文件版本，请勿修改
-    "logLevel": 4, // 日志等级
+    "logLevel": "Info", // 日志等级 Off / Fatal / Error / Warn / Info / Debug / Trace
     "economy": {
         "enabled": true, // 是否启用经济系统
         "kit": "LegacyMoney", // 经济套件 LegacyMoney 或 ScoreBoard

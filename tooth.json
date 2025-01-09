@@ -16,7 +16,8 @@
     "asset_url": "https://github.com/engsr6982/PLand/releases/download/v0.4.0/PLand-windows-x64.zip",
     "prerequisites": {
         "github.com/LiteLDev/LeviLamina": ">=1.0.0-rc.1 <=1.0.0-rc.2",
-        "github.com/LiteLDev/LegacyMoney": ">=0.9.0-rc.1"
+        "github.com/LiteLDev/LegacyMoney": ">=0.9.0-rc.1",
+        "github.com/MiracleForest/iListenAttentively": "0.2.1"
     },
     "files": {
         "place": [
