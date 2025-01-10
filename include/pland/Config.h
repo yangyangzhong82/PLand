@@ -23,8 +23,8 @@ struct Config {
         bool   landTp{true};    // 领地传送
         int    maxLand{20};     // 最大领地数量
         int    minSpacing{16};  // 最小领地间距
-        double refundRate{0.9}; // 退款率(1为全额退款)
-        double discountRate{1}; // 折扣率(1为无折扣)
+        double refundRate{0.9}; // 退款率(0.0~1.0，1.0为全额退款，0.9为退还90%)
+        double discountRate{1}; // 折扣率(0.0~1.0，1.0为原价，0.9为打9折)
 
         bool setupDrawCommand{false}; // 安装领地绘制命令
         int  drawRange{64};           // 绘制 x 范围内的领地

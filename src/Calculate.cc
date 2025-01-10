@@ -47,10 +47,13 @@ int Calculate::eval(string code) {
 
 
 int Calculate::calculateDiscountPrice(int originalPrice, double discountRate) {
-    return (int)(originalPrice * (1 - discountRate / 100));
+    // discountRate为1时表示原价，为0.9时表示打9折
+    return (int)(originalPrice * discountRate);
 }
+
 int Calculate::calculateRefundsPrice(int originalPrice, double refundRate) {
-    return (int)(originalPrice * refundRate / 100);
+    // refundRate为1时表示全额退款，为0.9时表示退还90%
+    return (int)(originalPrice * refundRate);
 }
 
 
