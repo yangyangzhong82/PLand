@@ -18,6 +18,10 @@
 #include "pland/PLand.h"
 #include "pland/Particle.h"
 
+#ifdef LD_TEST
+#include "LandEventTest.h"
+#endif
+
 
 namespace my_mod {
 
@@ -46,7 +50,7 @@ bool MyMod::load() {
 
 #ifdef DEBUG
     logger.warn("Debug Mode");
-    logger.setLevel(ll::io::LogLevel::Debug);
+    logger.setLevel(ll::io::LogLevel::Trace);
 #endif
 
     return true;
@@ -59,6 +63,10 @@ bool MyMod::enable() {
     land::LandScheduler::setup();
     land::EventListener::setup();
     land::LandDraw::setup();
+
+#ifdef LD_TEST
+    test::SetupEventListener();
+#endif
 
     return true;
 }

@@ -29,6 +29,11 @@ option("target_type")
     set_values("server", "client")
 option_end()
 
+option("test")
+    set_default(false)
+    set_showmenu(true)
+option_end()
+
 target("PLand") -- Change this to your mod name.
     add_rules("@levibuildscript/linkrule")
     add_rules("@levibuildscript/modpacker")
@@ -65,6 +70,12 @@ target("PLand") -- Change this to your mod name.
     else 
         set_symbols("debug")
     end 
+
+    if has_config("test") then
+        add_defines("LD_TEST")
+        add_files("test/**.cc")
+        add_includedirs("test")
+    end
 
     after_build(function (target)
         local bindir = path.join(os.projectdir(), "bin")

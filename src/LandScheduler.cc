@@ -53,7 +53,11 @@ bool LandScheduler::setup() {
                 // 处理维度变化
                 if (curDimid != lastDimid) {
                     if (lastLandID != (LandID)-1) {
-                        bus->publish(PlayerLeaveLandEvent(player, lastLandID)); // 离开上一个维度的领地
+                        auto ev = PlayerLeaveLandEvent(player, lastLandID);
+                        bus->publish(ev); // 离开上一个维度的领地
+#ifdef DEBUG
+                        printf("(dim) player %s leave land %d\n", player.getName().c_str(), lastLandID);
+#endif
                     }
                     lastDimid = curDimid;
                 }
@@ -61,10 +65,18 @@ bool LandScheduler::setup() {
                 // 处理领地变化
                 if (curLandID != lastLandID) {
                     if (lastLandID != (LandID)-1) {
-                        bus->publish(PlayerLeaveLandEvent(player, lastLandID)); // 离开上一个领地
+                        auto ev = PlayerLeaveLandEvent(player, lastLandID);
+                        bus->publish(ev); // 离开上一个领地
+#ifdef DEBUG
+                        printf("player %s leave land %d\n", player.getName().c_str(), lastLandID);
+#endif
                     }
                     if (curLandID != (LandID)-1) {
-                        bus->publish(PlayerEnterLandEvent(player, curLandID)); // 进入新领地
+                        auto ev = PlayerEnterLandEvent(player, curLandID);
+                        bus->publish(ev); // 进入新领地
+#ifdef DEBUG
+                        printf("player %s enter land %d\n", player.getName().c_str(), curLandID);
+#endif
                     }
                     lastLandID = curLandID;
                 }
@@ -74,15 +86,16 @@ bool LandScheduler::setup() {
         }
     }).launch(ll::thread::ServerThreadExecutor::getDefault());
 
+    auto* logger = &my_mod::MyMod::getInstance().getSelf().getLogger();
     mPlayerLeaveServerListener =
-        bus->emplaceListener<ll::event::PlayerDisconnectEvent>([](ll::event::PlayerDisconnectEvent& ev) {
+        bus->emplaceListener<ll::event::PlayerDisconnectEvent>([logger](ll::event::PlayerDisconnectEvent& ev) {
+            logger->debug("Player {} disconnect, remove land info");
             auto& uuid = ev.self().getUuid();
             LandScheduler::mDimidMap.erase(uuid);
             LandScheduler::mLandidMap.erase(uuid);
         });
 
     // tip
-    auto* logger         = &my_mod::MyMod::getInstance().getSelf().getLogger();
     auto* infos          = &ll::service::PlayerInfo::getInstance();
     auto* db             = &PLand::getInstance();
     mPlayerEnterListener = bus->emplaceListener<PlayerEnterLandEvent>([logger, infos, db](PlayerEnterLandEvent& ev) {
