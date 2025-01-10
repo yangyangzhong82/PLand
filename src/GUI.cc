@@ -99,6 +99,10 @@ void LandBuyGui::impl(Player& player) {
                             );
     int discountedPrice = Calculate::calculateDiscountPrice(originalPrice, Config::cfg.land.discountRate);
 
+    if (!Config::cfg.economy.enabled) {
+        discountedPrice = 0; // 免费
+    }
+
     // publish event
     PlayerBuyLandBeforeEvent ev(player, dataPtr, discountedPrice);
     ll::event::EventBus::getInstance().publish(ev);
