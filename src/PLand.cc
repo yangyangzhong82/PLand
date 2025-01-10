@@ -23,8 +23,9 @@
 
 namespace land {
 
-#define DB_DIR_NAME      "db"
-#define DB_KEY_OPERATORS "operators"
+#define DB_DIR_NAME            "db"
+#define DB_KEY_OPERATORS       "operators"
+#define DB_KEY_PLAYER_SETTINGS "player_settings"
 
 bool PLand::init() {
     auto dir = my_mod::MyMod::getInstance().getSelf().getDataDir() / DB_DIR_NAME;
@@ -33,19 +34,26 @@ bool PLand::init() {
         mDB = std::make_unique<ll::data::KeyValueDB>(dir);
     }
 
-
-    // init and load operators
+    // load operators
     if (!mDB->has(DB_KEY_OPERATORS)) {
         mDB->set(DB_KEY_OPERATORS, "[]"); // empty array
     }
     auto ops = JSON::parse(*mDB->get(DB_KEY_OPERATORS));
     JSON::jsonToStructNoMerge(ops, mLandOperators);
 
+    // load player settings
+    if (!mDB->has(DB_KEY_PLAYER_SETTINGS)) {
+        mDB->set(DB_KEY_PLAYER_SETTINGS, "{}"); // empty object
+    }
+    auto settings = JSON::parse(*mDB->get(DB_KEY_PLAYER_SETTINGS));
+    JSON::jsonToStructNoMerge(settings, mPlayerSettings);
 
     // load land data
-    std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
-    mDB->iter([this](auto key, auto value) {
-        if (key == DB_KEY_OPERATORS) return true; // skip operators
+    std::unique_lock<std::shared_mutex>                                lock(mMutex); // 获取锁
+    ll::coro::Generator<std::pair<std::string_view, std::string_view>> iter = mDB->iter();
+    for (auto [key, value] : iter) {
+        if (key == DB_KEY_OPERATORS) continue;       // skip operators
+        if (key == DB_KEY_PLAYER_SETTINGS) continue; // skip player settings
         auto json = JSON::parse(value);
         auto land = LandData::make();
 
@@ -57,8 +65,7 @@ bool PLand::init() {
         }
 
         mLandCache.emplace(land->getLandID(), std::move(land));
-        return true;
-    });
+    }
 
     auto& logger = my_mod::MyMod::getInstance().getSelf().getLogger();
     logger.info("已加载 {} 位操作员", mLandOperators.size());
@@ -71,6 +78,8 @@ bool PLand::init() {
 bool PLand::save() {
     std::shared_lock<std::shared_mutex> lock(mMutex); // 获取锁
     mDB->set(DB_KEY_OPERATORS, JSON::stringify(JSON::structTojson(mLandOperators)));
+
+    mDB->set(DB_KEY_PLAYER_SETTINGS, JSON::stringify(JSON::structTojson(mPlayerSettings)));
 
     for (auto& [id, land] : mLandCache) {
         mDB->set(std::to_string(land->mLandID), JSON::stringify(JSON::structTojson(*land)));
@@ -146,6 +155,26 @@ bool PLand::removeOperator(UUIDs const& uuid) {
     mLandOperators.erase(iter);
     return true;
 }
+
+
+PlayerSettings* PLand::getPlayerSettings(UUIDs const& uuid) {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+    auto                                iter = mPlayerSettings.find(uuid);
+    if (iter == mPlayerSettings.end()) {
+        return nullptr;
+    }
+    return &iter->second;
+}
+bool PLand::setPlayerSettings(UUIDs const& uuid, PlayerSettings settings) {
+    std::unique_lock<std::shared_mutex> lock(mMutex);
+    mPlayerSettings[uuid] = std::move(settings);
+    return true;
+}
+bool PLand::hasPlayerSettings(UUIDs const& uuid) const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+    return mPlayerSettings.find(uuid) != mPlayerSettings.end();
+}
+
 
 bool PLand::hasLand(LandID id) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);

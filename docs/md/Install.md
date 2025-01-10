@@ -34,7 +34,7 @@ lip install --upgrade github.com/engsr6982/PLand
 目前 PLand 依赖以下前置库
 
 - LeviLamina
-- MoreEvents
+- iListenAttentively
 
 > 您需要手动下载对应版本的前置组件  
 > 在下载前置组件时，请确保您下载的版本与 PLand 的版本兼容  

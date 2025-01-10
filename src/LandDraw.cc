@@ -1,6 +1,7 @@
 #include "pland/LandDraw.h"
-#include "ll/api/schedule/Task.h"
+#include "ll/api/coro/CoroTask.h"
 #include "ll/api/service/Bedrock.h"
+#include "ll/api/thread/ServerThreadExecutor.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/Level.h"
 #include "pland/Config.h"
@@ -28,37 +29,42 @@ void LandDraw::setup() {
     auto db = &PLand::getInstance();
 
     // 主线程绘制粒子
-    GlobalTickScheduler.add<ll::schedule::RepeatTask>(25_tick, [db]() {
-        ll::service::getLevel()->forEachPlayer([db](Player& player) {
-            try {
-                auto iter = mDrawType.find(player.getUuid());
-                if (iter == mDrawType.end() || iter->second == DrawType::Disable) {
-                    return true;
-                }
-
-                auto const& type = iter->second;
-                if (type == DrawType::CurrentLand) {
-                    auto land = db->getLandAt(player.getPosition(), player.getDimensionId());
-                    if (land) {
-                        auto pos = land->getLandPos();
-                        Particle(pos, land->getLandDimid(), land->is3DLand())
-                            .draw(player, false, true, true); // 绘制当前领地
+    // repeat task
+    ll::coro::keepThis([db]() -> ll::coro::CoroTask<> {
+        while (GlobalRepeatCoroTaskRunning) {
+            co_await 25_tick;
+            ll::service::getLevel()->forEachPlayer([db](Player& player) {
+                try {
+                    auto iter = mDrawType.find(player.getUuid());
+                    if (iter == mDrawType.end() || iter->second == DrawType::Disable) {
+                        return true;
                     }
 
-                } else {
-                    auto lds = db->getLandAt(player.getPosition(), Config::cfg.land.drawRange, player.getDimensionId());
+                    auto const& type = iter->second;
+                    if (type == DrawType::CurrentLand) {
+                        auto land = db->getLandAt(player.getPosition(), player.getDimensionId());
+                        if (land) {
+                            auto pos = land->getLandPos();
+                            Particle(pos, land->getLandDimid(), land->is3DLand())
+                                .draw(player, false, true, true); // 绘制当前领地
+                        }
 
-                    for (auto& land : lds) {
-                        auto pp = land->getLandPos();
-                        Particle{pp, land->getLandDimid(), land->is3DLand()}.draw(player, false, true, true);
+                    } else {
+                        auto lds =
+                            db->getLandAt(player.getPosition(), Config::cfg.land.drawRange, player.getDimensionId());
+
+                        for (auto& land : lds) {
+                            auto pp = land->getLandPos();
+                            Particle{pp, land->getLandDimid(), land->is3DLand()}.draw(player, false, true, true);
+                        }
                     }
+                } catch (...) {
+                    disable(player);
                 }
-            } catch (...) {
-                disable(player);
-            }
-            return true;
-        });
-    });
+                return true;
+            });
+        }
+    }).launch(ll::thread::ServerThreadExecutor::getDefault());
 }
 
 } // namespace land

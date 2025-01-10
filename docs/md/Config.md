@@ -9,7 +9,7 @@
 ```json
 {
     "version": 2, // 配置文件版本，请勿修改
-    "logLevel": 4, // 日志等级
+    "logLevel": "Info", // 日志等级 Off / Fatal / Error / Warn / Info / Debug / Trace
     "economy": {
         "enabled": true, // 是否启用经济系统
         "kit": "LegacyMoney", // 经济套件 LegacyMoney 或 ScoreBoard
@@ -20,8 +20,8 @@
         "landTp": true, // 是否启用领地传送
         "maxLand": 20, // 玩家最大领地数量
         "minSpacing": 16, // 领地最小间距
-        "refundRate": 0.9, // 领地退地时返还的百分比
-        "discountRate": 1.0, // 领地购买时的折扣率
+        "refundRate": 0.9, // 退款率(0.0~1.0，1.0为全额退款，0.9为退还90%)
+        "discountRate": 1.0, // 折扣率(0.0~1.0，1.0为原价，0.9为打9折)
 
         "setupDrawCommand": true, // 是否注册领地范围绘制指令
         "drawRange": 64, // 绘制查询领地范围 （以玩家为中心，此值不宜过大，过大可能导致性能问题）

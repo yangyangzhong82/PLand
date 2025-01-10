@@ -25,6 +25,7 @@
 #include "pland/utils/Utils.h"
 #include "pland/wrapper/FormEx.h"
 #include <algorithm>
+#include <cstdint>
 #include <string>
 #include <unordered_set>
 
@@ -98,6 +99,10 @@ void LandBuyGui::impl(Player& player) {
                             );
     int discountedPrice = Calculate::calculateDiscountPrice(originalPrice, Config::cfg.land.discountRate);
 
+    if (!Config::cfg.economy.enabled) {
+        discountedPrice = 0; // 免费
+    }
+
     // publish event
     PlayerBuyLandBeforeEvent ev(player, dataPtr, discountedPrice);
     ll::event::EventBus::getInstance().publish(ev);
@@ -121,7 +126,7 @@ void LandBuyGui::impl(Player& player) {
 
     fm.appendButton("确认购买"_tr(), "textures/ui/realms_green_check", [discountedPrice](Player& pl) {
         auto& eco = EconomySystem::getInstance();
-        if (eco.get(pl) < discountedPrice) {
+        if (eco.get(pl) < discountedPrice && Config::cfg.economy.enabled) {
             mc::sendText<mc::LogLevel::Error>(pl, "您的余额不足，无法购买"_tr());
             return; // 预检查经济
         }
@@ -251,7 +256,7 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
 
     fm.appendButton("确认购买"_tr(), "textures/ui/realms_green_check", [needPay, refund, discountedPrice](Player& pl) {
         auto& eco = EconomySystem::getInstance();
-        if (needPay > 0 && eco.get(pl) < needPay) {
+        if ((needPay > 0 && eco.get(pl) < needPay) && Config::cfg.economy.enabled) {
             mc::sendText<mc::LogLevel::Error>(pl, "您的余额不足，无法购买"_tr());
             return; // 预检查经济
         }
@@ -453,9 +458,29 @@ void LandMainGui::impl(Player& player) {
     fm.appendButton("领地传送", "textures/ui/icon_recipe_nature", [](Player& pl) {
         ChooseLandGui::impl<LandMainGui>(pl, LandTeleportGui::impl);
     });
+    fm.appendButton("个人设置", "textures/ui/icon_recipe_nature", [](Player& pl) { EditPlayerSettingGui::impl(pl); });
 
     fm.appendButton("关闭", "textures/ui/cancel");
     fm.sendTo(player);
+}
+
+
+void EditPlayerSettingGui::impl(Player& player) {
+    auto setting = PLand::getInstance().getPlayerSettings(player.getUuid().asString());
+
+    CustomForm fm(PLUGIN_NAME + ("| 玩家设置"_tr()));
+
+    fm.appendToggle("showEnterLandTitle", "是否显示进入领地提示"_tr(), setting->showEnterLandTitle);
+    fm.appendToggle("showBottomContinuedTip", "是否持续显示底部提示"_tr(), setting->showBottomContinuedTip);
+
+    fm.sendTo(player, [setting](Player& pl, CustomFormResult res, FormCancelReason) {
+        if (!res) {
+            return;
+        }
+        setting->showEnterLandTitle     = std::get<uint64_t>(res->at("showEnterLandTitle"));
+        setting->showBottomContinuedTip = std::get<uint64_t>(res->at("showBottomContinuedTip"));
+        mc::sendText<mc::LogLevel::Info>(pl, "设置已保存"_tr());
+    });
 }
 
 
@@ -506,7 +531,7 @@ void LandManagerGui::EditLandPermGui::impl(Player& player, LandData_sptr ptr) {
 
     auto js = JSON::structTojson(ptr->getLandPermTableConst());
     for (auto& [k, v] : js.items()) {
-        fm.appendToggle(k, (string)i18n->get(k), v);
+        fm.appendToggle(k, (string)i18n.get(k, ll::i18n::getDefaultLocaleCode()), v);
     }
 
     fm.sendTo(player, [ptr](Player& pl, CustomFormResult const& res, FormCancelReason) {

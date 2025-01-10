@@ -6,6 +6,7 @@
 #include "ll/api/mod/RegisterHelper.h"
 #include "ll/api/utils/SystemUtils.h"
 
+#include "ll/api/io/LogLevel.h"
 #include "pland/Calculate.h"
 #include "pland/Command.h"
 #include "pland/Config.h"
@@ -17,18 +18,20 @@
 #include "pland/PLand.h"
 #include "pland/Particle.h"
 
+#ifdef LD_TEST
+#include "LandEventTest.h"
+#endif
+
 
 namespace my_mod {
 
-static std::unique_ptr<MyMod> instance;
-
-MyMod& MyMod::getInstance() { return *instance; }
+MyMod& MyMod::getInstance() {
+    static MyMod instance;
+    return instance;
+}
 
 bool MyMod::load() {
     auto& logger = getSelf().getLogger();
-    if (ll::sys_utils::isStdoutSupportAnsi()) {
-        logger.title = fmt::format(fmt::fg(fmt::color::light_green), logger.title);
-    }
     logger.info(R"(  _____   _                        _ )");
     logger.info(R"( |  __ \ | |                      | |)");
     logger.info(R"( | |__) || |      __ _  _ __    __| |)");
@@ -38,16 +41,16 @@ bool MyMod::load() {
     logger.info(R"(                                     )");
     logger.info("Loading...");
 
-    ll::i18n::load(getSelf().getLangDir());
+    auto un_used = ll::i18n::getInstance().load(getSelf().getLangDir());
 
     land::Config::tryLoad();
-    logger.consoleLevel = land::Config::cfg.logLevel; // set console log level
+    logger.setLevel(land::Config::cfg.logLevel); // set console log level
 
     land::PLand::getInstance().init();
 
 #ifdef DEBUG
     logger.warn("Debug Mode");
-    logger.consoleLevel = 5;
+    logger.setLevel(ll::io::LogLevel::Trace);
 #endif
 
     return true;
@@ -61,6 +64,10 @@ bool MyMod::enable() {
     land::EventListener::setup();
     land::LandDraw::setup();
 
+#ifdef LD_TEST
+    test::SetupEventListener();
+#endif
+
     return true;
 }
 
@@ -68,7 +75,7 @@ bool MyMod::disable() {
     auto& logger = getSelf().getLogger();
     logger.info("Stopping thread and saving data...");
     land::PLand::getInstance().mThread.request_stop(); // 请求关闭线程
-    land::GlobalTickScheduler.clear();
+    // land::GlobalTickScheduler.clear();
     logger.debug("[Main] Saving land data...");
     land::PLand::getInstance().save();
     logger.debug("[Main] Land data saved.");
@@ -82,4 +89,4 @@ bool MyMod::disable() {
 
 } // namespace my_mod
 
-LL_REGISTER_MOD(my_mod::MyMod, my_mod::instance);
+LL_REGISTER_MOD(my_mod::MyMod, my_mod::MyMod::getInstance());

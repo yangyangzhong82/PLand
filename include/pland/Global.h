@@ -1,8 +1,10 @@
 #pragma once
+#include "ll/api/chrono/GameChrono.h"
+#include "ll/api/coro/CoroTask.h"
 #include "ll/api/i18n/I18n.h"
-#include "ll/api/schedule/Scheduler.h"
-#include "mc/deps/core/mce/UUID.h"
-#include "mc/world/ActorUniqueID.h"
+#include "mc/common/ActorUniqueID.h"
+#include "mc/platform/UUID.h"
+#include <atomic>
 #include <filesystem>
 
 
@@ -30,9 +32,7 @@ using ll::i18n_literals::operator""_tr;
 using ll::chrono_literals::operator""_tick; // 1s = 20_tick
 namespace fs = std::filesystem;
 
-// 全局共享资源 (这些对象在 Mod 初始化时创建，在 Mod 退出时销毁)
-extern ll::schedule::GameTickScheduler GlobalTickScheduler; // 全局定时器
-
+extern std::atomic<bool> GlobalRepeatCoroTaskRunning;
 
 } // namespace land
 

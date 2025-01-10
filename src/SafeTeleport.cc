@@ -1,6 +1,8 @@
 #include "pland/SafeTeleport.h"
-#include "ll/api/schedule/Task.h"
-#include "mc/math/Vec3.h"
+#include "ll/api/coro/CoroTask.h"
+#include "ll/api/thread/ServerThreadExecutor.h"
+#include "ll/api/thread/TickSyncSleep.h"
+#include "mc/deps/core/math/Vec3.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/ChunkPos.h"
@@ -111,10 +113,12 @@ public:
 
 
     void execute(uint64_t id) {
-        GlobalTickScheduler.add<ll::schedule::DelayTask>(10_tick, [id, this]() {
+        // delay task
+        ll::coro::keepThis([id, this]() -> ll::coro::CoroTask<> {
+            co_await 10_tick;
             auto iter = mTeleportQueue.find(id);
             if (iter == mTeleportQueue.end()) {
-                return;
+                co_return;
             }
 
             auto& dt = iter->second;
@@ -129,11 +133,12 @@ public:
                     mc::sendText<mc::LogLevel::Info>(*dt.mPlayer, "无法找到安全位置, 区块加载超时"_tr());
                     dt.mPlayer->teleport(dt.mSourcePos, dt.mTargetDimid); //  返回原位置
                     remove(id);
-                    return;
+                    co_return;
                 }
                 execute(id);
             }
-        });
+            co_return;
+        }).launch(ll::thread::ServerThreadExecutor::getDefault());
     }
 
 

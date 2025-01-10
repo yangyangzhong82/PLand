@@ -61,6 +61,12 @@ public:
 };
 
 
+class EditPlayerSettingGui {
+public:
+    LDAPI static void impl(Player& player);
+};
+
+
 // 领地管理GUI
 class LandManagerGui {
 public:
