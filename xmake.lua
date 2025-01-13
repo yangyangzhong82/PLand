@@ -16,8 +16,8 @@ add_requires("levibuildscript")
 add_requires("exprtk 0.0.3")
 add_requires("legacymoney 0.9.0-rc.1")
 add_requires("ilistenattentively 0.2.2")
-add_requireconfs("**.magic_enum", {override = true, version = "0.9.7"}) -- override ilistenattentively's magic_enum version
-add_requireconfs("**.levilamina", {override = true, version = "1.0.0-rc.2", configs = {target_type = "server"}}) -- override ilistenattentively's levilamina version
+-- add_requireconfs("**.magic_enum", {override = true, version = "0.9.7"}) -- override ilistenattentively's magic_enum version
+-- add_requireconfs("**.levilamina", {override = true, version = "1.0.0-rc.2", configs = {target_type = "server"}}) -- override ilistenattentively's levilamina version
 
 if not has_config("vs_runtime") then
     set_runtimes("MD")
