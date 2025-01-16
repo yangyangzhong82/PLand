@@ -23,13 +23,28 @@ PosBase& PosBase::operator=(const BlockPos& pos) {
 PosBase PosBase::make(int x, int y, int z) { return PosBase{x, y, z}; }
 PosBase PosBase::make(BlockPos const& pos) { return PosBase{pos.x, pos.y, pos.z}; }
 
-
 // LandPos
 int LandPos::getDepth() const { return mMax_B.x - mMin_A.x; }
 int LandPos::getHeight() const { return mMax_B.y - mMin_A.y; }
 int LandPos::getWidth() const { return mMax_B.z - mMin_A.z; }
-int LandPos::getSquare() const { return getDepth() * getWidth(); }
-int LandPos::getVolume() const { return getSquare() * getHeight(); }
+int LandPos::getSquare() const {
+    int64 depth  = getDepth();
+    int64 width  = getWidth();
+    int64 square = depth * width;
+    if (square > INT_MAX) {
+        return INT_MAX;
+    }
+    return square;
+}
+int LandPos::getVolume() const {
+    int64 square = getSquare();
+    int64 height = getHeight();
+    int64 volume = square * height;
+    if (volume > INT_MAX) {
+        return INT_MAX;
+    }
+    return volume;
+}
 
 
 void LandPos::fix() {

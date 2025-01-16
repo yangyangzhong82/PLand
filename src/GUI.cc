@@ -25,6 +25,7 @@
 #include "pland/utils/Utils.h"
 #include "pland/wrapper/FormEx.h"
 #include <algorithm>
+#include <climits>
 #include <cstdint>
 #include <string>
 #include <unordered_set>
@@ -90,6 +91,13 @@ void LandBuyGui::impl(Player& player) {
 
     bool const& is3D = dataPtr->mDraw3D;
 
+    dataPtr->mPos.fix();
+    int const volume = dataPtr->mPos.getVolume();
+    if (volume >= INT_MAX) {
+        mc::sendText<mc::LogLevel::Error>(player, "领地体积过大，无法购买"_tr());
+        return;
+    }
+
     auto& economy = EconomySystem::getInstance();
 
     int originalPrice = Calculate(dataPtr->mPos)
@@ -98,6 +106,12 @@ void LandBuyGui::impl(Player& player) {
                                      : Config::cfg.land.bought.twoDimensionl.calculate
                             );
     int discountedPrice = Calculate::calculateDiscountPrice(originalPrice, Config::cfg.land.discountRate);
+
+    if (originalPrice < 0 || discountedPrice < 0) {
+        // 范围过大导致溢出
+        mc::sendText<mc::LogLevel::Error>(player, "领地体积过大，无法购买"_tr());
+        return;
+    }
 
     if (!Config::cfg.economy.enabled) {
         discountedPrice = 0; // 免费
@@ -117,7 +131,7 @@ void LandBuyGui::impl(Player& player) {
         dataPtr->mPos.getDepth(),
         dataPtr->mPos.getWidth(),
         dataPtr->mPos.getHeight(),
-        dataPtr->mPos.getVolume(),
+        volume,
         dataPtr->mPos.toString(),
         originalPrice,
         discountedPrice,
@@ -217,6 +231,12 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
     auto&       economy = EconomySystem::getInstance();
     bool const& is3D    = dataPtr->mDraw3D;
 
+    dataPtr->mPos.fix();
+    int const volume = dataPtr->mPos.getVolume();
+    if (volume >= INT_MAX) {
+        mc::sendText<mc::LogLevel::Error>(player, "领地体积过大，无法购买"_tr());
+        return;
+    }
 
     int const& originalPrice   = dataPtr->mBindLandData.lock()->mOriginalBuyPrice; // 原始购买价格
     int const  discountedPrice = Calculate::calculateDiscountPrice(                // 新范围购买价格
