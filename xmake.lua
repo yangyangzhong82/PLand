@@ -81,6 +81,7 @@ target("PLand") -- Change this to your mod name.
         local bindir = path.join(os.projectdir(), "bin")
         local outputdir = path.join(bindir, target:name())
         -- Lang
+        os.mkdir(path.join(outputdir, "lang"))
         local langdir = path.join(os.projectdir(), "assets", "lang")
         os.cp(langdir, outputdir)
     end)
