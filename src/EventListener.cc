@@ -675,17 +675,18 @@ bool EventListener::setup() {
 
     mLiquidFlowEvent =
         bus->emplaceListener<ila::mc::LiquidTryFlowBeforeEvent>([db, logger](ila::mc::LiquidTryFlowBeforeEvent& ev) {
-            auto& sou = ev.getPos();
+            // auto& sou = ev.getPos();
             // auto& from = ev.getFlowFromPos();
             // logger->debug("[LiquidFlow] {} -> {}", sou.toString(), from.toString());
 
-            auto land = db->getLandAt(sou, ev.blockSource().getDimensionId());
-            if (land) {
-                if (!land->getLandPermTableConst().allowLiquidFlow) {
-                    ev.cancel();
-                    return;
-                }
-            }
+            // auto land = db->getLandAt(sou, ev.blockSource().getDimensionId());
+            // if (land) {
+            //     if (!land->getLandPermTableConst().allowLiquidFlow) {
+            //         ev.cancel();
+            //         return;
+            //     }
+            // }
+            // ev.cancel();
         });
 
     // mSculkCatalystAbsorbExperienceEvent = bus->emplaceListener<more_events::SculkCatalystAbsorbExperienceEvent>(
