@@ -17,7 +17,7 @@
     "prerequisites": {
         "github.com/LiteLDev/LeviLamina": ">=1.0.0-rc.3 <=1.1.0",
         "github.com/LiteLDev/LegacyMoney": ">=0.9.0-rc.1",
-        "github.com/MiracleForest/iListenAttentively": ">=0.2.2"
+        "github.com/MiracleForest/iListenAttentively-Release": ">=0.2.2"
     },
     "files": {
         "place": [
