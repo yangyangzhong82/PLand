@@ -18,6 +18,7 @@
 #include "pland/utils/MC.h"
 #include <functional>
 #include <optional>
+#include <unordered_set>
 
 
 #include "ll/api/event/entity/ActorHurtEvent.h"
@@ -31,24 +32,24 @@
 #include "ll/api/event/world/FireSpreadEvent.h"
 
 
-#include "ila/event/minecraft/actor/ActorRideEvent.h"
-#include "ila/event/minecraft/actor/ActorTriggerPressurePlateEvent.h"
-#include "ila/event/minecraft/actor/ArmorStandSwapItemEvent.h"
-#include "ila/event/minecraft/actor/MobHurtEffectEvent.h"
-#include "ila/event/minecraft/actor/ProjectileCreateEvent.h"
+#include "ila/event/minecraft/world/actor/ActorRideEvent.h"
+#include "ila/event/minecraft/world/actor/ActorTriggerPressurePlateEvent.h"
+#include "ila/event/minecraft/world/actor/ArmorStandSwapItemEvent.h"
+#include "ila/event/minecraft/world/actor/MobHurtEffectEvent.h"
+#include "ila/event/minecraft/world/actor/ProjectileCreateEvent.h"
 // #include "ila/event/minecraft/level/SculkCatalystAbsorbExperienceEvent.h"
-#include "ila/event/minecraft/player/PlayerAttackBlockEvent.h"
-#include "ila/event/minecraft/player/PlayerDropItemEvent.h"
-#include "ila/event/minecraft/player/PlayerOperatedItemFrameEvent.h"
 #include "ila/event/minecraft/world/ExplosionEvent.h"
-#include "ila/event/minecraft/world/FarmDecayEvent.h"
-#include "ila/event/minecraft/world/LiquidTryFlowEvent.h"
-#include "ila/event/minecraft/world/MossGrowthEvent.h"
 #include "ila/event/minecraft/world/PistonPushEvent.h"
 #include "ila/event/minecraft/world/RedstoneUpdateEvent.h"
 #include "ila/event/minecraft/world/SculkBlockGrowthEvent.h"
-#include "ila/event/minecraft/world/SculkSpreadEvent.h"
 #include "ila/event/minecraft/world/WitherDestroyEvent.h"
+#include "ila/event/minecraft/world/actor/player/PlayerAttackBlockEvent.h"
+#include "ila/event/minecraft/world/actor/player/PlayerDropItemEvent.h"
+#include "ila/event/minecraft/world/actor/player/PlayerOperatedItemFrameEvent.h"
+#include "ila/event/minecraft/world/level/block/FarmDecayEvent.h"
+#include "ila/event/minecraft/world/level/block/LiquidTryFlowEvent.h"
+#include "ila/event/minecraft/world/level/block/MossGrowthEvent.h"
+#include "ila/event/minecraft/world/level/block/SculkSpreadEvent.h"
 
 
 ll::event::ListenerPtr mPlayerJoinEvent;           // 玩家加入服务器
@@ -397,6 +398,11 @@ bool EventListener::setup() {
 
             logger->debug("[AttackBlock] {}", ev.getPos().toString());
 
+            static std::unordered_set<string> whiteList = {
+                "minecraft:clock" // 钟
+            };
+            if (whiteList.contains(player.getSelectedItem().getTypeName())) return true; // 白名单
+
             auto land = db->getLandAt(ev.getPos(), player.getDimensionId());
             if (PreCheck(land, player.getUuid().asString())) {
                 return true;
@@ -654,7 +660,7 @@ bool EventListener::setup() {
 
     mMossFertilizerEvent =
         bus->emplaceListener<ila::mc::MossGrowthBeforeEvent>([db, logger](ila::mc::MossGrowthBeforeEvent& ev) {
-            logger->debug("[MossSpread] {}", ev.getPos().toString());
+            // logger->debug("[MossSpread] {}", ev.getPos().toString());
 
             auto const& pos = ev.getPos();
 
@@ -675,18 +681,15 @@ bool EventListener::setup() {
 
     mLiquidFlowEvent =
         bus->emplaceListener<ila::mc::LiquidTryFlowBeforeEvent>([db, logger](ila::mc::LiquidTryFlowBeforeEvent& ev) {
-            // auto& sou = ev.getPos();
+            auto& sou = ev.getPos();
             // auto& from = ev.getFlowFromPos();
             // logger->debug("[LiquidFlow] {} -> {}", sou.toString(), from.toString());
 
-            // auto land = db->getLandAt(sou, ev.blockSource().getDimensionId());
-            // if (land) {
-            //     if (!land->getLandPermTableConst().allowLiquidFlow) {
-            //         ev.cancel();
-            //         return;
-            //     }
-            // }
-            // ev.cancel();
+            auto land = db->getLandAt(sou, ev.blockSource().getDimensionId());
+            if (land && !land->getLandPermTableConst().allowLiquidFlow) {
+                ev.cancel();
+                return;
+            }
         });
 
     // mSculkCatalystAbsorbExperienceEvent = bus->emplaceListener<more_events::SculkCatalystAbsorbExperienceEvent>(
@@ -725,7 +728,7 @@ bool EventListener::setup() {
 
     mSculkSpreadEvent =
         bus->emplaceListener<ila::mc::SculkSpreadBeforeEvent>([db, logger](ila::mc::SculkSpreadBeforeEvent& ev) {
-            logger->debug("[SculkSpread] {} -> {}", ev.getSelfPos().toString(), ev.getTargetPos().toString());
+            // logger->debug("[SculkSpread] {} -> {}", ev.getSelfPos().toString(), ev.getTargetPos().toString());
 
             auto sou = db->getLandAt(ev.getSelfPos(), ev.blockSource().getDimensionId());
             auto tar = db->getLandAt(ev.getTargetPos(), ev.blockSource().getDimensionId());

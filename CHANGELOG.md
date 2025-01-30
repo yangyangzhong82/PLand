@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2025-01-30
+
+### Changed
+
+- 适配 iListenAttentively v0.2.3
+
 ## [0.4.0] - 2025-01-27
 
 ### Changed
@@ -15,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- 暂时移除液体事件（事件库Bug）
+- 暂时移除液体事件（事件库 Bug）
 
 ## [0.4.0-rc.2] - 2025-01-13
 
@@ -36,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- 修复一些bug (记不清了)
+- 修复一些 bug (记不清了)
 
 ## [0.3.1] - 2024-12-17
 
