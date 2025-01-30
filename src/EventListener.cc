@@ -206,6 +206,11 @@ bool EventListener::setup() {
                 return true;
             }
 
+            static std::unordered_set<string> whiteList = {
+                "minecraft:clock" // 钟
+            };
+            if (whiteList.contains(item)) return true; // 白名单
+
             if (!UseItemOnMap.contains(item) && !UseItemOnMap.contains(block)) {
                 return true;
             }
