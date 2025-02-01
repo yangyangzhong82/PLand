@@ -172,6 +172,8 @@ bool EventListener::setup() {
 
             logger->debug("[PlaceingBlock] {}", blockPos.toString());
 
+            if (WhiteListItems.contains(player.getSelectedItem().getTypeName())) return true; // 白名单
+
             auto land = db->getLandAt(blockPos, player.getDimensionId());
             if (PreCheck(land, player.getUuid().asString())) {
                 return true;
@@ -205,11 +207,6 @@ bool EventListener::setup() {
             if (PreCheck(land, player.getUuid().asString())) {
                 return true;
             }
-
-            static std::unordered_set<string> whiteList = {
-                "minecraft:clock" // 钟
-            };
-            if (whiteList.contains(item)) return true; // 白名单
 
             if (!UseItemOnMap.contains(item) && !UseItemOnMap.contains(block)) {
                 return true;
@@ -253,6 +250,8 @@ bool EventListener::setup() {
             if (block == "minecraft:respawn_anchor" && tab.useRespawnAnchor) return true;   // 重生锚（充能）
             if (block == "minecraft:flower_pot" && tab.editFlowerPot) return true;          // 花盆
             // clang-format on
+
+            if (WhiteListItems.contains(item)) return true;
 
             ev.cancel();
             return true;
@@ -351,6 +350,8 @@ bool EventListener::setup() {
             if (block.ends_with("furnace") && tab.useFurnace) return true;                      // 熔炉
             if (block.ends_with("smoker") && tab.useSmoker) return true;                        // 烟熏炉
 
+            if (WhiteListItems.contains(player.getSelectedItem().getTypeName())) return true;
+
             ev.cancel();
             return true;
         });
@@ -402,11 +403,6 @@ bool EventListener::setup() {
             Player& player = pl.value();
 
             logger->debug("[AttackBlock] {}", ev.getPos().toString());
-
-            static std::unordered_set<string> whiteList = {
-                "minecraft:clock" // 钟
-            };
-            if (whiteList.contains(player.getSelectedItem().getTypeName())) return true; // 白名单
 
             auto land = db->getLandAt(ev.getPos(), player.getDimensionId());
             if (PreCheck(land, player.getUuid().asString())) {
@@ -997,6 +993,7 @@ std::unordered_set<string> EventListener::AnimalEntityMap = {
     "minecraft:wandering_trader", // 流浪商人
     "minecraft:npc"               // NPC
 };
+std::unordered_set<string> EventListener::WhiteListItems = {"minecraft:clock"};
 
 
 } // namespace land
