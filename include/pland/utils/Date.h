@@ -11,7 +11,7 @@ namespace land {
 
 struct Date {
 private:
-    std::tm mTm;
+    std::tm mTm{};
 
     std::tm _now() {
         std::time_t t = std::time(nullptr);
@@ -21,25 +21,25 @@ private:
     }
 
 public:
-    int  getYear(int year = 0) const { return mTm.tm_year + 1900 + year; }
-    bool setYear(int year) { return mTm.tm_year = year - 1900; }
-    int  getMonth() const { return mTm.tm_mon + 1; }
-    bool setMonth(int month) { return mTm.tm_mon = month - 1; }
-    int  getDay() const { return mTm.tm_mday; }
-    bool setDay(int day) { return mTm.tm_mday = day; }
-    int  getHour() const { return mTm.tm_hour; }
-    bool setHour(int hour) { return mTm.tm_hour = hour; }
-    int  getMinute() const { return mTm.tm_min; }
-    bool setMinute(int minute) { return mTm.tm_min = minute; }
-    int  getSecond() const { return mTm.tm_sec; }
-    bool setSecond(int second) { return mTm.tm_sec = second; }
+    [[nodiscard]] int getYear(int year = 0) const { return mTm.tm_year + 1900 + year; }
+    bool              setYear(int year) { return mTm.tm_year = year - 1900; }
+    [[nodiscard]] int getMonth() const { return mTm.tm_mon + 1; }
+    bool              setMonth(int month) { return mTm.tm_mon = month - 1; }
+    [[nodiscard]] int getDay() const { return mTm.tm_mday; }
+    bool              setDay(int day) { return mTm.tm_mday = day; }
+    [[nodiscard]] int getHour() const { return mTm.tm_hour; }
+    bool              setHour(int hour) { return mTm.tm_hour = hour; }
+    [[nodiscard]] int getMinute() const { return mTm.tm_min; }
+    bool              setMinute(int minute) { return mTm.tm_min = minute; }
+    [[nodiscard]] int getSecond() const { return mTm.tm_sec; }
+    bool              setSecond(int second) { return mTm.tm_sec = second; }
 
     std::time_t getTime() const {
         std::tm tm = mTm;
         return std::mktime(&tm);
     }
 
-    string toString() {
+    [[nodiscard]] string toString() const {
         return fmt::format(
             "{}-{}-{} {}:{}:{}",
             std::to_string(getYear()),
@@ -68,7 +68,7 @@ public:
     static Date future(int seconds) {
         std::time_t now    = std::time(nullptr);
         std::time_t future = now + seconds;
-        std::tm     tm;
+        std::tm     tm{};
         localtime_s(&tm, &future);
         return Date{tm};
     }

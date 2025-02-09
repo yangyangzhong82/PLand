@@ -107,22 +107,23 @@ public:
     bool               mIsConvertedLand{false};            // 是否为转换后的领地(其它插件创建的领地)
     bool               mOwnerDataIsXUID{false}; // 领地主人数据是否为XUID (如果为true，则主人上线自动转换为UUID)
 
-    LDAPI static LandData_sptr make(); // 创建一个空领地数据(反射使用)
-    LDAPI static LandData_sptr make(LandPos const& pos, LandDimid dimid, bool is3D, UUIDs const& owner); // 新建领地数据
+    [[nodiscard]] LDAPI static LandData_sptr make(); // 创建一个空领地数据(反射使用)
+    [[nodiscard]] LDAPI static LandData_sptr
+    make(LandPos const& pos, LandDimid dimid, bool is3D, UUIDs const& owner); // 新建领地数据
 
     // getters
-    LDAPI LandPos const& getLandPos() const;
-    LDAPI LandID         getLandID() const;
-    LDAPI LandDimid      getLandDimid() const;
-    LDAPI int            getSalePrice() const;
+    [[nodiscard]] LDAPI LandPos const& getLandPos() const;
+    [[nodiscard]] LDAPI LandID         getLandID() const;
+    [[nodiscard]] LDAPI LandDimid      getLandDimid() const;
+    [[nodiscard]] LDAPI int            getSalePrice() const;
 
-    LDAPI LandPermTable&       getLandPermTable();
-    LDAPI LandPermTable const& getLandPermTableConst() const;
+    [[nodiscard]] LDAPI LandPermTable&       getLandPermTable();
+    [[nodiscard]] LDAPI LandPermTable const& getLandPermTableConst() const;
 
-    LDAPI UUIDs const& getLandOwner() const;
-    LDAPI std::vector<UUIDs> const& getLandMembers() const;
-    LDAPI std::string const& getLandName() const;
-    LDAPI std::string const& getLandDescribe() const;
+    [[nodiscard]] LDAPI UUIDs const& getLandOwner() const;
+    [[nodiscard]] LDAPI std::vector<UUIDs> const& getLandMembers() const;
+    [[nodiscard]] LDAPI std::string const& getLandName() const;
+    [[nodiscard]] LDAPI std::string const& getLandDescribe() const;
 
 
     // setters
@@ -140,15 +141,15 @@ public:
 
 
     // others
-    LDAPI bool is3DLand() const;
-    LDAPI bool isLandOwner(UUIDs const& uuid) const;
-    LDAPI bool isLandMember(UUIDs const& uuid) const;
-    LDAPI bool isSaleing() const;
+    [[nodiscard]] LDAPI bool is3DLand() const;
+    [[nodiscard]] LDAPI bool isLandOwner(UUIDs const& uuid) const;
+    [[nodiscard]] LDAPI bool isLandMember(UUIDs const& uuid) const;
+    [[nodiscard]] LDAPI bool isSaleing() const;
 
-    LDAPI bool isRadiusInLand(BlockPos const& pos, int radius) const;
-    LDAPI bool isAABBInLand(BlockPos const& pos1, BlockPos const& pos2) const;
+    [[nodiscard]] LDAPI bool isRadiusInLand(BlockPos const& pos, int radius) const;
+    [[nodiscard]] LDAPI bool isAABBInLand(BlockPos const& pos1, BlockPos const& pos2) const;
 
-    LDAPI LandPermType getPermType(UUIDs const& uuid) const;
+    [[nodiscard]] LDAPI LandPermType getPermType(UUIDs const& uuid) const;
 };
 
 

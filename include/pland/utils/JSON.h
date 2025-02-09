@@ -25,13 +25,13 @@ public:
     JSON& operator=(JSON&&)      = delete;
     JSON& operator=(const JSON&) = delete;
 
-    static nlohmann::json parse(std::string const& str) { return nlohmann::json::parse(str); }
-    static nlohmann::json parse(std::string_view const& str) { return nlohmann::json::parse(str); }
-    static std::string    stringify(nlohmann::json const& j, int indent = -1) { return j.dump(indent); }
+    [[nodiscard]] static nlohmann::json parse(std::string const& str) { return nlohmann::json::parse(str); }
+    [[nodiscard]] static nlohmann::json parse(std::string_view const& str) { return nlohmann::json::parse(str); }
+    [[nodiscard]] static std::string    stringify(nlohmann::json const& j, int indent = -1) { return j.dump(indent); }
 
     // class/vector/struct -> json
     template <class T>
-    static nlohmann::ordered_json structTojson(T& obj) {
+    [[nodiscard]] static nlohmann::ordered_json structTojson(T& obj) {
         return ll::reflection::serialize<nlohmann::ordered_json>(obj).value();
     }
 

@@ -15,10 +15,10 @@ public:
     LDAPI Calculate(LandPos& landPos);
     LDAPI Calculate(int height, int width, int depth);
 
-    LDAPI int eval(string code);
+    [[nodiscard]] LDAPI int eval(string code);
 
-    LDAPI static int calculateDiscountPrice(int originalPrice, double discountRate); // 计算折扣后的价格
-    LDAPI static int calculateRefundsPrice(int originalPrice, double refundRate);    // 计算退款金额
+    [[nodiscard]] LDAPI static int calculateDiscountPrice(int originalPrice, double discountRate); // 计算折扣后的价格
+    [[nodiscard]] LDAPI static int calculateRefundsPrice(int originalPrice, double refundRate);    // 计算退款金额
 };
 
 

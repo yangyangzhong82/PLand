@@ -42,10 +42,9 @@
 #include <string>
 
 
-
 namespace land::mc {
 
-inline Block const& getBlock(BlockPos& bp, int dimid) {
+[[nodiscard]] inline Block const& getBlock(BlockPos& bp, int dimid) {
     return ll::service::getLevel()->getDimension(dimid)->getBlockSourceFromMainChunkSource().getBlock(bp);
 }
 
@@ -73,7 +72,7 @@ inline void executeCommand(const std::string& cmd, Player* player = nullptr) {
         ll::service::getMinecraft()->getCommands().executeCommand(ctx, true);
     }
 }
-inline std::pair<bool, std::string> executeCommandEx(const std::string& cmd) {
+[[nodiscard]] inline std::pair<bool, std::string> executeCommandEx(const std::string& cmd) {
     std::pair<bool, std::string> result;
     auto                         origin =
         ServerCommandOrigin("Server", ll::service::getLevel()->asServer(), CommandPermissionLevel::Internal, 0);
@@ -104,7 +103,7 @@ inline std::pair<bool, std::string> executeCommandEx(const std::string& cmd) {
     return result;
 }
 
-inline BlockPos face2Pos(BlockPos const& sour, uchar face) {
+[[nodiscard]] inline BlockPos face2Pos(BlockPos const& sour, uchar face) {
     BlockPos dest = sour;
     switch (face) {
     case 0:
@@ -133,17 +132,17 @@ inline BlockPos face2Pos(BlockPos const& sour, uchar face) {
 // Template function sendText, usage: sendText() or sendText<LogLevel::Success>().
 enum class LogLevel : int { Normal = -1, Debug = 0, Info = 1, Warn = 2, Error = 3, Fatal = 4, Success = 5 };
 inline static std::unordered_map<LogLevel, std::string> Color = {
-    {LogLevel::Normal,  "§b"},
-    {LogLevel::Debug,   "§7"},
-    {LogLevel::Info,    "§r"},
-    {LogLevel::Warn,    "§e"},
-    {LogLevel::Error,   "§c"},
-    {LogLevel::Fatal,   "§4"},
+    { LogLevel::Normal, "§b"},
+    {  LogLevel::Debug, "§7"},
+    {   LogLevel::Info, "§r"},
+    {   LogLevel::Warn, "§e"},
+    {  LogLevel::Error, "§c"},
+    {  LogLevel::Fatal, "§4"},
     {LogLevel::Success, "§a"}
 };
 
 template <typename... Args>
-inline std::string format(const std::string& fmt, Args... args) {
+[[nodiscard]] inline std::string format(const std::string& fmt, Args... args) {
     try {
         return fmt::vformat(fmt, fmt::make_format_args(args...));
     } catch (...) {
