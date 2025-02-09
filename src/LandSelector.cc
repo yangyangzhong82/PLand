@@ -39,14 +39,20 @@ bool                                   LandSelector::init() {
         bus.emplaceListener<ll::event::PlayerInteractBlockEvent>([this](ll::event::PlayerInteractBlockEvent const& ev) {
             auto& pl = ev.self();
 
-            if (!this->isSelectTool(ev.item()) || !this->isSelecting(pl) || this->isSelected(pl)) {
-                return;
-            }
-
             if (auto iter = mStabilized.find(pl.getUuid()); iter != mStabilized.end()) {
                 if (iter->second >= Date::now().getTime()) {
                     return;
                 }
+            }
+            mStabilized[pl.getUuid()] = Date::future(50 / 1000).getTime(); // 50ms
+
+            if (this->isSelected(pl)) {
+                mc::executeCommand("pland buy", &pl);
+                return;
+            }
+
+            if (!this->isSelectTool(ev.item()) || !this->isSelecting(pl)) {
+                return;
             }
 
 #ifdef DEBUG
@@ -59,7 +65,6 @@ bool                                   LandSelector::init() {
             if (!this->isSelectedPointA(pl)) {
                 if (this->trySelectPointA(pl, ev.blockPos())) {
                     mc::sendText(pl, "已选择点A \"{}\""_tr(ev.blockPos().toString()));
-                    mStabilized[pl.getUuid()] = Date::future(50 / 1000).getTime(); // 50ms
                 } else {
                     mc::sendText<mc::LogLevel::Error>(pl, "选择失败"_tr());
                 }
