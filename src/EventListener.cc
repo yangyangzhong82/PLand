@@ -120,11 +120,27 @@ bool EventListener::setup() {
     });
 
     mActorHurtEvent = bus->emplaceListener<ll::event::ActorHurtEvent>([db, logger](ll::event::ActorHurtEvent& ev) {
-        logger->debug("[ActorHurt] mob: {}", ev.self().getTypeName());
         auto& self = ev.self();
+        auto& source = ev.source();
+        logger->debug(
+            "[ActorHurt] Mob: {}, ActorDamageCause: {}, ActorType: {}",
+            self.getTypeName(),
+            static_cast<int>(source.getCause()),
+            static_cast<int>(source.getEntityType())
+        );
 
         auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
         if (PreCheck(land)) return true; // land not found
+
+        if (source.getEntityType() == ActorType::Player && source.getCause() == ActorDamageCause::EntityAttack) {
+            // 玩家攻击 [ActorHurt] Mob: ikun, ActorDamageCause: 2, ActorType: 319
+            if (auto souPlayer = self.getILevel().getPlayer(source.getEntityUniqueID()); souPlayer) {
+                if (PreCheck(land, souPlayer->getUuid().asString())) {
+                    return true;
+                }
+            }
+        }
+
         if (land) {
             auto const& et  = self.getTypeName();
             auto const& tab = land->getLandPermTableConst();
