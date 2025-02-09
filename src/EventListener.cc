@@ -612,15 +612,22 @@ bool EventListener::setup() {
     mProjectileSpawnEvent =
         bus->emplaceListener<ila::mc::ProjectileCreateBeforeEvent>([db,
                                                                     logger](ila::mc::ProjectileCreateBeforeEvent& ev) {
-            logger->debug("[ProjectileSpawn] type: {}", ev.self().getTypeName());
-            Actor* actor = &ev.self();
-            if (!actor) {
-                return;
-            }
-
+            Actor& self = ev.self();
             auto& type = ev.self().getTypeName();
-            auto  land = db->getLandAt(actor->getPosition(), actor->getDimensionId());
+
+            logger->debug("[ProjectileSpawn] type: {}", type);
+
+            auto  land = db->getLandAt(self.getPosition(), self.getDimensionId());
             if (PreCheck(land)) return; // land not found
+
+            if (self.getOwnerEntityType() == ActorType::Player) {
+                // 由玩家所创建的实体
+                if (auto mob = self.getOwner(); mob && mob->isPlayer()) {
+                    auto pl = mob->getWeakEntity().tryUnwrap<Player>();
+                    if (pl.has_value() && PreCheck(land, pl->getUuid().asString())) return;
+                }
+            }
+            
             if (land) {
                 auto& tab = land->getLandPermTableConst();
                 if (type == "minecraft:fishing_hook" && tab.useFishingHook) return;       // 钓鱼竿
@@ -632,13 +639,6 @@ bool EventListener::setup() {
                 if (type == "minecraft:snowball" && tab.allowThrowSnowball) return;       // 雪球
                 if (type == "minecraft:ender_pearl" && tab.allowThrowEnderPearl) return;  // 末影珍珠
                 if (type == "minecraft:egg" && tab.allowThrowEgg) return;                 // 鸡蛋
-            }
-
-            if (actor->isPlayer()) {
-                auto pl = actor->getWeakEntity().tryUnwrap<Player>();
-                if (pl.has_value()) {
-                    if (PreCheck(land, pl->getUuid().asString())) return;
-                }
             }
 
             ev.cancel();
