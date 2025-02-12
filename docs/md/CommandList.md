@@ -61,10 +61,12 @@
     - `relationship_file` 领地关系文件(路径)
     - `data_file` 领地数据文件(路径)
 
+> 例如：/pland import true "C:/Users/xxx/Desktop/relationship.json" "C:/Users/xxx/Desktop/data.json"
+
 !> 注意：
-> 此转换为动态转换，由于iLand使用XUID作为玩家唯一标识符，而本插件使用UUID。  
-> 因此，插件转换会后Owner数据依然为XUID，待玩家进服后，插件会自动转换为UUID。  
-> 所以：请不要关闭xbox验证，否则无法转换成功。  
-> 为了避免意外情况，我们仅建议在服务器刚开服时导入数据。  
-> 或者导入时，将 `clearDb` 设置为 `true`，清空数据库，重新导入。  
-> 否则可能会出现已有领地和导入的领地范围重叠等问题。
+此转换为动态转换，由于iLand使用XUID作为玩家唯一标识符，而本插件使用UUID。  
+因此，插件转换会后Owner数据依然为XUID，待玩家进服后，插件会自动转换为UUID。  
+所以：请不要关闭xbox验证，否则无法转换成功。  
+为了避免意外情况，我们仅建议在服务器刚开服时导入数据。  
+或者导入时，将 `clearDb` 设置为 `true`，清空数据库，重新导入。  
+否则可能会出现已有领地和导入的领地范围重叠等问题。
