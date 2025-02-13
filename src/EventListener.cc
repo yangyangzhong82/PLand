@@ -45,6 +45,7 @@
 #include "ila/event/minecraft/world/WitherDestroyEvent.h"
 #include "ila/event/minecraft/world/actor/player/PlayerAttackBlockEvent.h"
 #include "ila/event/minecraft/world/actor/player/PlayerDropItemEvent.h"
+#include "ila/event/minecraft/world/actor/player/PlayerEditSignEvent.h"
 #include "ila/event/minecraft/world/actor/player/PlayerOperatedItemFrameEvent.h"
 #include "ila/event/minecraft/world/level/block/FarmDecayEvent.h"
 #include "ila/event/minecraft/world/level/block/LiquidTryFlowEvent.h"
@@ -80,9 +81,10 @@ ll::event::ListenerPtr mLiquidFlowEvent;           // 流体流动 (iListenAtten
 // ll::event::ListenerPtr mSculkCatalystAbsorbExperienceEvent; // 幽匿催发体吸收经验 (iListenAttentively)
 ll::event::ListenerPtr mSculkBlockGrowthEvent; // 幽匿尖啸体生成 (iListenAttentively)
 ll::event::ListenerPtr mSculkSpreadEvent;      // 幽匿蔓延 (iListenAttentively)
+ll::event::ListenerPtr mPlayerEditSignEvent;   // 玩家编辑告示牌 (iListenAttentively)
 
 namespace land {
-inline bool PreCheck(LandData_sptr ptr, UUIDs uuid = "", bool ignoreOperator = false) {
+inline bool PreCheck(LandData_sptr ptr, UUIDs const& uuid = "", bool ignoreOperator = false) {
     if (!ptr) {
         return true; // 此位置没有领地
     } else if (!ignoreOperator && PLand::getInstance().isOperator(uuid)) {
@@ -120,7 +122,7 @@ bool EventListener::setup() {
     });
 
     mActorHurtEvent = bus->emplaceListener<ll::event::ActorHurtEvent>([db, logger](ll::event::ActorHurtEvent& ev) {
-        auto& self = ev.self();
+        auto& self   = ev.self();
         auto& source = ev.source();
         logger->debug(
             "[ActorHurt] Mob: {}, ActorDamageCause: {}, ActorType: {}",
@@ -613,11 +615,11 @@ bool EventListener::setup() {
         bus->emplaceListener<ila::mc::ProjectileCreateBeforeEvent>([db,
                                                                     logger](ila::mc::ProjectileCreateBeforeEvent& ev) {
             Actor& self = ev.self();
-            auto& type = ev.self().getTypeName();
+            auto&  type = ev.self().getTypeName();
 
             logger->debug("[ProjectileSpawn] type: {}", type);
 
-            auto  land = db->getLandAt(self.getPosition(), self.getDimensionId());
+            auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
             if (PreCheck(land)) return; // land not found
 
             if (self.getOwnerEntityType() == ActorType::Player) {
@@ -627,7 +629,7 @@ bool EventListener::setup() {
                     if (pl.has_value() && PreCheck(land, pl->getUuid().asString())) return;
                 }
             }
-            
+
             if (land) {
                 auto& tab = land->getLandPermTableConst();
                 if (type == "minecraft:fishing_hook" && tab.useFishingHook) return;       // 钓鱼竿
@@ -758,6 +760,23 @@ bool EventListener::setup() {
             }
         });
 
+    mPlayerEditSignEvent =
+        bus->emplaceListener<ila::mc::PlayerEditSignBeforeEvent>([db, logger](ila::mc::PlayerEditSignBeforeEvent& ev) {
+            auto& player = ev.self();
+            auto& pos    = ev.getPos();
+
+            logger->debug("[PlayerEditSign] {} -> {}", player.getName(), pos.toString());
+
+            auto land = db->getLandAt(pos, player.getDimensionId());
+            if (PreCheck(land, player.getUuid().asString())) {
+                return;
+            }
+
+            if (land && !land->getLandPermTableConst().editSign) {
+                ev.cancel();
+            }
+        });
+
     return true;
 }
 
@@ -794,6 +813,7 @@ bool EventListener::release() {
     // bus.removeListener(mSculkCatalystAbsorbExperienceEvent);
     bus.removeListener(mSculkBlockGrowthEvent);
     bus.removeListener(mSculkSpreadEvent);
+    bus.removeListener(mPlayerEditSignEvent);
 
     return true;
 }
