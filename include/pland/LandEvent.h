@@ -18,7 +18,7 @@ protected:
 public:
     LDAPI constexpr explicit PlayerAskCreateLandBeforeEvent(Player& player) : Cancellable(), mPlayer(player) {}
 
-    LDAPI Player& getPlayer() const;
+    [[nodiscard]] LDAPI Player& getPlayer() const;
 };
 class PlayerAskCreateLandAfterEvent final : public ll::event::Event {
 protected:
@@ -30,8 +30,8 @@ public:
     : mPlayer(player),
       mIs3DLand(is3DLand) {}
 
-    LDAPI Player& getPlayer() const;
-    LDAPI bool    is3DLand() const;
+    [[nodiscard]] LDAPI Player& getPlayer() const;
+    [[nodiscard]] LDAPI bool    is3DLand() const;
 };
 
 
@@ -49,9 +49,9 @@ public:
       mLandSelectorData(landSelectorData),
       mPrice(price) {}
 
-    LDAPI Player&           getPlayer() const;
-    LDAPI LandSelectorData* getLandSelectorData() const;
-    LDAPI int&              getPrice() const;
+    [[nodiscard]] LDAPI Player&           getPlayer() const;
+    [[nodiscard]] LDAPI LandSelectorData* getLandSelectorData() const;
+    [[nodiscard]] LDAPI int&              getPrice() const;
 };
 class PlayerBuyLandAfterEvent final : public ll::event::Event {
 protected:
@@ -63,8 +63,8 @@ public:
     : mPlayer(player),
       mLandData(landData) {}
 
-    LDAPI Player&       getPlayer() const;
-    LDAPI LandData_sptr getLandData() const;
+    [[nodiscard]] LDAPI Player&       getPlayer() const;
+    [[nodiscard]] LDAPI LandData_sptr getLandData() const;
 };
 
 
@@ -77,8 +77,8 @@ protected:
 public:
     LDAPI constexpr explicit PlayerEnterLandEvent(Player& player, LandID landID) : mPlayer(player), mLandID(landID) {}
 
-    LDAPI Player& getPlayer() const;
-    LDAPI LandID  getLandID() const;
+    [[nodiscard]] LDAPI Player& getPlayer() const;
+    [[nodiscard]] LDAPI LandID  getLandID() const;
 };
 class PlayerLeaveLandEvent final : public ll::event::Event {
 protected:
@@ -88,8 +88,8 @@ protected:
 public:
     LDAPI constexpr explicit PlayerLeaveLandEvent(Player& player, LandID landID) : mPlayer(player), mLandID(landID) {}
 
-    LDAPI Player& getPlayer() const;
-    LDAPI LandID  getLandID() const;
+    [[nodiscard]] LDAPI Player& getPlayer() const;
+    [[nodiscard]] LDAPI LandID  getLandID() const;
 };
 
 
@@ -107,9 +107,9 @@ public:
       mLandID(landID),
       mRefundPrice(refundPrice) {}
 
-    LDAPI Player&    getPlayer() const;
-    LDAPI LandID     getLandID() const;
-    LDAPI int const& getRefundPrice() const;
+    [[nodiscard]] LDAPI Player&    getPlayer() const;
+    [[nodiscard]] LDAPI LandID     getLandID() const;
+    [[nodiscard]] LDAPI int const& getRefundPrice() const;
 };
 class PlayerDeleteLandAfterEvent final : public ll::event::Event {
 protected:
@@ -121,8 +121,8 @@ public:
     : mPlayer(player),
       mLandID(landID) {}
 
-    LDAPI Player& getPlayer() const;
-    LDAPI LandID  getLandID() const;
+    [[nodiscard]] LDAPI Player& getPlayer() const;
+    [[nodiscard]] LDAPI LandID  getLandID() const;
 };
 
 
@@ -142,10 +142,10 @@ public:
       mLandID(landID),
       mIsAdd(isAdd) {}
 
-    LDAPI Player&      getPlayer() const;
-    LDAPI UUIDs const& getTargetPlayer() const;
-    LDAPI LandID       getLandID() const;
-    LDAPI bool         isAdd() const;
+    [[nodiscard]] LDAPI Player&      getPlayer() const;
+    [[nodiscard]] LDAPI UUIDs const& getTargetPlayer() const;
+    [[nodiscard]] LDAPI LandID       getLandID() const;
+    [[nodiscard]] LDAPI bool         isAdd() const;
 };
 class LandMemberChangeAfterEvent final : public ll::event::Event {
 protected:
@@ -161,10 +161,10 @@ public:
       mLandID(landID),
       mIsAdd(isAdd) {}
 
-    LDAPI Player&      getPlayer() const;
-    LDAPI UUIDs const& getTargetPlayer() const;
-    LDAPI LandID       getLandID() const;
-    LDAPI bool         isAdd() const;
+    [[nodiscard]] LDAPI Player&      getPlayer() const;
+    [[nodiscard]] LDAPI UUIDs const& getTargetPlayer() const;
+    [[nodiscard]] LDAPI LandID       getLandID() const;
+    [[nodiscard]] LDAPI bool         isAdd() const;
 };
 
 
@@ -182,9 +182,9 @@ public:
       mNewOwner(newOwner),
       mLandID(landID) {}
 
-    LDAPI Player& getPlayer() const;
-    LDAPI Player& getNewOwner() const;
-    LDAPI LandID  getLandID() const;
+    [[nodiscard]] LDAPI Player& getPlayer() const;
+    [[nodiscard]] LDAPI Player& getNewOwner() const;
+    [[nodiscard]] LDAPI LandID  getLandID() const;
 };
 class LandOwnerChangeAfterEvent final : public ll::event::Event {
 protected:
@@ -198,9 +198,9 @@ public:
       mNewOwner(newOwner),
       mLandID(landID) {}
 
-    LDAPI Player& getPlayer() const;
-    LDAPI Player& getNewOwner() const;
-    LDAPI LandID  getLandID() const;
+    [[nodiscard]] LDAPI Player& getPlayer() const;
+    [[nodiscard]] LDAPI Player& getNewOwner() const;
+    [[nodiscard]] LDAPI LandID  getLandID() const;
 };
 
 
@@ -228,11 +228,11 @@ public:
       mNeedPay(needPay),
       mRefundPrice(refundPrice) {}
 
-    LDAPI Player&              getPlayer() const;
-    LDAPI LandData_sptr const& getLandData() const;
-    LDAPI LandPos const&       getNewRange() const;
-    LDAPI int const&           getNeedPay() const;
-    LDAPI int const&           getRefundPrice() const;
+    [[nodiscard]] LDAPI Player&              getPlayer() const;
+    [[nodiscard]] LDAPI LandData_sptr const& getLandData() const;
+    [[nodiscard]] LDAPI LandPos const&       getNewRange() const;
+    [[nodiscard]] LDAPI int const&           getNeedPay() const;
+    [[nodiscard]] LDAPI int const&           getRefundPrice() const;
 };
 class LandRangeChangeAfterEvent final : public ll::event::Event {
 protected:
@@ -256,11 +256,11 @@ public:
       mNeedPay(needPay),
       mRefundPrice(refundPrice) {}
 
-    LDAPI Player&              getPlayer() const;
-    LDAPI LandData_sptr const& getLandData() const;
-    LDAPI LandPos const&       getNewRange() const;
-    LDAPI int const&           getNeedPay() const;
-    LDAPI int const&           getRefundPrice() const;
+    [[nodiscard]] LDAPI Player&              getPlayer() const;
+    [[nodiscard]] LDAPI LandData_sptr const& getLandData() const;
+    [[nodiscard]] LDAPI LandPos const&       getNewRange() const;
+    [[nodiscard]] LDAPI int const&           getNeedPay() const;
+    [[nodiscard]] LDAPI int const&           getRefundPrice() const;
 };
 
 
