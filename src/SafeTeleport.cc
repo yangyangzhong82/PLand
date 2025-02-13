@@ -116,6 +116,8 @@ public:
         // delay task
         ll::coro::keepThis([id, this]() -> ll::coro::CoroTask<> {
             co_await 10_tick;
+            if (!GlobalRepeatCoroTaskRunning) co_return;
+
             auto iter = mTeleportQueue.find(id);
             if (iter == mTeleportQueue.end()) {
                 co_return;

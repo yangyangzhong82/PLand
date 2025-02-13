@@ -35,6 +35,7 @@ bool LandScheduler::setup() {
     ll::coro::keepThis([bus]() -> ll::coro::CoroTask<> {
         while (GlobalRepeatCoroTaskRunning) {
             co_await 5_tick;
+            if (!GlobalRepeatCoroTaskRunning) co_return;
             ll::service::getLevel()->forEachPlayer([bus](Player& player) {
                 if (player.isSimulatedPlayer()) return true; // 模拟玩家不处理
                 auto& db   = PLand::getInstance();
@@ -143,6 +144,7 @@ bool LandScheduler::setup() {
         ll::coro::keepThis([logger, infos, db]() -> ll::coro::CoroTask<> {
             while (GlobalRepeatCoroTaskRunning) {
                 co_await (Config::cfg.land.tip.bottomTipFrequency * 20_tick);
+                if (!GlobalRepeatCoroTaskRunning) co_return;
                 auto level = ll::service::getLevel();
                 if (!level) {
                     continue;

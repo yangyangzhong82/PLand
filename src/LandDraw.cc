@@ -33,6 +33,7 @@ void LandDraw::setup() {
     ll::coro::keepThis([db]() -> ll::coro::CoroTask<> {
         while (GlobalRepeatCoroTaskRunning) {
             co_await 25_tick;
+            if (!GlobalRepeatCoroTaskRunning) co_return;
             ll::service::getLevel()->forEachPlayer([db](Player& player) {
                 try {
                     auto iter = mDrawType.find(player.getUuid());

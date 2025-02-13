@@ -110,19 +110,24 @@ bool PLand::_initCache() {
 
 // Thread
 void PLand::_initThread() {
-    mThread = std::jthread([this](std::stop_token st) {
+    mThread = std::thread([this]() {
         static std::time_t lastSaveTime = std::time(nullptr);
-        while (!st.stop_requested()) {
+        while (mThreadRunning) {
             std::this_thread::sleep_for(std::chrono::seconds(5)); // 5秒检查一次 & 2分钟保存一次
             if (std::time(nullptr) - lastSaveTime < 120) continue;
             lastSaveTime = std::time(nullptr); // 更新时间
-            if (!st.stop_requested()) {
+
+            if (mThreadRunning) {
                 my_mod::MyMod::getInstance().getSelf().getLogger().debug("[Thread] Saving land data...");
                 this->save();
                 my_mod::MyMod::getInstance().getSelf().getLogger().debug("[Thread] Land data saved.");
-            }
+            } else break;
         }
     });
+}
+void PLand::_stopThread() {
+    mThreadRunning = false;
+    if (mThread.joinable()) mThread.join();
 }
 
 

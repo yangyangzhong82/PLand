@@ -74,11 +74,15 @@ bool MyMod::enable() {
 bool MyMod::disable() {
     auto& logger = getSelf().getLogger();
     logger.info("Stopping thread and saving data...");
-    land::PLand::getInstance().mThread.request_stop(); // 请求关闭线程
-    // land::GlobalTickScheduler.clear();
+    land::PLand::getInstance()._stopThread(); // 请求关闭线程
     logger.debug("[Main] Saving land data...");
     land::PLand::getInstance().save();
     logger.debug("[Main] Land data saved.");
+
+    logger.debug("Stopping coroutine...");
+    land::GlobalRepeatCoroTaskRunning = false;
+
+    logger.debug("cleaning up...");
     land::LandSelector::getInstance().uninit();
     land::LandScheduler::release();
     land::EventListener::release();
@@ -86,6 +90,9 @@ bool MyMod::disable() {
 
     return true;
 }
+
+bool MyMod::unload() { return true; }
+
 
 } // namespace my_mod
 

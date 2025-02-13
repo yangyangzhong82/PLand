@@ -108,6 +108,7 @@ bool                                   LandSelector::init() {
     ll::coro::keepThis([this]() -> ll::coro::CoroTask<> {
         while (GlobalRepeatCoroTaskRunning) {
             co_await 20_tick;
+            if (!GlobalRepeatCoroTaskRunning) co_return;
             for (auto& [uuid, data] : mSelectors) {
                 try {
                     auto pl = data.mPlayer; // 玩家指针

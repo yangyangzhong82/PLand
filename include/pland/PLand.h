@@ -40,6 +40,9 @@ private:
     std::unordered_map<UUIDs, PlayerSettings> mPlayerSettings; // 玩家设置
     mutable std::shared_mutex                 mMutex;          // 领地缓存锁
 
+    std::atomic<bool> mThreadRunning{true};
+    std::thread       mThread;
+
 public:
     [[nodiscard]] LDAPI static PLand& getInstance();
 
@@ -47,8 +50,8 @@ public:
     LDAPI bool save();
     LDAPI bool _initCache(); // private
 
-    std::jthread mThread;       // private
-    LDAPI void   _initThread(); // private
+    LDAPI void _initThread(); // private
+    LDAPI void _stopThread(); // private
 
     LDAPI bool isOperator(UUIDs const& uuid) const;
     LDAPI bool addOperator(UUIDs const& uuid);
