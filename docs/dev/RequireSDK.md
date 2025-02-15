@@ -28,12 +28,12 @@ add_repositories("engsr6982-repo https://github.com/engsr6982/xmake-repo.git")
 
 add_requires("pland 0.0.3")
 
-package("xxx")
+target("xxx")
     -- ...
     add_packages("pland")
 ```
 
-?> `xxx` 是您在 `package` 中定义的包名，请将其替换为您自己的包名。  
+?> `xxx` 是您在 `target` 中定义的生成目标，请将其替换为您自己的包名。  
 
 3. 保存并关闭文件。
 
