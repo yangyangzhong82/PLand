@@ -1,19 +1,16 @@
 #pragma once
 #include "ll/api/data/KeyValueDB.h"
-#include "mc/world/actor/player/Player.h"
-#include "mc/world/level/BlockPos.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
-#include "pland/LandPos.h"
 #include <atomic>
-#include <cstdint>
 #include <memory>
-#include <mutex>
 #include <thread>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
+class Player;
+class BlockPos;
 
 namespace land {
 
@@ -27,69 +24,87 @@ public:
     PLand()                        = default;
     PLand(const PLand&)            = delete;
     PLand& operator=(const PLand&) = delete;
+    PLand(PLand&&)                 = delete;
+    PLand& operator=(PLand&&)      = delete;
 
 private:
-    std::unique_ptr<ll::data::KeyValueDB> mDB; // private
+    std::unique_ptr<ll::data::KeyValueDB>     mDB;                    // 领地数据库
+    std::vector<UUIDs>                        mLandOperators;         // 领地操作员
+    std::unordered_map<UUIDs, PlayerSettings> mPlayerSettings;        // 玩家设置
+    std::atomic<LandID>                       mNextLandID{0};         // 下一个领地ID
+    std::unordered_map<LandID, LandData_sptr> mLandCache;             // 领地缓存
+    mutable std::shared_mutex                 mMutex;                 // 读写锁
+    std::thread                               mThread;                // 线程
+    std::atomic<bool>                         mThreadStopFlag{false}; // 线程停止标志
 
-    //                 维度                         区块            领地
-    std::unordered_map<LandDimid, std::unordered_map<ChunkID, std::vector<LandID>>> mLandMap;   // 领地映射表
-    std::unordered_map<LandID, LandData_sptr>                                       mLandCache; // 领地缓存
-    std::atomic<LandID>                                                             mNextID{0};
+    // 维度 -> 区块 -> [领地] (快速查询领地)
+    std::unordered_map<LandDimid, std::unordered_map<ChunkID, std::vector<LandID>>> mLandMap;
 
-    std::vector<UUIDs>                        mLandOperators;  // 领地操作员
-    std::unordered_map<UUIDs, PlayerSettings> mPlayerSettings; // 玩家设置
-    mutable std::shared_mutex                 mMutex;          // 领地缓存锁
+private: //! private 方法非线程安全
+    void _loadOperators();
+    void _loadPlayerSettings();
+    void _loadLands();
 
-    std::atomic<bool> mThreadRunning{true};
-    std::thread       mThread;
+    void _initLandMap();
+
+    void _updateLandMap(LandData_sptr const& ptr, bool add);
+    void _refreshLandRange(LandData_sptr const& ptr);
 
 public:
     [[nodiscard]] LDAPI static PLand& getInstance();
 
-    LDAPI bool init();
-    LDAPI bool save();
-    LDAPI bool _initCache(); // private
+    LDAPI void init();
+    LDAPI void save();
+    LDAPI void stopThread();
 
-    LDAPI void _initThread(); // private
-    LDAPI void _stopThread(); // private
+public:
+    [[nodiscard]] LDAPI bool isOperator(UUIDs const& uuid) const;
 
-    LDAPI bool isOperator(UUIDs const& uuid) const;
-    LDAPI bool addOperator(UUIDs const& uuid);
-    LDAPI bool removeOperator(UUIDs const& uuid);
+    [[nodiscard]] LDAPI bool addOperator(UUIDs const& uuid);
 
-    LDAPI bool                          hasPlayerSettings(UUIDs const& uuid) const;
+    [[nodiscard]] LDAPI bool removeOperator(UUIDs const& uuid);
+
+    [[nodiscard]] LDAPI bool hasPlayerSettings(UUIDs const& uuid) const;
+
     [[nodiscard]] LDAPI PlayerSettings* getPlayerSettings(UUIDs const& uuid);
-    LDAPI bool                          setPlayerSettings(UUIDs const& uuid, PlayerSettings settings);
 
-    LDAPI bool hasLand(LandID id) const;
+    LDAPI bool setPlayerSettings(UUIDs const& uuid, PlayerSettings settings);
+
+    [[nodiscard]] LDAPI bool hasLand(LandID id) const;
+
     LDAPI bool addLand(LandData_sptr land);
+
     LDAPI bool removeLand(LandID id);
 
-    LDAPI bool refreshLandRange(LandData_sptr ptr); // 刷新领地范围
+    LDAPI void refreshLandRange(LandData_sptr const& ptr); // 刷新领地范围 (_refreshLandRange)
 
-    [[nodiscard]] LDAPI LandData_wptr getLandWeakPtr(LandID id) const;                // 获取领地弱引用 (推荐)
-    [[nodiscard]] LDAPI LandData_sptr getLand(LandID id) const;                       // 获取领地数据
-    [[nodiscard]] LDAPI std::vector<LandData_sptr> getLands() const;                  // 获取所有领地数据
-    [[nodiscard]] LDAPI std::vector<LandData_sptr> getLands(LandDimid dimid) const;   // 获取维度领地数据
-    [[nodiscard]] LDAPI std::vector<LandData_sptr> getLands(UUIDs const& uuid) const; // 获取玩家领地数据
-    [[nodiscard]] LDAPI                            std::vector<LandData_sptr>
-    getLands(UUIDs const& uuid, LandDimid dimid) const; // 获取玩家维度领地数据
+public: // 领地查询API
+    [[nodiscard]] LDAPI LandData_wptr getLandWeakPtr(LandID id) const;
+    [[nodiscard]] LDAPI LandData_sptr getLand(LandID id) const;
+    [[nodiscard]] LDAPI std::vector<LandData_sptr> getLands() const;
+    [[nodiscard]] LDAPI std::vector<LandData_sptr> getLands(LandDimid dimid) const;
+    [[nodiscard]] LDAPI std::vector<LandData_sptr> getLands(UUIDs const& uuid, bool includeShared = false) const;
+    [[nodiscard]] LDAPI std::vector<LandData_sptr> getLands(UUIDs const& uuid, LandDimid dimid) const;
 
-    [[nodiscard]] LDAPI LandPermType
-    getPermType(UUIDs const& uuid, LandID id = 0, bool ignoreOperator = false) const; // 获取领地权限类型
+    [[nodiscard]] LDAPI LandPermType getPermType(UUIDs const& uuid, LandID id = 0, bool ignoreOperator = false) const;
 
-    // 获取领地数据
     [[nodiscard]] LDAPI LandData_sptr getLandAt(BlockPos const& pos, LandDimid dimid) const;
-    // 半径内的领地
+
     [[nodiscard]] LDAPI std::vector<LandData_sptr> getLandAt(BlockPos const& center, int radius, LandDimid dimid) const;
-    // 矩形内的领地
+
     [[nodiscard]] LDAPI std::vector<LandData_sptr>
                         getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const;
 
+public:
     LDAPI LandID generateLandID();
 
-    LDAPI static ChunkID             getChunkID(int x, int z);
-    LDAPI static std::pair<int, int> parseChunkID(ChunkID id);
+public:
+    LDAPI static ChunkID             EncodeChunkID(int x, int z);
+    LDAPI static std::pair<int, int> DecodeChunkID(ChunkID id);
+
+    static string DB_DIR_NAME();
+    static string DB_KEY_OPERATORS();
+    static string DB_KEY_PLAYER_SETTINGS();
 };
 
 

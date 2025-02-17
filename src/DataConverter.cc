@@ -7,6 +7,7 @@
 #include "pland/PLand.h"
 #include "pland/utils/JSON.h"
 #include <algorithm>
+#include <cstddef>
 #include <cstdio>
 #include <fstream>
 
@@ -14,7 +15,7 @@
 namespace land {
 
 
-DataConverter::DataConverter(bool clearDb) : mClearDb(clearDb){};
+DataConverter::DataConverter(bool clearDb) : mClearDb(clearDb) {}
 
 std::unique_ptr<nlohmann::json> DataConverter::loadJson(fs::path const& file) const {
     if (!fs::exists(file)) {
@@ -40,7 +41,7 @@ std::unique_ptr<nlohmann::json> DataConverter::loadJson(fs::path const& file) co
         ifs.close();
         throw std::runtime_error("Unknown error occurred while parsing JSON file: " + file.string());
     }
-};
+}
 
 void DataConverter::writeToDb(LandData_sptr const& data) {
     auto& db = PLand::getInstance();
@@ -51,13 +52,13 @@ void DataConverter::writeToDb(LandData_sptr const& data) {
         }
     }
     db.addLand(data);
-};
+}
 
 void DataConverter::writeToDb(std::vector<LandData_sptr> const& data) {
     for (auto& land : data) {
         writeToDb(land);
     }
-};
+}
 
 template <class T>
 T DataConverter::reflection(nlohmann::json const& json) const {
@@ -204,7 +205,7 @@ LandData_sptr iLandConverter::convert(RawData::iLandData const& raw, string cons
     }
 
     return ptr;
-};
+}
 
 bool iLandConverter::execute() {
     auto rawRelationShipJSON = loadJson(mRelationShipPath);
@@ -227,7 +228,7 @@ bool iLandConverter::execute() {
     auto&       infos = ll::service::PlayerInfo::getInstance();
     logger.info("Start the data transformation...");
 
-    int                        total = 0, progress = 0;
+    size_t                     total = 0, progress = 0;
     std::vector<LandData_sptr> result;
     result.reserve(data.size()); // reserve space to avoid reallocation
     for (auto& [xuid, lands] : mRelationShip.Owner) {
@@ -275,7 +276,7 @@ bool iLandConverter::execute() {
     writeToDb(std::move(result));
 
     return true;
-};
+}
 
 
 } // namespace land

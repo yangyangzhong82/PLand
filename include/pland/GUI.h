@@ -29,27 +29,27 @@ public:
 
 
 // 通用组件Gui
-class ChooseLandGui {
+class ChooseLandUtilGui {
 public:
     using ChooseCallback = std::function<void(Player&, LandID id)>;
     template <typename ParentForm = void>
-    LDAPI static void impl(Player& player, ChooseCallback callback);
+    LDAPI static void impl(Player& player, ChooseCallback const& callback, bool showShredLand = false);
 };
-class ChoosePlayerGui {
+class ChoosePlayerUtilGui {
 public:
     using ChoosePlayerCall = std::function<void(Player&, Player& choosedPlayer)>;
     template <typename ParentForm = void>
-    LDAPI static void impl(Player& player, ChoosePlayerCall callback);
+    LDAPI static void impl(Player& player, ChoosePlayerCall const& callback);
 };
-class EditStringGui {
+class EditStringUtilGui {
 public:
     using EditStringResult = std::function<void(Player& self, string result)>;
     LDAPI static void impl(
-        Player&          player,
-        string const&    title        = " | 编辑", // 标题
-        string const&    text         = "",        // 提示
-        string const&    defaultValue = "",        // 默认值
-        EditStringResult callback     = {}         // 回调
+        Player&                 player,
+        string const&           title        = " | 编辑", // 标题
+        string const&           text         = "",        // 提示
+        string const&           defaultValue = "",        // 默认值
+        EditStringResult const& callback     = {}         // 回调
     );
 };
 
@@ -74,29 +74,29 @@ public:
 
     class EditLandPermGui {
     public:
-        LDAPI static void impl(Player& player, LandData_sptr ptr);
+        LDAPI static void impl(Player& player, LandData_sptr const& ptr);
     };
 
     class DeleteLandGui {
     public:
-        LDAPI static void impl(Player& player, LandData_sptr ptr);
+        LDAPI static void impl(Player& player, LandData_sptr const& ptr);
     };
 
     class EditLandNameGui {
     public:
-        LDAPI static void impl(Player& player, LandData_sptr ptr);
+        LDAPI static void impl(Player& player, LandData_sptr const& ptr);
     };
     class EditLandDescGui {
     public:
-        LDAPI static void impl(Player& player, LandData_sptr ptr);
+        LDAPI static void impl(Player& player, LandData_sptr const& ptr);
     };
     class EditLandOwnerGui {
     public:
-        LDAPI static void impl(Player& player, LandData_sptr ptr);
+        LDAPI static void impl(Player& player, LandData_sptr const& ptr);
     };
     class ReSelectLandGui {
     public:
-        LDAPI static void impl(Player& player, LandData_sptr ptr);
+        LDAPI static void impl(Player& player, LandData_sptr const& ptr);
     };
 };
 
@@ -121,7 +121,9 @@ public:
 // 领地传送GUI
 class LandTeleportGui {
 public:
-    LDAPI static void impl(Player& player, LandID id);
+    LDAPI static void impl(Player& player); // ChooseLandGui -> TeleportGui::run
+
+    LDAPI static void run(Player& player, LandID id);
 };
 
 

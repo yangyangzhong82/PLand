@@ -1,6 +1,7 @@
 #include "pland/PLand.h"
 #include "fmt/core.h"
 #include "ll/api/data/KeyValueDB.h"
+#include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
 #include "mod/MyMod.h"
 #include "pland/Global.h"
@@ -15,87 +16,61 @@
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
-#include <stop_token>
 #include <string>
 #include <utility>
 #include <vector>
 
 
 namespace land {
-
-#define DB_DIR_NAME            "db"
-#define DB_KEY_OPERATORS       "operators"
-#define DB_KEY_PLAYER_SETTINGS "player_settings"
-
-bool PLand::init() {
-    auto dir = my_mod::MyMod::getInstance().getSelf().getDataDir() / DB_DIR_NAME;
-
-    if (!mDB) {
-        mDB = std::make_unique<ll::data::KeyValueDB>(dir);
+void PLand::_loadOperators() {
+    if (!mDB->has(DB_KEY_OPERATORS())) {
+        mDB->set(DB_KEY_OPERATORS(), "[]"); // empty array
     }
-
-    // load operators
-    if (!mDB->has(DB_KEY_OPERATORS)) {
-        mDB->set(DB_KEY_OPERATORS, "[]"); // empty array
-    }
-    auto ops = JSON::parse(*mDB->get(DB_KEY_OPERATORS));
+    auto ops = JSON::parse(*mDB->get(DB_KEY_OPERATORS()));
     JSON::jsonToStructNoMerge(ops, mLandOperators);
+}
 
-    // load player settings
-    if (!mDB->has(DB_KEY_PLAYER_SETTINGS)) {
-        mDB->set(DB_KEY_PLAYER_SETTINGS, "{}"); // empty object
+void PLand::_loadPlayerSettings() {
+    if (!mDB->has(DB_KEY_PLAYER_SETTINGS())) {
+        mDB->set(DB_KEY_PLAYER_SETTINGS(), "{}"); // empty object
     }
-    auto settings = JSON::parse(*mDB->get(DB_KEY_PLAYER_SETTINGS));
+    auto settings = JSON::parse(*mDB->get(DB_KEY_PLAYER_SETTINGS()));
     JSON::jsonToStructNoMerge(settings, mPlayerSettings);
+}
 
-    // load land data
-    std::unique_lock<std::shared_mutex>                                lock(mMutex); // 获取锁
+void PLand::_loadLands() {
     ll::coro::Generator<std::pair<std::string_view, std::string_view>> iter = mDB->iter();
+
+    auto operatorKey      = DB_KEY_OPERATORS();
+    auto playerSettingKey = DB_KEY_PLAYER_SETTINGS();
+
     for (auto [key, value] : iter) {
-        if (key == DB_KEY_OPERATORS) continue;       // skip operators
-        if (key == DB_KEY_PLAYER_SETTINGS) continue; // skip player settings
+        if (key == operatorKey || key == playerSettingKey) continue;
+
         auto json = JSON::parse(value);
         auto land = LandData::make();
 
         JSON::jsonToStruct(json, *land);
 
         // 保证landID唯一
-        if (mNextID < land->getLandID()) {
-            mNextID.store(land->getLandID() + 1);
+        if (mNextLandID < land->getLandID()) {
+            mNextLandID.store(land->getLandID() + 1);
         }
 
         mLandCache.emplace(land->getLandID(), std::move(land));
     }
-
     auto& logger = my_mod::MyMod::getInstance().getSelf().getLogger();
     logger.info("已加载 {} 位操作员", mLandOperators.size());
     logger.info("已加载 {} 块领地数据", mLandCache.size());
-
-    lock.unlock(); // 提前解锁，避免死锁
-    _initThread(); // 启动保存线程
-    return _initCache();
 }
-bool PLand::save() {
-    std::shared_lock<std::shared_mutex> lock(mMutex); // 获取锁
-    mDB->set(DB_KEY_OPERATORS, JSON::stringify(JSON::structTojson(mLandOperators)));
 
-    mDB->set(DB_KEY_PLAYER_SETTINGS, JSON::stringify(JSON::structTojson(mPlayerSettings)));
-
-    for (auto& [id, land] : mLandCache) {
-        mDB->set(std::to_string(land->mLandID), JSON::stringify(JSON::structTojson(*land)));
-    }
-
-    return true;
-}
-bool PLand::_initCache() {
-    std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
-
+void PLand::_initLandMap() {
     for (auto& [id, land] : mLandCache) {
         auto& chunkMap = mLandMap[LandDimid(land->getLandDimid())]; // 区块表
 
         auto chs = land->mPos.getChunks();
         for (auto& ch : chs) {
-            auto  chunkID      = PLand::getChunkID(ch.x, ch.z);
+            auto  chunkID      = PLand::EncodeChunkID(ch.x, ch.z);
             auto& chunkLandVec = chunkMap[chunkID]; // 区块领地数组
 
             if (!some(chunkLandVec, land->getLandID())) {
@@ -104,20 +79,61 @@ bool PLand::_initCache() {
         }
     }
     my_mod::MyMod::getInstance().getSelf().getLogger().info("初始化领地缓存系统完成");
-    return true;
 }
 
+void PLand::_updateLandMap(LandData_sptr const& ptr, bool add) {
+    auto chunks = ptr->mPos.getChunks();
+    for (auto& ch : chunks) {
+        auto& chunkLands = mLandMap[ptr->mLandDimid][EncodeChunkID(ch.x, ch.z)];
 
-// Thread
-void PLand::_initThread() {
+        auto iter = std::find(chunkLands.begin(), chunkLands.end(), ptr->mLandID);
+
+        if (add) {
+            if (iter == chunkLands.end()) {
+                chunkLands.push_back(ptr->mLandID);
+            }
+        } else {
+            if (iter != chunkLands.end()) {
+                chunkLands.erase(iter);
+            }
+        }
+    }
+}
+void PLand::_refreshLandRange(LandData_sptr const& ptr) {
+    _updateLandMap(ptr, false);
+    _updateLandMap(ptr, true);
+}
+} // namespace land
+
+
+namespace land {
+
+void PLand::init() {
+    auto dir = my_mod::MyMod::getInstance().getSelf().getDataDir() / DB_DIR_NAME();
+
+    if (!mDB) {
+        mDB = std::make_unique<ll::data::KeyValueDB>(dir);
+    }
+
+    std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
+
+    _loadOperators();
+
+    _loadPlayerSettings();
+
+    _loadLands();
+
+    _initLandMap();
+
+    lock.unlock();
     mThread = std::thread([this]() {
         static std::time_t lastSaveTime = std::time(nullptr);
-        while (mThreadRunning) {
+        while (!mThreadStopFlag) {
             std::this_thread::sleep_for(std::chrono::seconds(5)); // 5秒检查一次 & 2分钟保存一次
             if (std::time(nullptr) - lastSaveTime < 120) continue;
             lastSaveTime = std::time(nullptr); // 更新时间
 
-            if (mThreadRunning) {
+            if (!mThreadStopFlag) {
                 my_mod::MyMod::getInstance().getSelf().getLogger().debug("[Thread] Saving land data...");
                 this->save();
                 my_mod::MyMod::getInstance().getSelf().getLogger().debug("[Thread] Land data saved.");
@@ -125,8 +141,18 @@ void PLand::_initThread() {
         }
     });
 }
-void PLand::_stopThread() {
-    mThreadRunning = false;
+void PLand::save() {
+    std::shared_lock<std::shared_mutex> lock(mMutex); // 获取锁
+    mDB->set(DB_KEY_OPERATORS(), JSON::stringify(JSON::structTojson(mLandOperators)));
+
+    mDB->set(DB_KEY_PLAYER_SETTINGS(), JSON::stringify(JSON::structTojson(mPlayerSettings)));
+
+    for (auto& [id, land] : mLandCache) {
+        mDB->set(std::to_string(land->mLandID), JSON::stringify(JSON::structTojson(*land)));
+    }
+}
+void PLand::stopThread() {
+    mThreadStopFlag = false;
     if (mThread.joinable()) mThread.join();
 }
 
@@ -172,7 +198,7 @@ PlayerSettings* PLand::getPlayerSettings(UUIDs const& uuid) {
 }
 bool PLand::setPlayerSettings(UUIDs const& uuid, PlayerSettings settings) {
     std::unique_lock<std::shared_mutex> lock(mMutex);
-    mPlayerSettings[uuid] = std::move(settings);
+    mPlayerSettings[uuid] = settings;
     return true;
 }
 bool PLand::hasPlayerSettings(UUIDs const& uuid) const {
@@ -198,29 +224,21 @@ bool PLand::addLand(LandData_sptr land) {
                 break;
             }
         }
+        if (hasLand(id)) {
+            return false; // ID 冲突
+        }
     }
     land->mLandID = id;
 
     std::unique_lock<std::shared_mutex> lock(mMutex);
-    auto                                result = mLandCache.emplace(land->mLandID, land); // 添加到缓存
+
+    auto result = mLandCache.emplace(land->mLandID, land);
     if (!result.second) {
-        my_mod::MyMod::getInstance().getSelf().getLogger().warn(
-            "添加领地失败, ID: {}, at: {}",
-            land->mLandID,
-            __LINE__
-        );
-        return false; // add failed
+        my_mod::MyMod::getInstance().getSelf().getLogger().warn("添加领地失败, ID: {}", land->mLandID);
+        return false;
     }
 
-    // 添加映射表
-    auto chs = land->mPos.getChunks();
-    for (auto& c : chs) {
-        auto& ls   = mLandMap[land->mLandDimid][getChunkID(c.x, c.z)];
-        auto  iter = std::find(ls.begin(), ls.end(), land->mLandID);
-        if (iter == ls.end()) {
-            ls.push_back(land->mLandID);
-        }
-    }
+    _updateLandMap(land, true);
 
     return true;
 }
@@ -232,43 +250,16 @@ bool PLand::removeLand(LandID landId) {
         return false;
     }
 
-    // 擦除映射表
-    auto land = landIter->second;
-    for (auto& chunk : land->mPos.getChunks()) {
-        auto& landVec = mLandMap[land->mLandDimid][getChunkID(chunk.x, chunk.z)];
-        auto  iter    = std::find(landVec.begin(), landVec.end(), land->mLandID);
-        if (iter != landVec.end()) {
-            landVec.erase(iter);
-        }
-    }
+    _updateLandMap(landIter->second, false); // 擦除映射表
 
     mLandCache.erase(landIter);             // 删除缓存
     this->mDB->del(std::to_string(landId)); // 删除数据库记录
 
     return true;
 }
-bool PLand::refreshLandRange(LandData_sptr ptr) {
+void PLand::refreshLandRange(LandData_sptr const& ptr) {
     std::unique_lock<std::shared_mutex> lock(mMutex);
-
-    // 擦除旧映射
-    for (auto& chunk : ptr->mPos.getChunks()) {
-        auto& landVec = mLandMap[ptr->mLandDimid][getChunkID(chunk.x, chunk.z)];
-        auto  iter    = std::find(landVec.begin(), landVec.end(), ptr->mLandID);
-        if (iter != landVec.end()) {
-            landVec.erase(iter);
-        }
-    }
-
-    // 添加映射表
-    auto chunks = ptr->mPos.getChunks();
-    for (auto& chunk : chunks) {
-        auto& lands = mLandMap[ptr->mLandDimid][getChunkID(chunk.x, chunk.z)];
-        auto  iter  = std::find(lands.begin(), lands.end(), ptr->mLandID);
-        if (iter == lands.end()) {
-            lands.push_back(ptr->mLandID);
-        }
-    }
-    return true;
+    _refreshLandRange(ptr);
 }
 
 LandData_wptr PLand::getLandWeakPtr(LandID id) const {
@@ -276,9 +267,9 @@ LandData_wptr PLand::getLandWeakPtr(LandID id) const {
 
     auto landIt = mLandCache.find(id);
     if (landIt != mLandCache.end()) {
-        return LandData_wptr(landIt->second);
+        return {landIt->second};
     }
-    return LandData_wptr{}; // 返回一个空的weak_ptr
+    return {}; // 返回一个空的weak_ptr
 }
 LandData_sptr PLand::getLand(LandID id) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);
@@ -293,6 +284,7 @@ std::vector<LandData_sptr> PLand::getLands() const {
     std::shared_lock<std::shared_mutex> lock(mMutex);
 
     std::vector<LandData_sptr> lands;
+    lands.reserve(mLandCache.size());
     for (auto& land : mLandCache) {
         lands.push_back(land.second);
     }
@@ -309,12 +301,12 @@ std::vector<LandData_sptr> PLand::getLands(LandDimid dimid) const {
     }
     return lands;
 }
-std::vector<LandData_sptr> PLand::getLands(UUIDs const& uuid) const {
+std::vector<LandData_sptr> PLand::getLands(UUIDs const& uuid, bool includeShared) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);
 
     std::vector<LandData_sptr> lands;
     for (auto& land : mLandCache) {
-        if (land.second->isLandOwner(uuid)) {
+        if (land.second->isLandOwner(uuid) || (includeShared && land.second->isLandMember(uuid))) {
             lands.push_back(land.second);
         }
     }
@@ -332,26 +324,24 @@ std::vector<LandData_sptr> PLand::getLands(UUIDs const& uuid, LandDimid dimid) c
     return lands;
 }
 
-
 LandPermType PLand::getPermType(UUIDs const& uuid, LandID id, bool ignoreOperator) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);
 
     if (!ignoreOperator && isOperator(uuid)) return LandPermType::Operator;
 
-    auto land = getLand(id);
-    if (land) {
+    if (auto land = getLand(id); land) {
         return land->getPermType(uuid);
     }
 
     return LandPermType::Guest;
 }
 
+LandID PLand::generateLandID() { return mNextLandID++; }
 
-LandID        PLand::generateLandID() { return mNextID++; }
 LandData_sptr PLand::getLandAt(BlockPos const& pos, LandDimid dimid) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);
 
-    ChunkID chunkId = getChunkID(pos.x >> 4, pos.z >> 4);
+    ChunkID chunkId = EncodeChunkID(pos.x >> 4, pos.z >> 4);
     auto    dimIt   = mLandMap.find(dimid); // 查找维度
     if (dimIt != mLandMap.end()) {
         auto chunkIt = dimIt->second.find(chunkId); // 查找区块
@@ -379,7 +369,7 @@ std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& center, int radius, 
 
     for (int x = minChunkX; x <= maxChunkX; ++x) {
         for (int z = minChunkZ; z <= maxChunkZ; ++z) {
-            ChunkID chunkId = getChunkID(x, z);
+            ChunkID chunkId = EncodeChunkID(x, z);
             auto    dimIt   = mLandMap.find(dimid); // 查找维度
             if (dimIt != mLandMap.end()) {
                 auto chunkIt = dimIt->second.find(chunkId); // 查找区块
@@ -408,7 +398,7 @@ std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& pos1, BlockPos const
 
     for (int x = minChunkX; x <= maxChunkX; ++x) {
         for (int z = minChunkZ; z <= maxChunkZ; ++z) {
-            ChunkID chunkId = getChunkID(x, z);
+            ChunkID chunkId = EncodeChunkID(x, z);
             auto    dimIt   = mLandMap.find(dimid); // 查找维度
             if (dimIt != mLandMap.end()) {
                 auto chunkIt = dimIt->second.find(chunkId); // 查找区块
@@ -427,24 +417,31 @@ std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& pos1, BlockPos const
 }
 
 
-// static function
-ChunkID PLand::getChunkID(int x, int z) {
-    uint64_t ux       = static_cast<uint64_t>(std::abs(x));
-    uint64_t uz       = static_cast<uint64_t>(std::abs(z));
+} // namespace land
+
+
+namespace land {
+ChunkID PLand::EncodeChunkID(int x, int z) {
+    auto ux = static_cast<uint64_t>(std::abs(x));
+    auto uz = static_cast<uint64_t>(std::abs(z));
+
     uint64_t signBits = 0;
     if (x >= 0) signBits |= (1ULL << 63);
     if (z >= 0) signBits |= (1ULL << 62);
     return signBits | (ux << 31) | (uz & 0x7FFFFFFF);
 }
-std::pair<int, int> PLand::parseChunkID(ChunkID id) {
+std::pair<int, int> PLand::DecodeChunkID(ChunkID id) {
     bool xPositive = (id & (1ULL << 63)) != 0;
     bool zPositive = (id & (1ULL << 62)) != 0;
-    int  x         = static_cast<int>((id >> 31) & 0x7FFFFFFF);
-    int  z         = static_cast<int>(id & 0x7FFFFFFF);
+
+    int x = static_cast<int>((id >> 31) & 0x7FFFFFFF);
+    int z = static_cast<int>(id & 0x7FFFFFFF);
     if (!xPositive) x = -x;
     if (!zPositive) z = -z;
     return {x, z};
 }
 
-
+string PLand::DB_DIR_NAME() { return "db"; }
+string PLand::DB_KEY_OPERATORS() { return "operators"; }
+string PLand::DB_KEY_PLAYER_SETTINGS() { return "player_settings"; }
 } // namespace land

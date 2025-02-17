@@ -57,7 +57,7 @@ bool LandScheduler::setup() {
                         auto ev = PlayerLeaveLandEvent(player, lastLandID);
                         bus->publish(ev); // 离开上一个维度的领地
 #ifdef DEBUG
-                        printf("(dim) player %s leave land %d\n", player.getName().c_str(), lastLandID);
+                        printf("(dim) player %s leave land %llu\n", player.getName().c_str(), lastLandID);
 #endif
                     }
                     lastDimid = curDimid;
@@ -69,14 +69,14 @@ bool LandScheduler::setup() {
                         auto ev = PlayerLeaveLandEvent(player, lastLandID);
                         bus->publish(ev); // 离开上一个领地
 #ifdef DEBUG
-                        printf("player %s leave land %d\n", player.getName().c_str(), lastLandID);
+                        printf("player %s leave land %llu\n", player.getName().c_str(), lastLandID);
 #endif
                     }
                     if (curLandID != (LandID)-1) {
                         auto ev = PlayerEnterLandEvent(player, curLandID);
                         bus->publish(ev); // 进入新领地
 #ifdef DEBUG
-                        printf("player %s enter land %d\n", player.getName().c_str(), curLandID);
+                        printf("player %s enter land %llu\n", player.getName().c_str(), curLandID);
 #endif
                     }
                     lastLandID = curLandID;

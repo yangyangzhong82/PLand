@@ -415,12 +415,12 @@ void SelectorChangeYGui::impl(Player& player, std::string const& exception) {
 
 // 通用组件Gui
 template <typename ParentForm>
-void ChooseLandGui::impl(Player& player, ChooseCallback callback) {
+void ChooseLandUtilGui::impl(Player& player, ChooseCallback const& callback, bool showShredLand) {
     auto fm = SimpleFormEx::create<ParentForm, BackButtonPos::Upper>();
     fm.setTitle(PLUGIN_NAME + ("| 选择领地"_tr()));
     fm.setContent("请选择一个领地"_tr());
 
-    auto lands = PLand::getInstance().getLands(player.getUuid().asString());
+    auto lands = PLand::getInstance().getLands(player.getUuid().asString(), showShredLand);
     for (auto& land : lands) {
         fm.appendButton(
             "{}\n维度: {} | ID: {}"_tr(land->getLandName(), land->getLandDimid(), land->getLandID()),
@@ -432,7 +432,7 @@ void ChooseLandGui::impl(Player& player, ChooseCallback callback) {
     fm.sendTo(player);
 }
 template <typename ParentForm>
-void ChoosePlayerGui::impl(Player& player, ChoosePlayerCall callback) {
+void ChoosePlayerUtilGui::impl(Player& player, ChoosePlayerCall const& callback) {
     auto fm = SimpleFormEx::create<LandMainGui, BackButtonPos::Upper>();
     fm.setTitle(PLUGIN_NAME + ("| 选择玩家"_tr()));
 
@@ -447,12 +447,12 @@ void ChoosePlayerGui::impl(Player& player, ChoosePlayerCall callback) {
 
     fm.sendTo(player);
 }
-void EditStringGui::impl(
-    Player&          player,
-    string const&    title,        // 标题
-    string const&    text,         // 提示
-    string const&    defaultValue, // 默认值
-    EditStringResult callback      // 回调
+void EditStringUtilGui::impl(
+    Player&                 player,
+    string const&           title,        // 标题
+    string const&           text,         // 提示
+    string const&           defaultValue, // 默认值
+    EditStringResult const& callback      // 回调
 ) {
     CustomForm fm(PLUGIN_NAME + title);
     fm.appendInput("str", text, "string", defaultValue);
@@ -473,11 +473,9 @@ void LandMainGui::impl(Player& player) {
 
     fm.appendButton("新建领地", "textures/ui/anvil_icon", [](Player& pl) { ChooseLandDimAndNewLand::impl(pl); });
     fm.appendButton("管理领地", "textures/ui/icon_spring", [](Player& pl) {
-        ChooseLandGui::impl<LandMainGui>(pl, LandManagerGui::impl);
+        ChooseLandUtilGui::impl<LandMainGui>(pl, LandManagerGui::impl);
     });
-    fm.appendButton("领地传送", "textures/ui/icon_recipe_nature", [](Player& pl) {
-        ChooseLandGui::impl<LandMainGui>(pl, LandTeleportGui::impl);
-    });
+    fm.appendButton("领地传送", "textures/ui/icon_recipe_nature", [](Player& pl) { LandTeleportGui::impl(pl); });
     fm.appendButton("个人设置", "textures/ui/icon_recipe_nature", [](Player& pl) { EditPlayerSettingGui::impl(pl); });
 
     fm.appendButton("关闭", "textures/ui/cancel");
@@ -544,7 +542,7 @@ void LandManagerGui::impl(Player& player, LandID id) {
 
     fm.sendTo(player);
 }
-void LandManagerGui::EditLandPermGui::impl(Player& player, LandData_sptr ptr) {
+void LandManagerGui::EditLandPermGui::impl(Player& player, LandData_sptr const& ptr) {
     CustomForm fm(PLUGIN_NAME + " | 编辑权限"_tr());
 
     auto& i18n = ll::i18n::getInstance();
@@ -571,7 +569,7 @@ void LandManagerGui::EditLandPermGui::impl(Player& player, LandData_sptr ptr) {
         mc::sendText(pl, "权限表已更新");
     });
 }
-void LandManagerGui::DeleteLandGui::impl(Player& player, LandData_sptr ptr) {
+void LandManagerGui::DeleteLandGui::impl(Player& player, LandData_sptr const& ptr) {
     int price = Calculate::calculateRefundsPrice(ptr->mOriginalBuyPrice, Config::cfg.land.refundRate);
 
     PlayerDeleteLandBeforeEvent ev(player, ptr->getLandID(), price);
@@ -612,8 +610,8 @@ void LandManagerGui::DeleteLandGui::impl(Player& player, LandData_sptr ptr) {
         } else mc::sendText(pl, "经济系统异常，操作失败"_tr());
     });
 }
-void LandManagerGui::EditLandNameGui::impl(Player& player, LandData_sptr ptr) {
-    EditStringGui::impl(
+void LandManagerGui::EditLandNameGui::impl(Player& player, LandData_sptr const& ptr) {
+    EditStringUtilGui::impl(
         player,
         "修改领地名称"_tr(),
         "请输入新的领地名称"_tr(),
@@ -624,8 +622,8 @@ void LandManagerGui::EditLandNameGui::impl(Player& player, LandData_sptr ptr) {
         }
     );
 }
-void LandManagerGui::EditLandDescGui::impl(Player& player, LandData_sptr ptr) {
-    EditStringGui::impl(
+void LandManagerGui::EditLandDescGui::impl(Player& player, LandData_sptr const& ptr) {
+    EditStringUtilGui::impl(
         player,
         "修改领地描述"_tr(),
         "请输入新的领地描述"_tr(),
@@ -636,8 +634,8 @@ void LandManagerGui::EditLandDescGui::impl(Player& player, LandData_sptr ptr) {
         }
     );
 }
-void LandManagerGui::EditLandOwnerGui::impl(Player& player, LandData_sptr ptr) {
-    ChoosePlayerGui::impl(player, [ptr](Player& self, Player& target) {
+void LandManagerGui::EditLandOwnerGui::impl(Player& player, LandData_sptr const& ptr) {
+    ChoosePlayerUtilGui::impl(player, [ptr](Player& self, Player& target) {
         if (self == target) {
             mc::sendText(self, "不能将领地转让给自己, 左手倒右手哦!"_tr());
             return;
@@ -682,7 +680,7 @@ void LandManagerGui::EditLandOwnerGui::impl(Player& player, LandData_sptr ptr) {
         });
     });
 }
-void LandManagerGui::ReSelectLandGui::impl(Player& player, LandData_sptr ptr) {
+void LandManagerGui::ReSelectLandGui::impl(Player& player, LandData_sptr const& ptr) {
     ModalForm fm(
         PLUGIN_NAME + " | 重新选区"_tr(),
         "重新选区为完全重新选择领地的范围，非直接扩充/缩小现有领地范围。\n重新选择的价格计算方式为\"新范围价格 — 旧范围价值\"，是否继续？"_tr(
@@ -725,7 +723,7 @@ void EditLandMemberGui::impl(Player& player, LandData_sptr ptr) {
     fm.sendTo(player);
 }
 void EditLandMemberGui::AddMemberGui::impl(Player& player, LandData_sptr ptr) {
-    ChoosePlayerGui::impl<EditLandMemberGui>(player, [ptr](Player& self, Player& target) {
+    ChoosePlayerUtilGui::impl<EditLandMemberGui>(player, [ptr](Player& self, Player& target) {
         if (self == target) {
             mc::sendText(self, "不能添加自己为领地成员哦!"_tr());
             return;
@@ -810,7 +808,8 @@ void EditLandMemberGui::RemoveMemberGui::impl(Player& player, LandData_sptr ptr,
 
 
 // 领地传送GUI
-void LandTeleportGui::impl(Player& player, LandID id) {
+void LandTeleportGui::impl(Player& player) { ChooseLandUtilGui::impl<LandMainGui>(player, LandTeleportGui::run, true); }
+void LandTeleportGui::run(Player& player, LandID id) {
     auto land = PLand::getInstance().getLand(id);
     if (!land) {
         mc::sendText<mc::LogLevel::Error>(player, "领地不存在"_tr());
