@@ -534,6 +534,7 @@ void LandManagerGui::impl(Player& player, LandID id) {
     fm.appendButton("修改领地描述"_tr(), "textures/ui/book_edit_default", [land](Player& pl) {
         EditLandDescGui::impl(pl, land);
     });
+    fm.appendButton("传送到领地", "textures/ui/icon_recipe_nature", [id](Player& pl) { LandTeleportGui::run(pl, id); });
     fm.appendButton("领地过户"_tr(), "textures/ui/sidebar_icons/my_characters", [land](Player& pl) {
         EditLandOwnerGui::impl(pl, land);
     });
