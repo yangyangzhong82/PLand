@@ -56,13 +56,17 @@
 #include <mc/world/level/GameType.h>
 
 
-
 #include "magic_enum.hpp"
 
 #include "pland/Config.h"
 #include "pland/GUI.h"
 #include "pland/PLand.h"
 #include "pland/utils/Utils.h"
+
+#ifdef LD_DEVTOOL
+#include "devtools/DevTools.h"
+#endif
+
 
 namespace land {
 
@@ -118,13 +122,11 @@ static auto const Operator = [](CommandOrigin const& ori, CommandOutput& out, Op
             if (db.isOperator(uid)) {
                 mc::sendText(out, "{} 已经是管理员，请不要重复添加"_tr(name));
             } else {
-                db.addOperator(uid);
-                mc::sendText(out, "{} 已经被添加为管理员"_tr(name));
+                if (db.addOperator(uid)) mc::sendText(out, "{} 已经被添加为管理员"_tr(name));
             }
         } else {
             if (db.isOperator(uid)) {
-                db.removeOperator(uid);
-                mc::sendText(out, "{} 已经被移除管理员"_tr(name));
+                if (db.removeOperator(uid)) mc::sendText(out, "{} 已经被移除管理员"_tr(name));
             } else {
                 mc::sendText(out, "{} 不是管理员，无需移除"_tr(name));
             }
@@ -284,6 +286,15 @@ bool LandCommand::setup() {
         .required("relationship_file")
         .required("data_file")
         .execute(Lambda::Import);
+
+#ifdef LD_DEVTOOL
+    // pland devtool
+    cmd.overload().text("devtool").execute([](CommandOrigin const& ori, CommandOutput&) {
+        if (ori.getOriginType() == CommandOriginType::DedicatedServer) {
+            devtools::show();
+        }
+    });
+#endif
 
     return true;
 }

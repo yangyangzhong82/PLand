@@ -16,8 +16,12 @@ add_requires("levibuildscript")
 add_requires("exprtk 0.0.3")
 add_requires("legacymoney 0.9.0-rc.1")
 add_requires("ilistenattentively 0.2.3")
--- add_requireconfs("**.magic_enum", {override = true, version = "0.9.7"}) -- override ilistenattentively's magic_enum version
--- add_requireconfs("**.levilamina", {override = true, version = "1.0.0-rc.2", configs = {target_type = "server"}}) -- override ilistenattentively's levilamina version
+
+if has_config("devtool") then
+    add_requires("imgui v1.91.6-docking", {configs = { opengl3 = true, glfw = true }})
+    add_requires("imgui-filebrowser 2024.10.07")
+    add_requires("glew 2.2.0")
+end
 
 if not has_config("vs_runtime") then
     set_runtimes("MD")
@@ -31,6 +35,11 @@ option_end()
 
 option("test")
     set_default(false)
+    set_showmenu(true)
+option_end()
+
+option("devtool") -- 开发工具
+    set_default(true)
     set_showmenu(true)
 option_end()
 
@@ -76,11 +85,23 @@ target("PLand") -- Change this to your mod name.
         add_includedirs("test")
     end
 
+    if has_config("devtool") then
+        add_packages(
+            "imgui",
+            "glew",
+            "imgui-filebrowser"
+        )
+        add_defines("LD_DEVTOOL")
+    end
+
     after_build(function (target)
         local bindir = path.join(os.projectdir(), "bin")
         local outputdir = path.join(bindir, target:name())
-        -- Lang
-        os.mkdir(path.join(outputdir, "lang"))
-        local langdir = path.join(os.projectdir(), "assets", "lang")
-        os.cp(langdir, outputdir)
+
+        local assetsdir = path.join(os.projectdir(), "assets")
+        local matchDir = assetsdir .. "/*"
+        for _, dir in ipairs(os.dirs(matchDir)) do
+            local fixedDir = path.join(outputdir, path.basename(dir))
+            os.cp(dir, fixedDir)
+        end
     end)

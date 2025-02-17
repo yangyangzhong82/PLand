@@ -22,6 +22,9 @@
 #include "LandEventTest.h"
 #endif
 
+#ifdef LD_DEVTOOL
+#include "devtools/DevTools.h"
+#endif
 
 namespace my_mod {
 
@@ -68,13 +71,21 @@ bool MyMod::enable() {
     test::SetupEventListener();
 #endif
 
+#ifdef LD_DEVTOOL
+    land::devtools::init();
+#endif
+
     return true;
 }
 
 bool MyMod::disable() {
+#ifdef LD_DEVTOOL
+    land::devtools::destroy();
+#endif
+
     auto& logger = getSelf().getLogger();
     logger.info("Stopping thread and saving data...");
-    land::PLand::getInstance()._stopThread(); // 请求关闭线程
+    land::PLand::getInstance().stopThread(); // 请求关闭线程
     logger.debug("[Main] Saving land data...");
     land::PLand::getInstance().save();
     logger.debug("[Main] Land data saved.");
