@@ -16,6 +16,7 @@
 23:01:00.561 INFO [Server] - /pland new
 23:01:00.561 INFO [Server] - /pland reload
 23:01:00.561 INFO [Server] - /pland set <a|b>
+23:01:00.561 INFO [Server] - /pland set teleport_pos
 23:01:00.561 INFO [Server] - /pland draw <disable|current_land|near_land>
 17:35:08.110 INFO [Server] - /pland import <clearDb: Boolean> <relationship_file: string> <data_file: string>
 ```
@@ -48,6 +49,9 @@
 
 - `/pland reload`
   - 重载领地配置 (控制台)。
+
+- `/pland set teleport_pos`
+  - 设置脚下领地的传送点为当前位置（领地主人、管理员）。
 
 - `/pland draw <disable|current_land|near_land>`
   - 开启绘制领地范围(需在 `Config.json` 中设置 `setupDrawCommand: true`)

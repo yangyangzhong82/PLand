@@ -91,8 +91,9 @@ using LandData_sptr = std::shared_ptr<class LandData>; // 共享指针
 using LandData_wptr = std::weak_ptr<class LandData>;   // 弱指针
 class LandData {
 public:
-    int                version{4};                         // 版本号
+    int                version{5};                         // 版本号
     LandPos            mPos;                               // 领地对角坐标
+    PosBase            mTeleportPos;                       // 领地传送坐标
     LandID             mLandID{static_cast<uint64_t>(-1)}; // 领地唯一ID  (由 PLand::addLand() 时分配)
     LandDimid          mLandDimid;                         // 领地所在维度
     bool               mIs3DLand;                          // 是否为3D领地

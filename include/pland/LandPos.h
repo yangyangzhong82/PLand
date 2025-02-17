@@ -18,6 +18,8 @@ public:
 
     [[nodiscard]] LDAPI std::string toString() const;
 
+    [[nodiscard]] LDAPI bool isZero() const; // xyz是否都为0
+
     LDAPI PosBase& operator=(PosBase const& pos) = default;
     LDAPI bool     operator==(PosBase const& pos) const;
     LDAPI bool     operator!=(PosBase const& pos) const;

@@ -240,6 +240,24 @@ static auto const Import = [](CommandOrigin const& ori, CommandOutput& out, Impo
     }
 };
 
+static auto const SetLandTeleportPos = [](CommandOrigin const& ori, CommandOutput& out) {
+    CHECK_TYPE(ori, out, CommandOriginType::Player);
+    auto& player = *static_cast<Player*>(ori.getEntity());
+
+    auto& db   = PLand::getInstance();
+    auto  land = db.getLandAt(player.getPosition(), player.getDimensionId().id);
+    if (!land) {
+        mc::sendText<mc::LogLevel::Error>(out, "您当前不在领地内"_tr());
+        return;
+    }
+
+    auto uuid = player.getUuid().asString();
+    if (!land->isLandOwner(uuid) && !db.isOperator(uuid)) {
+        mc::sendText<mc::LogLevel::Error>(out, "您不是领地主人，无法设置传送点"_tr());
+        return;
+    }
+    land->mTeleportPos = player.getPosition();
+};
 
 }; // namespace Lambda
 
@@ -286,6 +304,9 @@ bool LandCommand::setup() {
         .required("relationship_file")
         .required("data_file")
         .execute(Lambda::Import);
+
+    // pland set teleport_pos 设置传送点
+    cmd.overload().text("set").text("teleport_pos").execute(Lambda::SetLandTeleportPos);
 
 #ifdef LD_DEVTOOL
     // pland devtool

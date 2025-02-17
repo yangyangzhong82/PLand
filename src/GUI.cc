@@ -817,7 +817,12 @@ void LandTeleportGui::run(Player& player, LandID id) {
         return;
     }
 
-    SafeTeleport::getInstance().teleportTo(player, land->mPos.mMin_A, land->getLandDimid());
+    if (land->mTeleportPos.isZero()) {
+        SafeTeleport::getInstance().teleportTo(player, land->mPos.mMin_A, land->getLandDimid());
+        return;
+    }
+
+    player.teleport(land->mTeleportPos, land->getLandDimid());
 }
 
 
