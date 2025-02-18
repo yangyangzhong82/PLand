@@ -1,5 +1,6 @@
 #include "pland/LandData.h"
 #include "pland/Global.h"
+#include "pland/utils/JSON.h"
 #include <vector>
 
 namespace land {
@@ -81,6 +82,7 @@ LandPermType LandData::getPermType(UUIDs const& uuid) const {
     return LandPermType::Guest;
 }
 
+nlohmann::json LandData::toJSON() const { return JSON::structTojson(*this); }
 
 // static
 LandData_sptr LandData::make() { return std::make_shared<LandData>(); }

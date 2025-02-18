@@ -1,5 +1,6 @@
 #pragma once
 #include "ll/api/base/StdInt.h"
+#include "nlohmann/json.hpp"
 #include "pland/Global.h"
 #include "pland/LandPos.h"
 #include <cstdint>
@@ -151,6 +152,8 @@ public:
     [[nodiscard]] LDAPI bool isAABBInLand(BlockPos const& pos1, BlockPos const& pos2) const;
 
     [[nodiscard]] LDAPI LandPermType getPermType(UUIDs const& uuid) const;
+
+    [[nodiscard]] LDAPI nlohmann::json toJSON() const;
 };
 
 
