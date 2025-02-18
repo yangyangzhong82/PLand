@@ -152,7 +152,7 @@ void PLand::save() {
     }
 }
 void PLand::stopThread() {
-    mThreadStopFlag = false;
+    mThreadStopFlag = true;
     if (mThread.joinable()) mThread.join();
 }
 
