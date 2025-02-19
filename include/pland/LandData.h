@@ -39,7 +39,8 @@ struct LandPermTable {
     bool allowDestroyArmorStand{false};  // 允许破坏盔甲架
     bool allowLiquidFlow{true};          // 允许液体流动
     bool allowSculkBlockGrowth{true};    // 允许幽匿尖啸体生长
-    bool allowMobSpawn{true};            // 允许怪物生成
+    bool allowMonsterSpawn{true};        // 允许怪物生成
+    bool allowAnimalSpawn{true};         // 允许动物生成
 
     bool useAnvil{false};            // 使用铁砧
     bool useBarrel{false};           // 使用木桶

@@ -91,7 +91,7 @@ struct Config {
         bool SculkBlockGrowthBeforeEvent{true};               // 诡秘方块生长事件
         bool SculkSpreadBeforeEvent{true};                    // 诡秘蔓延事件
         bool PlayerEditSignBeforeEvent{true};                 // 玩家编辑告示牌事件
-        bool SpawningMobEvent{false};                         // 生成生物事件(控制怪物生成)
+        bool SpawnedMobEvent{false};                          // 生物生成事件(怪物和动物)
         bool SculkCatalystAbsorbExperienceBeforeEvent{false}; // 幽匿催化体吸收经验事件
     } listeners;
 

@@ -727,19 +727,26 @@ bool EventListener::setup() {
                 ev.cancel();
             }
         ),
-        bus->emplaceListener<ll::event::SpawningMobEvent>([db, logger](ll::event::SpawningMobEvent& ev) {
-            if (!Config::cfg.listeners.SpawningMobEvent) return;
+        bus->emplaceListener<ll::event::SpawnedMobEvent>([db, logger](ll::event::SpawnedMobEvent& ev) {
+            if (!Config::cfg.listeners.SpawnedMobEvent) return;
 
-            auto& pos  = ev.pos();
-            auto& type = ev.identifier().getFullName();
+            auto mob = ev.mob();
+            if (!mob.has_value()) {
+                return;
+            }
 
-            logger->debug("[SpawningMob] {} -> {}", pos.toString(), type);
+            auto& pos = mob->getPosition();
 
-            auto land = db->getLandAt(pos, ev.blockSource().getDimensionId().id);
-            if (land) {
-                if (!land->getLandPermTableConst().allowMobSpawn && !AnimalEntityMap.contains(type)) {
-                    ev.cancel(); // 不允许生物生成 && 不是动物
-                }
+            logger->debug("[SpawnedMob] {} -> {}", pos.toString());
+
+            auto land = db->getLandAt(pos, mob->getDimensionId());
+            if (PreCheck(land)) {
+                return;
+            }
+
+            if ((mob->hasCategory(::ActorCategory::Animal) && !land->getLandPermTableConst().allowAnimalSpawn)
+                || (mob->hasCategory(::ActorCategory::Monster) && !land->getLandPermTableConst().allowMonsterSpawn)) {
+                mob->despawn();
             }
         })
     };
