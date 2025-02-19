@@ -175,7 +175,7 @@ LandData_sptr iLandConverter::convert(RawData::iLandData const& raw, string cons
         tab.useAnvil            = p.use_anvil;
         tab.useLever            = p.use_lever;
         tab.useButton           = p.use_button;
-        tab.allowAttackMob      = p.allow_attack_mobs;
+        tab.allowAttackMonster  = p.allow_attack_mobs;
         tab.useComposter        = p.use_composter;
         tab.allowRideEntity     = p.allow_ride_entity;
         tab.useSmithingTable    = p.use_smithing_table;

@@ -19,7 +19,6 @@ public:
     LDAPI static std::unordered_set<string> WhiteListItems; // 物品白名单（兼容菜单类插件)
     LDAPI static std::unordered_set<string> UseItemOnMap;
     LDAPI static std::unordered_set<string> InteractBlockMap;
-    LDAPI static std::unordered_set<string> AnimalEntityMap;
 };
 
 

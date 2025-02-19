@@ -116,11 +116,10 @@ bool EventListener::setup() {
             }
 
             if (land) {
-                auto const& et  = self.getTypeName();
                 auto const& tab = land->getLandPermTableConst();
                 if (tab.allowAttackPlayer && self.isPlayer()) return;
-                if (tab.allowAttackAnimal && AnimalEntityMap.contains(et)) return;
-                if (tab.allowAttackMob && !AnimalEntityMap.contains(et)) return;
+                if (tab.allowAttackAnimal && self.hasCategory(::ActorCategory::Animal)) return;
+                if (tab.allowAttackMonster && self.hasCategory(::ActorCategory::Monster)) return;
             }
 
             if (self.isPlayer()) {
@@ -262,22 +261,23 @@ bool EventListener::setup() {
             if (!Config::cfg.listeners.PlayerAttackEvent) return;
 
             auto& player = ev.self();
-            auto& pos    = ev.target().getPosition();
+            auto& mob    = ev.target();
+            auto& pos    = mob.getPosition();
 
-            logger->debug("[AttackEntity] Entity: {}, Pos: {}", ev.target().getTypeName(), pos.toString());
+            logger->debug("[AttackEntity] Entity: {}, Pos: {}", mob.getTypeName(), pos.toString());
 
             auto land = db->getLandAt(pos, player.getDimensionId());
             if (PreCheck(land, player.getUuid().asString())) {
                 return;
             }
 
-            auto const& et  = ev.target().getTypeName();
+            auto const& et  = mob.getTypeName();
             auto const& tab = land->getLandPermTableConst();
-            if (et == "minecraft:ender_crystal" && tab.allowAttackEnderCrystal) return; // 末影水晶
-            if (et == "minecraft:armor_stand" && tab.allowDestroyArmorStand) return;    // 盔甲架
-            if (tab.allowAttackPlayer && ev.target().isPlayer()) return;                // 玩家
-            if (tab.allowAttackAnimal && AnimalEntityMap.contains(et)) return;          // 动物
-            if (tab.allowAttackMob && !AnimalEntityMap.contains(et)) return;            // 怪物
+            if (et == "minecraft:ender_crystal" && tab.allowAttackEnderCrystal) return;      // 末影水晶
+            if (et == "minecraft:armor_stand" && tab.allowDestroyArmorStand) return;         // 盔甲架
+            if (tab.allowAttackPlayer && mob.isPlayer()) return;                             // 玩家
+            if (tab.allowAttackAnimal && mob.hasCategory(::ActorCategory::Animal)) return;   // 动物
+            if (tab.allowAttackMonster && mob.hasCategory(::ActorCategory::Monster)) return; // 怪物
 
             ev.cancel();
         }),
@@ -502,11 +502,10 @@ bool EventListener::setup() {
             auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
             if (PreCheck(land)) return; // land not found
             if (land) {
-                auto const& et  = self.getTypeName();
                 auto const& tab = land->getLandPermTableConst();
                 if (tab.allowAttackPlayer && self.isPlayer()) return;
-                if (tab.allowAttackAnimal && AnimalEntityMap.contains(et)) return;
-                if (tab.allowAttackMob && !AnimalEntityMap.contains(et)) return;
+                if (tab.allowAttackAnimal && self.hasCategory(::ActorCategory::Animal)) return;
+                if (tab.allowAttackMonster && self.hasCategory(::ActorCategory::Monster)) return;
             }
 
             if (self.isPlayer()) {
@@ -737,7 +736,7 @@ bool EventListener::setup() {
 
             auto& pos = mob->getPosition();
 
-            logger->debug("[SpawnedMob] {} -> {}", pos.toString());
+            logger->debug("[SpawnedMob] {}", pos.toString());
 
             auto land = db->getLandAt(pos, mob->getDimensionId());
             if (PreCheck(land)) {
@@ -947,35 +946,35 @@ std::unordered_set<string> EventListener::InteractBlockMap = {
     "minecraft:lit_blast_furnace", // 燃烧中的高炉
     "minecraft:lit_smoker"         // 燃烧中的烟熏炉
 };
-std::unordered_set<string> EventListener::AnimalEntityMap = {
-    "minecraft:axolotl",          // 美西螈
-    "minecraft:bat",              // 蝙蝠
-    "minecraft:cat",              // 猫
-    "minecraft:chicken",          // 鸡
-    "minecraft:cod",              // 鳕鱼
-    "minecraft:cow",              // 牛
-    "minecraft:donkey",           // 驴
-    "minecraft:fox",              // 狐狸
-    "minecraft:glow_squid",       // 发光鱿鱼
-    "minecraft:horse",            // 马
-    "minecraft:mooshroom",        // 蘑菇牛
-    "minecraft:mule",             // 驴
-    "minecraft:ocelot",           // 豹猫
-    "minecraft:parrot",           // 鹦鹉
-    "minecraft:pig",              // 猪
-    "minecraft:rabbit",           // 兔子
-    "minecraft:salmon",           // 鲑鱼
-    "minecraft:snow_golem",       // 雪傀儡
-    "minecraft:sheep",            // 羊
-    "minecraft:skeleton_horse",   // 骷髅马
-    "minecraft:squid",            // 鱿鱼
-    "minecraft:strider",          // 炽足兽
-    "minecraft:tropical_fish",    // 热带鱼
-    "minecraft:turtle",           // 海龟
-    "minecraft:villager_v2",      // 村民
-    "minecraft:wandering_trader", // 流浪商人
-    "minecraft:npc"               // NPC
-};
+// std::unordered_set<string> EventListener::AnimalEntityMap = {
+//     "minecraft:axolotl",          // 美西螈
+//     "minecraft:bat",              // 蝙蝠
+//     "minecraft:cat",              // 猫
+//     "minecraft:chicken",          // 鸡
+//     "minecraft:cod",              // 鳕鱼
+//     "minecraft:cow",              // 牛
+//     "minecraft:donkey",           // 驴
+//     "minecraft:fox",              // 狐狸
+//     "minecraft:glow_squid",       // 发光鱿鱼
+//     "minecraft:horse",            // 马
+//     "minecraft:mooshroom",        // 蘑菇牛
+//     "minecraft:mule",             // 驴
+//     "minecraft:ocelot",           // 豹猫
+//     "minecraft:parrot",           // 鹦鹉
+//     "minecraft:pig",              // 猪
+//     "minecraft:rabbit",           // 兔子
+//     "minecraft:salmon",           // 鲑鱼
+//     "minecraft:snow_golem",       // 雪傀儡
+//     "minecraft:sheep",            // 羊
+//     "minecraft:skeleton_horse",   // 骷髅马
+//     "minecraft:squid",            // 鱿鱼
+//     "minecraft:strider",          // 炽足兽
+//     "minecraft:tropical_fish",    // 热带鱼
+//     "minecraft:turtle",           // 海龟
+//     "minecraft:villager_v2",      // 村民
+//     "minecraft:wandering_trader", // 流浪商人
+//     "minecraft:npc"               // NPC
+// };
 std::unordered_set<string> EventListener::WhiteListItems = {"minecraft:clock"};
 
 

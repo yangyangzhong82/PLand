@@ -22,7 +22,7 @@ struct LandPermTable {
     bool allowPlace{false};              // 允许放置 [x]
     bool allowAttackPlayer{false};       // 允许攻击玩家
     bool allowAttackAnimal{false};       // 允许攻击动物
-    bool allowAttackMob{true};           // 允许攻击怪物
+    bool allowAttackMonster{true};       // 允许攻击怪物
     bool allowOpenChest{false};          // 允许打开箱子
     bool allowPickupItem{false};         // 允许拾取物品
     bool allowThrowSnowball{true};       // 允许投掷雪球

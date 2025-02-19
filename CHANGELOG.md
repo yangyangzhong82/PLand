@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - 优化部分代码
+- `allowAttackMob` 更改为 `allowAttackMonster`
+- 移除 `AnimalEntityMap`
 
 ### Fixed
 
