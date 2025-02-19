@@ -9,7 +9,7 @@ namespace land {
 enum class EconomyKit : int { LegacyMoney, ScoreBoard };
 
 struct Config {
-    int              version{5};
+    int              version{6};
     ll::io::LogLevel logLevel{ll::io::LogLevel::Info};
 
     struct {
@@ -39,12 +39,12 @@ struct Config {
         struct {
             struct {
                 bool   enabled{true};
-                string calculate{"square * 25"}; // 计算公式
+                string calculate{"square * 8 + height * 20"}; // 计算公式
             } threeDimensionl;
 
             struct {
                 bool   enabled{true};
-                string calculate{"square * 8 + height * 20"}; // 计算公式
+                string calculate{"square * 25"}; // 计算公式
             } twoDimensionl;
 
             struct {
@@ -91,7 +91,7 @@ struct Config {
         bool SculkBlockGrowthBeforeEvent{true};               // 诡秘方块生长事件
         bool SculkSpreadBeforeEvent{true};                    // 诡秘蔓延事件
         bool PlayerEditSignBeforeEvent{true};                 // 玩家编辑告示牌事件
-        bool SpawnedMobEvent{false};                          // 生物生成事件(怪物和动物)
+        bool SpawnedMobEvent{true};                           // 生物生成事件(怪物和动物)
         bool SculkCatalystAbsorbExperienceBeforeEvent{false}; // 幽匿催化体吸收经验事件
     } listeners;
 

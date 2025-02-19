@@ -11,7 +11,7 @@
     "allowPlace": "允许放置(方块、头颅、旗帜、等)",
     "allowAttackPlayer": "允许攻击玩家",
     "allowAttackAnimal": "允许攻击动物",
-    "allowAttackMob": "允许攻击实体(非动物)",
+    "allowAttackMonster": "允许攻击怪物",
     "allowOpenChest": "允许打开箱子",
     "allowPickupItem": "允许拾取物品",
     "allowThrowSnowball": "允许投掷雪球",
