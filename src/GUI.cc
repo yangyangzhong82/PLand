@@ -464,6 +464,24 @@ void EditStringUtilGui::impl(
         callback(pl, std::get<string>(res->at("str")));
     });
 }
+void FuzzySerarchUtilGui::impl(Player& player, std::vector<LandData_sptr> const& list, const CallBack& callback) {
+    CustomForm fm;
+    fm.setTitle(PLUGIN_NAME + " | 模糊搜索领地"_tr());
+    fm.appendInput("name", "请输入领地名称", "string");
+    fm.sendTo(player, [list, callback](Player& player, CustomFormResult const& res, FormCancelReason) {
+        if (!res) {
+            return;
+        }
+        auto                       name = std::get<string>(res->at("name"));
+        std::vector<LandData_sptr> filtered;
+        for (auto const& ptr : list) {
+            if (ptr->getLandName().find(name) != std::string::npos) {
+                filtered.push_back(ptr);
+            }
+        }
+        callback(player, filtered);
+    });
+}
 
 
 // 领地主菜单
@@ -887,29 +905,15 @@ void LandOPManagerGui::IChoosePlayerFromDB::impl(Player& player, ChoosePlayerCal
     fm.sendTo(player);
 }
 
-void FuzzySerach(Player& player, std::vector<LandData_sptr> lands) {
-    CustomForm fm;
-    fm.setTitle(PLUGIN_NAME + " | 模糊搜索领地"_tr());
-    fm.appendInput("name", "请输入领地名称", "string");
-    fm.sendTo(player, [lands](Player& player, CustomFormResult const& res, FormCancelReason) {
-        if (!res) {
-            return;
-        }
-        auto                       name = std::get<string>(res->at("name"));
-        std::vector<LandData_sptr> filtered;
-        for (auto const& ptr : lands) {
-            if (ptr->getLandName().find(name) != std::string::npos) {
-                filtered.push_back(ptr);
-            }
-        }
-        LandOPManagerGui::IChooseLand::impl(player, filtered);
-    });
-}
 
 void LandOPManagerGui::IChooseLand::impl(Player& player, std::vector<LandData_sptr> const& lands) {
     auto fm = SimpleFormEx::create<LandOPManagerGui, BackButtonPos::Upper>();
     fm.setTitle(PLUGIN_NAME + " | 领地列表"_tr());
     fm.setContent("请选择您要管理的领地"_tr());
+
+    fm.appendButton("模糊搜索领地", "textures/ui/magnifyingGlass", [lands](Player& player) {
+        FuzzySerarchUtilGui::impl(player, lands, LandOPManagerGui::IChooseLand::impl);
+    });
 
     auto const& infos = ll::service::PlayerInfo::getInstance();
     for (auto const& ptr : lands) {

@@ -53,6 +53,11 @@ public:
         EditStringResult const& callback     = {}         // 回调
     );
 };
+class FuzzySerarchUtilGui {
+public:
+    using CallBack = std::function<void(Player& slef, std::vector<LandData_sptr> const& result)>;
+    LDAPI static void impl(Player& player, std::vector<LandData_sptr> const& list, CallBack const& callback);
+};
 
 
 // 主界面
