@@ -29,6 +29,7 @@
 #include <cstdint>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 
 using namespace ll::form;
@@ -851,17 +852,13 @@ void LandOPManagerGui::impl(Player& player) {
         IChoosePlayerFromDB::impl(self, ManageLandWithPlayer::impl);
     });
     fm.appendButton("管理指定领地"_tr(), "textures/ui/magnifyingGlass", [](Player& self) {
-        IChooseLandFromDB::impl(self, "", [](Player& self, LandData_sptr ptr) {
-            LandManagerGui::impl(self, ptr->getLandID());
-        });
+        IChooseLand::impl(self, PLand::getInstance().getLands());
     });
 
     fm.sendTo(player);
 }
 void LandOPManagerGui::ManageLandWithPlayer::impl(Player& player, UUIDs const& targetPlayer) {
-    IChooseLandFromDB::impl(player, targetPlayer, [](Player& self, LandData_sptr ptr) {
-        LandManagerGui::impl(self, ptr->getLandID());
-    });
+    IChooseLand::impl(player, PLand::getInstance().getLands(targetPlayer));
 }
 
 
@@ -889,15 +886,32 @@ void LandOPManagerGui::IChoosePlayerFromDB::impl(Player& player, ChoosePlayerCal
 
     fm.sendTo(player);
 }
-void LandOPManagerGui::IChooseLandFromDB::impl(Player& player, UUIDs const& target, ChooseLandCall callback) {
+
+void FuzzySerach(Player& player, std::vector<LandData_sptr> lands) {
+    CustomForm fm;
+    fm.setTitle(PLUGIN_NAME + " | 模糊搜索领地"_tr());
+    fm.appendInput("name", "请输入领地名称", "string");
+    fm.sendTo(player, [lands](Player& player, CustomFormResult const& res, FormCancelReason) {
+        if (!res) {
+            return;
+        }
+        auto                       name = std::get<string>(res->at("name"));
+        std::vector<LandData_sptr> filtered;
+        for (auto const& ptr : lands) {
+            if (ptr->getLandName().find(name) != std::string::npos) {
+                filtered.push_back(ptr);
+            }
+        }
+        LandOPManagerGui::IChooseLand::impl(player, filtered);
+    });
+}
+
+void LandOPManagerGui::IChooseLand::impl(Player& player, std::vector<LandData_sptr> const& lands) {
     auto fm = SimpleFormEx::create<LandOPManagerGui, BackButtonPos::Upper>();
     fm.setTitle(PLUGIN_NAME + " | 领地列表"_tr());
     fm.setContent("请选择您要管理的领地"_tr());
 
-    auto const& db    = PLand::getInstance();
     auto const& infos = ll::service::PlayerInfo::getInstance();
-    auto const  lands = target.empty() ? db.getLands() : db.getLands(target);
-
     for (auto const& ptr : lands) {
         auto info = infos.fromUuid(UUIDm::fromString(ptr->getLandOwner()));
         fm.appendButton(
@@ -906,7 +920,7 @@ void LandOPManagerGui::IChooseLandFromDB::impl(Player& player, UUIDs const& targ
                 ptr->getLandID(),
                 info.has_value() ? info->name : ptr->getLandOwner()
             ),
-            [callback, ptr](Player& self) { callback(self, ptr); }
+            [ptr](Player& self) { LandManagerGui::impl(self, ptr->getLandID()); }
         );
     }
 

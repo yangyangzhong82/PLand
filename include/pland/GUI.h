@@ -4,6 +4,7 @@
 #include "pland/LandData.h"
 #include "pland/wrapper/FormEx.h"
 #include <functional>
+#include <vector>
 
 namespace land {
 using namespace wrapper;
@@ -144,10 +145,9 @@ public:
         using ChoosePlayerCall = std::function<void(Player& self, UUIDs target)>;
         LDAPI static void impl(Player& player, ChoosePlayerCall callback);
     };
-    class IChooseLandFromDB {
+    class IChooseLand {
     public:
-        using ChooseLandCall = std::function<void(Player& self, LandData_sptr ptr)>;
-        LDAPI static void impl(Player& player, UUIDs const& target, ChooseLandCall callback);
+        LDAPI static void impl(Player& player, std::vector<LandData_sptr> const& lands);
     };
 };
 
