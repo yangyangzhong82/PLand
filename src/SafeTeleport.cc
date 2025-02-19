@@ -25,6 +25,7 @@ struct TeleportData {
     int      mTargetDimid; // 目标维度
     Player*  mPlayer;      // 玩家
     uint64_t mID;          // 唯一ID
+    int      mSourceDimid; // 原始维度
     Vec3     mSourcePos;   // 原始位置
 
     short mScheduleCounter = 0; // 调度计数器
@@ -42,9 +43,9 @@ public:
     std::unordered_map<uint64_t, TeleportData> mTeleportQueue;
     uint64_t                                   mIDCounter = 0; // 唯一ID计数器
 
-    uint64_t insert(Player& player, Vec3 const& pos, int dimid, Vec3 const& sourcePos) {
+    uint64_t insert(Player& player, Vec3 const& pos, int dimid, Vec3 const& sourcePos, int sourceDimid) {
         uint64_t id        = ++mIDCounter;
-        mTeleportQueue[id] = {Vec3(pos), dimid, &player, id, Vec3(sourcePos)};
+        mTeleportQueue[id] = {Vec3(pos), dimid, &player, id, sourceDimid, Vec3(sourcePos)};
         return id;
     }
     bool remove(uint64_t id) {
@@ -52,7 +53,7 @@ public:
         return true;
     }
 
-    void findSafePos(Player& player, Vec3 const& targetPos, int dimid, Vec3 const& sourcePos) {
+    void findSafePos(Player& player, Vec3 const& targetPos, int dimid, Vec3 const& sourcePos, int sourceDimid) {
         static const std::vector<string> dangerousBlocks = {"minecraft:lava", "minecraft:flowing_lava"};
 
         // auto& logger = my_mod::MyMod::getInstance().getSelf().getLogger();
@@ -101,14 +102,14 @@ public:
 
         if (safeHeight == -1) {
             mc::sendText<mc::LogLevel::Info>(player, "无法找到安全位置"_tr());
-            player.teleport(sourcePos, dimid); //  返回原位置
+            player.teleport(sourcePos, sourceDimid); //  返回原位置
             return;
         }
 
         player.teleport(Vec3(currentPos.x + 0.5, safeHeight + 1, currentPos.z + 0.5), dimid);
     }
     void findSafePos(TeleportData& data) {
-        findSafePos(*data.mPlayer, data.mTargetPos, data.mTargetDimid, data.mSourcePos);
+        findSafePos(*data.mPlayer, data.mTargetPos, data.mTargetDimid, data.mSourcePos, data.mSourceDimid);
     }
 
 
@@ -133,7 +134,7 @@ public:
             } else {
                 if (++dt.mScheduleCounter > TeleportData::SCHEDULE_COUNTER_MAX) {
                     mc::sendText<mc::LogLevel::Info>(*dt.mPlayer, "无法找到安全位置, 区块加载超时"_tr());
-                    dt.mPlayer->teleport(dt.mSourcePos, dt.mTargetDimid); //  返回原位置
+                    dt.mPlayer->teleport(dt.mSourcePos, dt.mSourceDimid); //  返回原位置
                     remove(id);
                     co_return;
                 }
@@ -149,11 +150,11 @@ public:
         Vec3  sourcePos = player.getPosition();
 
         if (bs.isChunkFullyLoaded(ChunkPos(pos), bs.getChunkSource())) {
-            findSafePos(player, pos, dimid, sourcePos);
+            findSafePos(player, pos, dimid, sourcePos, player.getDimensionId().id);
             return;
         }
 
-        execute(insert(player, pos, dimid, sourcePos));
+        execute(insert(player, pos, dimid, sourcePos, player.getDimensionId().id));
     }
 
 
