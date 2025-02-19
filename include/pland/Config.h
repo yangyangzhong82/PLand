@@ -64,34 +64,35 @@ struct Config {
     } selector;
 
     struct {
-        bool ActorHurtEvent{true};                       // 实体受伤事件
-        bool PlayerDestroyBlockEvent{true};              // 玩家破坏方块事件
-        bool PlayerPlacingBlockEvent{true};              // 玩家放置方块事件
-        bool PlayerInteractBlockEvent{true};             // 玩家交互方块事件(使用物品)
-        bool FireSpreadEvent{true};                      // 火势蔓延事件
-        bool PlayerAttackEvent{true};                    // 玩家攻击事件
-        bool PlayerPickUpItemEvent{true};                // 玩家拾取物品事件
-        bool PlayerInteractBlockEvent1{true};            // 玩家交互方块事件(功能性方块)
-        bool PlayerUseItemEvent{true};                   // 玩家使用物品事件
-        bool PlayerAttackBlockBeforeEvent{true};         // 玩家攻击方块事件
-        bool ArmorStandSwapItemBeforeEvent{true};        // 盔甲架交换物品事件
-        bool PlayerDropItemBeforeEvent{true};            // 玩家丢弃物品事件
-        bool ActorRideBeforeEvent{true};                 // 实体骑乘事件
-        bool ExplosionBeforeEvent{true};                 // 爆炸事件
-        bool FarmDecayBeforeEvent{true};                 // 农田枯萎事件
-        bool MobHurtEffectBeforeEvent{true};             // 生物受伤效果事件
-        bool PistonPushBeforeEvent{true};                // 活塞推动事件
-        bool PlayerOperatedItemFrameBeforeEvent{true};   // 玩家操作物品展示框事件
-        bool ActorTriggerPressurePlateBeforeEvent{true}; // 实体触发压力板事件
-        bool ProjectileCreateBeforeEvent{true};          // 投掷物创建事件
-        bool RedstoneUpdateBeforeEvent{true};            // 红石更新事件
-        bool WitherDestroyBeforeEvent{true};             // 凋零破坏事件
-        bool MossGrowthBeforeEvent{true};                // 苔藓生长事件
-        bool LiquidTryFlowBeforeEvent{true};             // 液体尝试流动事件
-        bool SculkBlockGrowthBeforeEvent{true};          // 诡秘方块生长事件
-        bool SculkSpreadBeforeEvent{true};               // 诡秘蔓延事件
-        bool PlayerEditSignBeforeEvent{true};            // 玩家编辑告示牌事件
-        bool SpawningMobEvent{false};                    // 生成生物事件
+        bool ActorHurtEvent{true};                            // 实体受伤事件
+        bool PlayerDestroyBlockEvent{true};                   // 玩家破坏方块事件
+        bool PlayerPlacingBlockEvent{true};                   // 玩家放置方块事件
+        bool PlayerInteractBlockEvent{true};                  // 玩家交互方块事件(使用物品)
+        bool FireSpreadEvent{true};                           // 火势蔓延事件
+        bool PlayerAttackEvent{true};                         // 玩家攻击事件
+        bool PlayerPickUpItemEvent{true};                     // 玩家拾取物品事件
+        bool PlayerInteractBlockEvent1{true};                 // 玩家交互方块事件(功能性方块)
+        bool PlayerUseItemEvent{true};                        // 玩家使用物品事件
+        bool PlayerAttackBlockBeforeEvent{true};              // 玩家攻击方块事件
+        bool ArmorStandSwapItemBeforeEvent{true};             // 盔甲架交换物品事件
+        bool PlayerDropItemBeforeEvent{true};                 // 玩家丢弃物品事件
+        bool ActorRideBeforeEvent{true};                      // 实体骑乘事件
+        bool ExplosionBeforeEvent{true};                      // 爆炸事件
+        bool FarmDecayBeforeEvent{true};                      // 农田枯萎事件
+        bool MobHurtEffectBeforeEvent{true};                  // 生物受伤效果事件
+        bool PistonPushBeforeEvent{true};                     // 活塞推动事件
+        bool PlayerOperatedItemFrameBeforeEvent{true};        // 玩家操作物品展示框事件
+        bool ActorTriggerPressurePlateBeforeEvent{true};      // 实体触发压力板事件
+        bool ProjectileCreateBeforeEvent{true};               // 投掷物创建事件
+        bool RedstoneUpdateBeforeEvent{true};                 // 红石更新事件
+        bool WitherDestroyBeforeEvent{true};                  // 凋零破坏事件
+        bool MossGrowthBeforeEvent{true};                     // 苔藓生长事件
+        bool LiquidTryFlowBeforeEvent{true};                  // 液体尝试流动事件
+        bool SculkBlockGrowthBeforeEvent{true};               // 诡秘方块生长事件
+        bool SculkSpreadBeforeEvent{true};                    // 诡秘蔓延事件
+        bool PlayerEditSignBeforeEvent{true};                 // 玩家编辑告示牌事件
+        bool SpawningMobEvent{false};                         // 生成生物事件(控制怪物生成)
+        bool SculkCatalystAbsorbExperienceBeforeEvent{false}; // 幽匿催化体吸收经验事件
     } listeners;
 
     // Functions

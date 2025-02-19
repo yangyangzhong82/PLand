@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 领地管理界面新增传送按钮 #9
 - 支持自定义领地传送点 #9
 - OP 领地管理支持模糊搜索 #9
+- 新增事件监听器开关
+- 新增权限 `allowMobSpawn` #11
 
 ### Changed
 

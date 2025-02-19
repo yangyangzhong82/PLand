@@ -2,6 +2,7 @@
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/Listener.h"
 #include "ll/api/event/ListenerBase.h"
+#include "ll/api/event/world/SpawnMobEvent.h"
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/network/packet/UpdateBlockPacket.h"
 #include "mc/server/ServerPlayer.h"
@@ -32,18 +33,16 @@
 #include "ll/api/event/player/PlayerUseItemEvent.h"
 #include "ll/api/event/world/FireSpreadEvent.h"
 
-
-#include "ila/event/minecraft/world/actor/ActorRideEvent.h"
-#include "ila/event/minecraft/world/actor/ActorTriggerPressurePlateEvent.h"
-#include "ila/event/minecraft/world/actor/ArmorStandSwapItemEvent.h"
-#include "ila/event/minecraft/world/actor/MobHurtEffectEvent.h"
-#include "ila/event/minecraft/world/actor/ProjectileCreateEvent.h"
-// #include "ila/event/minecraft/level/SculkCatalystAbsorbExperienceEvent.h"
 #include "ila/event/minecraft/world/ExplosionEvent.h"
 #include "ila/event/minecraft/world/PistonPushEvent.h"
 #include "ila/event/minecraft/world/RedstoneUpdateEvent.h"
 #include "ila/event/minecraft/world/SculkBlockGrowthEvent.h"
 #include "ila/event/minecraft/world/WitherDestroyEvent.h"
+#include "ila/event/minecraft/world/actor/ActorRideEvent.h"
+#include "ila/event/minecraft/world/actor/ActorTriggerPressurePlateEvent.h"
+#include "ila/event/minecraft/world/actor/ArmorStandSwapItemEvent.h"
+#include "ila/event/minecraft/world/actor/MobHurtEffectEvent.h"
+#include "ila/event/minecraft/world/actor/ProjectileCreateEvent.h"
 #include "ila/event/minecraft/world/actor/player/PlayerAttackBlockEvent.h"
 #include "ila/event/minecraft/world/actor/player/PlayerDropItemEvent.h"
 #include "ila/event/minecraft/world/actor/player/PlayerEditSignEvent.h"
@@ -51,6 +50,7 @@
 #include "ila/event/minecraft/world/level/block/FarmDecayEvent.h"
 #include "ila/event/minecraft/world/level/block/LiquidTryFlowEvent.h"
 #include "ila/event/minecraft/world/level/block/MossGrowthEvent.h"
+#include "ila/event/minecraft/world/level/block/SculkCatalystAbsorbExperienceEvent.h"
 #include "ila/event/minecraft/world/level/block/SculkSpreadEvent.h"
 
 
@@ -708,26 +708,41 @@ bool EventListener::setup() {
             if (land && !land->getLandPermTableConst().editSign) {
                 ev.cancel();
             }
+        }),
+        bus->emplaceListener<ila::mc::SculkCatalystAbsorbExperienceBeforeEvent>(
+            [db, logger](ila::mc::SculkCatalystAbsorbExperienceBeforeEvent& ev) {
+                if (!Config::cfg.listeners.SculkCatalystAbsorbExperienceBeforeEvent) return;
+
+                // auto& actor  = ev.getDiedActor();
+                auto& actor  = ev.getActor();
+                auto& region = actor.getDimensionBlockSource();
+                auto  pos    = actor.getBlockPosCurrentlyStandingOn(&actor);
+                logger->debug("[SculkCatalystAbsorbExperience] Pos: {}", pos.toString());
+                // 领地内蔓延 && 半径内没有别的领地 => 放行
+                // 领地外蔓延 && 半径内有别的领地   => 放行
+                auto cur = db->getLandAt(pos, region.getDimensionId());
+                auto lds = db->getLandAt(pos - 9, pos + 9, region.getDimensionId());
+                if (cur && lds.size() == 1) return;
+                if (!cur && lds.empty()) return;
+                ev.cancel();
+            }
+        ),
+        bus->emplaceListener<ll::event::SpawningMobEvent>([db, logger](ll::event::SpawningMobEvent& ev) {
+            if (!Config::cfg.listeners.SpawningMobEvent) return;
+
+            auto& pos  = ev.pos();
+            auto& type = ev.identifier().getFullName();
+
+            logger->debug("[SpawningMob] {} -> {}", pos.toString(), type);
+
+            auto land = db->getLandAt(pos, ev.blockSource().getDimensionId().id);
+            if (land) {
+                if (!land->getLandPermTableConst().allowMobSpawn && !AnimalEntityMap.contains(type)) {
+                    ev.cancel(); // 不允许生物生成 && 不是动物
+                }
+            }
         })
     };
-
-
-    // mSculkCatalystAbsorbExperienceEvent = bus->emplaceListener<more_events::SculkCatalystAbsorbExperienceEvent>(
-    //     [db, logger](more_events::SculkCatalystAbsorbExperienceEvent& ev) {
-    //         auto& actor  = ev.getDiedActor();
-    //         auto& region = actor.getDimensionBlockSource();
-    //         auto  pos    = actor.getBlockPosCurrentlyStandingOn(&actor);
-    //         logger->debug("[SculkCatalystAbsorbExperience] Pos: {}", pos.toString());
-    //         // 领地内蔓延 && 半径内没有别的领地 => 放行
-    //         // 领地外蔓延 && 半径内有别的领地   => 放行
-    //         auto cur = db->getLandAt(pos, region.getDimensionId());
-    //         auto lds = db->getLandAt(pos - 9, pos + 9, region.getDimensionId());
-    //         if (cur && lds.size() == 1) return;
-    //         if (!cur && lds.empty()) return;
-    //         ev.cancel();
-    //     }
-    // );
-
 
     return true;
 }
