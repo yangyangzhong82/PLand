@@ -96,7 +96,7 @@
 
 ## calculate 计算公式
 
-?> PLand 的 `Calculate` 实现使用了 `exprtk` 库，因此你可以使用 `exprtk` 库所支持的所有函数和运算符。
+?> PLand 的 `Calculate` 实现使用了 [`exprtk`](https://github.com/ArashPartow/exprtk) 库，因此你可以使用 [`exprtk`](https://github.com/ArashPartow/exprtk) 库所支持的所有函数和运算符。
 
 |   变量   |     描述     |
 | :------: | :----------: |
