@@ -19,7 +19,6 @@ add_requires("ilistenattentively 0.2.3")
 
 if has_config("devtool") then
     add_requires("imgui v1.91.6-docking", {configs = { opengl3 = true, glfw = true }})
-    add_requires("imgui-filebrowser 2024.10.07")
     add_requires("glew 2.2.0")
 end
 
@@ -88,8 +87,7 @@ target("PLand") -- Change this to your mod name.
     if has_config("devtool") then
         add_packages(
             "imgui",
-            "glew",
-            "imgui-filebrowser"
+            "glew"
         )
         add_defines("LD_DEVTOOL")
     end

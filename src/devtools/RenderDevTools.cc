@@ -1,7 +1,7 @@
-#include "GLFW/glfw3.h"
-#include "imgui.h"
 #ifdef LD_DEVTOOL
+#include "GLFW/glfw3.h"
 #include "devtools/DevTools.h"
+#include "imgui.h"
 #include "mod/MyMod.h"
 #include "pland/Global.h"
 
@@ -101,14 +101,6 @@ void RenderDevTools() {
     ImGui_ImplGlfw_InitForOpenGL(G_Window, true); // ImGui <> GLFW
     ImGui_ImplOpenGL3_Init(glslVersion);          // ImGui <> OpenGL
 
-    // 初始化文件浏览器
-    G_FileBrowser = new ImGui::FileBrowser(
-        ImGuiFileBrowserFlags_EnterNewFilename | // 允许输入新文件名
-        ImGuiFileBrowserFlags_CreateNewDir       // 允许创建新目录
-    );
-    auto dir = my_mod::MyMod::getInstance().getSelf().getDataDir();
-    G_FileBrowser->SetPwd(dir); // 设置默认目录
-
     // 线程主循环
     while (/* !glfwWindowShouldClose(G_Window) && */ G_RenderThreadRunning) {
         glfwPollEvents();
@@ -168,14 +160,6 @@ void RenderDevTools() {
 
         CheckAndHandleFlags(); // 处理标志
 
-        // 处理文件浏览器
-        G_FileBrowser->Display();
-        if (G_FileBrowser->HasSelected()) {
-            auto path = G_FileBrowser->GetSelected();
-            // TODO: 处理文件选择
-            G_FileBrowser->ClearSelected();
-        }
-
         // 渲染
         ImGui::Render();
         int displayW;
@@ -187,10 +171,6 @@ void RenderDevTools() {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(G_Window);
     }
-
-    // 清理资源
-    delete G_FileBrowser;
-    G_FileBrowser = nullptr;
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();

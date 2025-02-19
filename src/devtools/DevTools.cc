@@ -10,10 +10,9 @@ namespace land::devtools {
 //---------------------------------------------------------------------------
 // Global variables
 //---------------------------------------------------------------------------
-GLFWwindow*         G_Window      = nullptr; // 全局窗口指针
-ImGui::FileBrowser* G_FileBrowser = nullptr; // 全局文件浏览器指针
-std::thread         G_RenderThread;          // 全局渲染线程指针
-std::atomic<bool>   G_RenderThreadRunning;   // 全局渲染线程是否运行
+GLFWwindow*       G_Window = nullptr;    // 全局窗口指针
+std::thread       G_RenderThread;        // 全局渲染线程指针
+std::atomic<bool> G_RenderThreadRunning; // 全局渲染线程是否运行
 
 
 //---------------------------------------------------------------------------

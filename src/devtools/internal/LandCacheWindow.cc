@@ -1,3 +1,5 @@
+#include "mod/MyMod.h"
+#include <filesystem>
 #include <tuple>
 #ifdef LD_DEVTOOL
 #include "devtools/DevTools.h"
@@ -85,7 +87,7 @@ void RenderPlayerLands(bool* openFlag, UUIDs const& uuid, std::vector<LandData_s
 
     ImGui::TableHeadersRow();
 
-    static std::unordered_map<LandID, bool[4]> isOpen; // [详细信息] [原始数据] [删除] [导出]
+    static std::unordered_map<LandID, bool[3]> isOpen; // [详细信息] [原始数据] [导出]
     for (auto const& ld : lands) {
         if ((filterType == 1 && ld->getLandName().find(nameFilter) == string::npos)
             || (filterType == 2 && ld->mLandID != static_cast<LandID>(idFilter))) {
@@ -109,9 +111,16 @@ void RenderPlayerLands(bool* openFlag, UUIDs const& uuid, std::vector<LandData_s
         }
         if (isOpen[ld->mLandID][1]) RenderText(ld->toJSON().dump(2), &isOpen[ld->mLandID][1]);
         ImGui::SameLine();
-        if (ImGui::Button(fmt::format("删除 ##{}", ld->mLandID).c_str())) {}
-        ImGui::SameLine();
-        if (ImGui::Button(fmt::format("导出 ##{}", ld->mLandID).c_str())) {}
+        if (ImGui::Button(fmt::format("导出 ##{}", ld->mLandID).c_str())) {
+            auto dir = my_mod::MyMod::getInstance().getSelf().getModDir() / "devtools_exports";
+            if (!fs::exists(dir)) {
+                fs::create_directory(dir);
+            }
+            auto          file = dir / fmt::format("land_{}.json", ld->mLandID);
+            std::ofstream ofs(file);
+            ofs << ld->toJSON().dump(2);
+            ofs.close();
+        }
     }
     ImGui::EndTable();
 
