@@ -12,6 +12,7 @@
 #include "mc\world\level\block\components\BlockLiquidDetectionComponent.h"
 #include "mc\world\level\chunk\SubChunk.h"
 #include "mod/MyMod.h"
+#include "pland/Config.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
 #include "pland/PLand.h"
@@ -93,6 +94,8 @@ bool EventListener::setup() {
             }
         }),
         bus->emplaceListener<ll::event::ActorHurtEvent>([db, logger](ll::event::ActorHurtEvent& ev) {
+            if (!Config::cfg.listeners.ActorHurtEvent) return;
+
             auto& self   = ev.self();
             auto& source = ev.source();
             logger->debug(
@@ -130,6 +133,8 @@ bool EventListener::setup() {
             ev.cancel();
         }),
         bus->emplaceListener<ll::event::PlayerDestroyBlockEvent>([db, logger](ll::event::PlayerDestroyBlockEvent& ev) {
+            if (!Config::cfg.listeners.PlayerDestroyBlockEvent) return;
+
             auto& player   = ev.self();
             auto& blockPos = ev.pos();
 
@@ -148,6 +153,8 @@ bool EventListener::setup() {
             ev.cancel();
         }),
         bus->emplaceListener<ll::event::PlayerPlacingBlockEvent>([db, logger](ll::event::PlayerPlacingBlockEvent& ev) {
+            if (!Config::cfg.listeners.PlayerPlacingBlockEvent) return;
+
             auto&       player   = ev.self();
             auto const& blockPos = mc::face2Pos(ev.pos(), ev.face()); // 计算实际放置位置
 
@@ -169,6 +176,8 @@ bool EventListener::setup() {
         }),
         bus->emplaceListener<ll::event::PlayerInteractBlockEvent>([db,
                                                                    logger](ll::event::PlayerInteractBlockEvent& ev) {
+            if (!Config::cfg.listeners.PlayerInteractBlockEvent) return;
+
             auto& player = ev.self();
             auto& vec3   = ev.clickPos();
             auto& block  = ev.block()->getTypeName();
@@ -234,6 +243,8 @@ bool EventListener::setup() {
             ev.cancel();
         }),
         bus->emplaceListener<ll::event::FireSpreadEvent>([db](ll::event::FireSpreadEvent& ev) {
+            if (!Config::cfg.listeners.FireSpreadEvent) return;
+
             auto& pos = ev.pos();
 
             auto land = db->getLandAt(pos, ev.blockSource().getDimensionId());
@@ -248,6 +259,8 @@ bool EventListener::setup() {
             ev.cancel();
         }),
         bus->emplaceListener<ll::event::PlayerAttackEvent>([db, logger](ll::event::PlayerAttackEvent& ev) {
+            if (!Config::cfg.listeners.PlayerAttackEvent) return;
+
             auto& player = ev.self();
             auto& pos    = ev.target().getPosition();
 
@@ -269,6 +282,8 @@ bool EventListener::setup() {
             ev.cancel();
         }),
         bus->emplaceListener<ll::event::PlayerPickUpItemEvent>([db, logger](ll::event::PlayerPickUpItemEvent& ev) {
+            if (!Config::cfg.listeners.PlayerPickUpItemEvent) return;
+
             auto& player = ev.self();
             auto& pos    = ev.itemActor().getPosition();
 
@@ -285,6 +300,8 @@ bool EventListener::setup() {
         }),
         bus->emplaceListener<ll::event::PlayerInteractBlockEvent>([db,
                                                                    logger](ll::event::PlayerInteractBlockEvent& ev) {
+            if (!Config::cfg.listeners.PlayerInteractBlockEvent) return;
+
             auto& player = ev.self();
             auto& pos    = ev.blockPos(); // 交互的方块位置
             auto& block  = ev.block()->getTypeName();
@@ -322,6 +339,8 @@ bool EventListener::setup() {
             ev.cancel();
         }),
         bus->emplaceListener<ll::event::PlayerUseItemEvent>([db, logger](ll::event::PlayerUseItemEvent& ev) {
+            if (!Config::cfg.listeners.PlayerUseItemEvent) return;
+
             if (!ev.item().getTypeName().ends_with("bucket")) {
                 return;
             }
@@ -358,6 +377,8 @@ bool EventListener::setup() {
         // ila
         bus->emplaceListener<ila::mc::PlayerAttackBlockBeforeEvent>(
             [db, logger](ila::mc::PlayerAttackBlockBeforeEvent& ev) {
+                if (!Config::cfg.listeners.PlayerAttackBlockBeforeEvent) return;
+
                 optional_ref<Player> pl = ev.self();
                 if (!pl.has_value()) return;
 
@@ -378,6 +399,8 @@ bool EventListener::setup() {
         ),
         bus->emplaceListener<ila::mc::ArmorStandSwapItemBeforeEvent>(
             [db, logger](ila::mc::ArmorStandSwapItemBeforeEvent& ev) {
+                if (!Config::cfg.listeners.ArmorStandSwapItemBeforeEvent) return;
+
                 Player& player = ev.getPlayer();
 
                 logger->debug("[ArmorStandSwapItem]: executed");
@@ -393,6 +416,8 @@ bool EventListener::setup() {
             }
         ),
         bus->emplaceListener<ila::mc::PlayerDropItemBeforeEvent>([db, logger](ila::mc::PlayerDropItemBeforeEvent& ev) {
+            if (!Config::cfg.listeners.PlayerDropItemBeforeEvent) return;
+
             Player& player = ev.self();
 
             logger->debug("[PlayerDropItem]: executed");
@@ -407,6 +432,8 @@ bool EventListener::setup() {
             ev.cancel();
         }),
         bus->emplaceListener<ila::mc::ActorRideBeforeEvent>([db, logger](ila::mc::ActorRideBeforeEvent& ev) {
+            if (!Config::cfg.listeners.ActorRideBeforeEvent) return;
+
             logger->debug("[ActorRide]: executed");
             Actor& passenger = ev.self();
 
@@ -437,6 +464,8 @@ bool EventListener::setup() {
             ev.cancel();
         }),
         bus->emplaceListener<ila::mc::ExplosionBeforeEvent>([db, logger](ila::mc::ExplosionBeforeEvent& ev) {
+            if (!Config::cfg.listeners.ExplosionBeforeEvent) return;
+
             logger->debug("[Explode] Pos: {}", ev.getExplosion().mPos->toString());
 
             auto lands = db->getLandAt(
@@ -452,6 +481,8 @@ bool EventListener::setup() {
             }
         }),
         bus->emplaceListener<ila::mc::FarmDecayBeforeEvent>([db, logger](ila::mc::FarmDecayBeforeEvent& ev) {
+            if (!Config::cfg.listeners.FarmDecayBeforeEvent) return;
+
             logger->debug("[FarmDecay] Pos: {}", ev.getPos().toString());
 
             auto land = db->getLandAt(ev.getPos(), ev.blockSource().getDimensionId());
@@ -463,6 +494,8 @@ bool EventListener::setup() {
             ev.cancel();
         }),
         bus->emplaceListener<ila::mc::MobHurtEffectBeforeEvent>([db, logger](ila::mc::MobHurtEffectBeforeEvent& ev) {
+            if (!Config::cfg.listeners.MobHurtEffectBeforeEvent) return;
+
             logger->debug("[MobHurtEffect] mob: {}", ev.self().getTypeName());
             auto& self = ev.self();
 
@@ -486,6 +519,8 @@ bool EventListener::setup() {
             ev.cancel();
         }),
         bus->emplaceListener<ila::mc::PistonPushBeforeEvent>([db, logger](ila::mc::PistonPushBeforeEvent& ev) {
+            if (!Config::cfg.listeners.PistonPushBeforeEvent) return;
+
             auto const& piston = ev.getPistonPos();
             auto const& push   = ev.getPushPos();
             auto&       region = ev.blockSource();
@@ -500,6 +535,8 @@ bool EventListener::setup() {
         }),
         bus->emplaceListener<ila::mc::PlayerOperatedItemFrameBeforeEvent>(
             [db, logger](ila::mc::PlayerOperatedItemFrameBeforeEvent& ev) {
+                if (!Config::cfg.listeners.PlayerOperatedItemFrameBeforeEvent) return;
+
                 logger->debug("[PlayerUseItemFrame] pos: {}", ev.getBlockPos().toString());
 
                 auto land = db->getLandAt(ev.getBlockPos(), ev.self().getDimensionId());
@@ -512,6 +549,8 @@ bool EventListener::setup() {
         ),
         bus->emplaceListener<ila::mc::ActorTriggerPressurePlateBeforeEvent>(
             [db, logger](ila::mc::ActorTriggerPressurePlateBeforeEvent& ev) {
+                if (!Config::cfg.listeners.ActorTriggerPressurePlateBeforeEvent) return;
+
                 logger->debug("[PressurePlateTrigger] pos: {}", ev.getPos().toString());
 
                 auto land = db->getLandAt(ev.getPos(), ev.self().getDimensionId());
@@ -531,6 +570,8 @@ bool EventListener::setup() {
         ),
         bus->emplaceListener<ila::mc::ProjectileCreateBeforeEvent>([db,
                                                                     logger](ila::mc::ProjectileCreateBeforeEvent& ev) {
+            if (!Config::cfg.listeners.ProjectileCreateBeforeEvent) return;
+
             Actor& self = ev.self();
             auto&  type = ev.self().getTypeName();
 
@@ -563,6 +604,8 @@ bool EventListener::setup() {
             ev.cancel();
         }),
         bus->emplaceListener<ila::mc::RedstoneUpdateBeforeEvent>([db, logger](ila::mc::RedstoneUpdateBeforeEvent& ev) {
+            if (!Config::cfg.listeners.RedstoneUpdateBeforeEvent) return;
+
             logger->debug("[RedstoneUpdate] Pos: {}", ev.getPos().toString());
 
             auto land = db->getLandAt(ev.getPos(), ev.blockSource().getDimensionId());
@@ -574,6 +617,8 @@ bool EventListener::setup() {
             ev.cancel();
         }),
         bus->emplaceListener<ila::mc::WitherDestroyBeforeEvent>([db, logger](ila::mc::WitherDestroyBeforeEvent& ev) {
+            if (!Config::cfg.listeners.WitherDestroyBeforeEvent) return;
+
             logger->debug("[WitherDestroyBlock] executed");
             auto& aabb = ev.getBox();
 
@@ -586,6 +631,8 @@ bool EventListener::setup() {
             }
         }),
         bus->emplaceListener<ila::mc::MossGrowthBeforeEvent>([db, logger](ila::mc::MossGrowthBeforeEvent& ev) {
+            if (!Config::cfg.listeners.MossGrowthBeforeEvent) return;
+
             // logger->debug("[MossSpread] {}", ev.getPos().toString());
 
             auto const& pos = ev.getPos();
@@ -605,6 +652,8 @@ bool EventListener::setup() {
             ev.cancel();
         }),
         bus->emplaceListener<ila::mc::LiquidTryFlowBeforeEvent>([db, logger](ila::mc::LiquidTryFlowBeforeEvent& ev) {
+            if (!Config::cfg.listeners.LiquidTryFlowBeforeEvent) return;
+
             auto& sou = ev.getPos();
             // auto& from = ev.getFlowFromPos();
             // logger->debug("[LiquidFlow] {} -> {}", sou.toString(), from.toString());
@@ -616,6 +665,8 @@ bool EventListener::setup() {
         }),
         bus->emplaceListener<ila::mc::SculkBlockGrowthBeforeEvent>([db,
                                                                     logger](ila::mc::SculkBlockGrowthBeforeEvent& ev) {
+            if (!Config::cfg.listeners.SculkBlockGrowthBeforeEvent) return;
+
             auto& pos = ev.getPos();
             logger->debug("[SculkBlockGrowth] {}", pos.toString());
 
@@ -627,6 +678,8 @@ bool EventListener::setup() {
             }
         }),
         bus->emplaceListener<ila::mc::SculkSpreadBeforeEvent>([db, logger](ila::mc::SculkSpreadBeforeEvent& ev) {
+            if (!Config::cfg.listeners.SculkSpreadBeforeEvent) return;
+
             // logger->debug("[SculkSpread] {} -> {}", ev.getSelfPos().toString(), ev.getTargetPos().toString());
 
             auto sou = db->getLandAt(ev.getSelfPos(), ev.blockSource().getDimensionId());
@@ -640,6 +693,8 @@ bool EventListener::setup() {
             }
         }),
         bus->emplaceListener<ila::mc::PlayerEditSignBeforeEvent>([db, logger](ila::mc::PlayerEditSignBeforeEvent& ev) {
+            if (!Config::cfg.listeners.PlayerEditSignBeforeEvent) return;
+
             auto& player = ev.self();
             auto& pos    = ev.getPos();
 
