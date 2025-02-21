@@ -72,7 +72,7 @@ bool MyMod::enable() {
 #endif
 
 #ifdef LD_DEVTOOL
-    land::devtools::init();
+    if (land::Config::cfg.internal.devTools) land::devtools::init();
 #endif
 
     return true;
@@ -80,7 +80,7 @@ bool MyMod::enable() {
 
 bool MyMod::disable() {
 #ifdef LD_DEVTOOL
-    land::devtools::destroy();
+    if (land::Config::cfg.internal.devTools) land::devtools::destroy();
 #endif
 
     auto& logger = getSelf().getLogger();

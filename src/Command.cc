@@ -310,11 +310,13 @@ bool LandCommand::setup() {
 
 #ifdef LD_DEVTOOL
     // pland devtool
-    cmd.overload().text("devtool").execute([](CommandOrigin const& ori, CommandOutput&) {
-        if (ori.getOriginType() == CommandOriginType::DedicatedServer) {
-            devtools::show();
-        }
-    });
+    if (Config::cfg.internal.devTools) {
+        cmd.overload().text("devtool").execute([](CommandOrigin const& ori, CommandOutput&) {
+            if (ori.getOriginType() == CommandOriginType::DedicatedServer) {
+                devtools::show();
+            }
+        });
+    }
 #endif
 
     return true;

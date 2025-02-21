@@ -61,7 +61,11 @@ void RenderDevTools() {
 
     {
         float        xScale, yScale;
-        GLFWmonitor* monitor = glfwGetPrimaryMonitor();        // 获取主显示器
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor(); // 获取主显示器
+        if (!monitor) {
+            my_mod::MyMod::getInstance().getSelf().getLogger().error("Failed to get primary monitor");
+            return;
+        }
         glfwGetMonitorContentScale(monitor, &xScale, &yScale); // 获取主显示器缩放比例
         G_Window = glfwCreateWindow(
             static_cast<int>(600 * xScale),

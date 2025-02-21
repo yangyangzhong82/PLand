@@ -9,7 +9,7 @@ namespace land {
 enum class EconomyKit : int { LegacyMoney, ScoreBoard };
 
 struct Config {
-    int              version{6};
+    int              version{7};
     ll::io::LogLevel logLevel{ll::io::LogLevel::Info};
 
     struct {
@@ -94,6 +94,10 @@ struct Config {
         bool SpawnedMobEvent{true};                           // 生物生成事件(怪物和动物)
         bool SculkCatalystAbsorbExperienceBeforeEvent{false}; // 幽匿催化体吸收经验事件
     } listeners;
+
+    struct {
+        bool devTools{false}; // 开发工具
+    } internal;
 
     // Functions
     LDAPI static Config cfg;
