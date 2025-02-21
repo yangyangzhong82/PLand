@@ -92,6 +92,10 @@ target("PLand") -- Change this to your mod name.
         add_defines("LD_DEVTOOL")
     end
 
+    if is_plat("windows") then
+        add_files("resource/Resource.rc")
+    end
+
     after_build(function (target)
         local bindir = path.join(os.projectdir(), "bin")
         local outputdir = path.join(bindir, target:name())
