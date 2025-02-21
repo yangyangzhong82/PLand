@@ -90,6 +90,9 @@
     "PlayerEditSignBeforeEvent": true, // 玩家编辑告示牌事件
     "SpawnedMobEvent": true, // 生物生成事件(怪物和动物)
     "SculkCatalystAbsorbExperienceBeforeEvent": false // 幽匿催化体吸收经验事件
+  },
+  "internal": {
+    "devTools": false // 是否启用开发工具，启用前请确保您的机器有具有显示器，否则初始化时会引发错误、甚至崩溃。
   }
 }
 ```
