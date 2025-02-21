@@ -42,8 +42,8 @@ jobs:
       - run: |
           xmake -v -y
 
-      - run: |
-          Get-ChildItem -Path bin -Recurse -Filter "*.pdb" | Remove-Item
+      # - run: |
+      #     Get-ChildItem -Path bin -Recurse -Filter "*.pdb" | Remove-Item
 
       - uses: actions/upload-artifact@v4
         with:
@@ -51,9 +51,9 @@ jobs:
           path: |
             bin/
 
-      - uses: actions/upload-artifact@v4
-        with:
-          path: build/windows/x64/release/${{ github.event.repository.name }}.pdb
+      # - uses: actions/upload-artifact@v4
+      #   with:
+      #     path: build/windows/x64/release/${{ github.event.repository.name }}.pdb
 
       # SDK相关任务
       - name: Create SDK directories
