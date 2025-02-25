@@ -12,72 +12,76 @@
 #include <mc/world/scores/Objective.h>
 #include <mc/world/scores/Scoreboard.h>
 #include <mc/world/scores/ScoreboardId.h>
-
+#include <stdexcept>
 
 
 namespace land {
 using namespace mc;
 
 int ScoreBoard_Get(Player& player, string const& scoreName) {
-    Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
-    Objective*  obj        = scoreboard.getObjective(scoreName);
-    if (!obj) {
-        sendText<LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: {}"_tr(scoreName));
-        return 0;
-    }
-    ScoreboardId const& id = scoreboard.getScoreboardId(player);
-    if (!id.isValid()) {
-        scoreboard.createScoreboardId(player);
-    }
-    return obj->getPlayerScore(id).mValue;
+    // Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
+    // Objective*  obj        = scoreboard.getObjective(scoreName);
+    // if (!obj) {
+    //     sendText<LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: {}"_tr(scoreName));
+    //     return 0;
+    // }
+    // ScoreboardId const& id = scoreboard.getScoreboardId(player);
+    // if (!id.isValid()) {
+    //     scoreboard.createScoreboardId(player);
+    // }
+    // return obj->getPlayerScore(id).mValue;
+    return false; // TODO: Fix this
 }
 
 bool ScoreBoard_Set(Player& player, int score, string const& scoreName) {
-    Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
-    Objective*  obj        = scoreboard.getObjective(scoreName);
-    if (!obj) {
-        sendText<LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: "_tr(scoreName));
-        return false;
-    }
-    const ScoreboardId& id = scoreboard.getScoreboardId(player);
-    if (!id.isValid()) {
-        scoreboard.createScoreboardId(player);
-    }
-    bool isSuccess = false;
-    scoreboard.modifyPlayerScore(isSuccess, id, *obj, score, PlayerScoreSetFunction::Set);
-    return isSuccess;
+    // Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
+    // Objective*  obj        = scoreboard.getObjective(scoreName);
+    // if (!obj) {
+    //     sendText<LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: "_tr(scoreName));
+    //     return false;
+    // }
+    // const ScoreboardId& id = scoreboard.getScoreboardId(player);
+    // if (!id.isValid()) {
+    //     scoreboard.createScoreboardId(player);
+    // }
+    // bool isSuccess = false;
+    // scoreboard.modifyPlayerScore(isSuccess, id, *obj, score, PlayerScoreSetFunction::Set);
+    // return isSuccess;
+    return false; // TODO: Fix this
 }
 
 bool ScoreBoard_Add(Player& player, int score, string const& scoreName) {
-    Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
-    Objective*  obj        = scoreboard.getObjective(scoreName);
-    if (!obj) {
-        sendText<LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: "_tr(scoreName));
-        return false;
-    }
-    const ScoreboardId& id = scoreboard.getScoreboardId(player);
-    if (!id.isValid()) {
-        scoreboard.createScoreboardId(player);
-    }
-    bool isSuccess = false;
-    scoreboard.modifyPlayerScore(isSuccess, id, *obj, score, PlayerScoreSetFunction::Add);
-    return isSuccess;
+    // Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
+    // Objective*  obj        = scoreboard.getObjective(scoreName);
+    // if (!obj) {
+    //     sendText<LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: "_tr(scoreName));
+    //     return false;
+    // }
+    // const ScoreboardId& id = scoreboard.getScoreboardId(player);
+    // if (!id.isValid()) {
+    //     scoreboard.createScoreboardId(player);
+    // }
+    // bool isSuccess = false;
+    // scoreboard.modifyPlayerScore(isSuccess, id, *obj, score, PlayerScoreSetFunction::Add);
+    // return isSuccess;
+    return false; // TODO: Fix this
 }
 
 bool ScoreBoard_Reduce(Player& player, int score, string const& scoreName) {
-    Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
-    Objective*  obj        = scoreboard.getObjective(scoreName);
-    if (!obj) {
-        sendText<LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: "_tr(scoreName));
-        return false;
-    }
-    const ScoreboardId& id = scoreboard.getScoreboardId(player);
-    if (!id.isValid()) {
-        scoreboard.createScoreboardId(player);
-    }
-    bool isSuccess = false;
-    scoreboard.modifyPlayerScore(isSuccess, id, *obj, score, PlayerScoreSetFunction::Subtract);
-    return isSuccess;
+    // Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
+    // Objective*  obj        = scoreboard.getObjective(scoreName);
+    // if (!obj) {
+    //     sendText<LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: "_tr(scoreName));
+    //     return false;
+    // }
+    // const ScoreboardId& id = scoreboard.getScoreboardId(player);
+    // if (!id.isValid()) {
+    //     scoreboard.createScoreboardId(player);
+    // }
+    // bool isSuccess = false;
+    // scoreboard.modifyPlayerScore(isSuccess, id, *obj, score, PlayerScoreSetFunction::Subtract);
+    // return isSuccess;
+    return false; // TODO: Fix this
 }
 
 

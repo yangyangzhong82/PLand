@@ -81,9 +81,11 @@ bool                                   LandSelector::init() {
                             SelectorChangeYGui::impl(pl); // 发送GUI
                         } else {
                             // 2DLand
-                            if (auto dim = pl.getLevel().getDimension(data.mDimid); dim) {
-                                data.mPos.mMax_B.y = dim->getHeight();
-                                data.mPos.mMin_A.y = dim->getMinHeight();
+                            auto dim = pl.getLevel().getDimension(data.mDimid);
+                            if (auto lock = dim.lock(); lock) {
+                                // data.mPos.mMax_B.y = dim.getHeight();
+                                // data.mPos.mMin_A.y = dim.getMinHeight();
+                                // TODO: Fix this
                             } else {
                                 mc::sendText<mc::LogLevel::Error>(pl, "获取维度失败"_tr());
                             }

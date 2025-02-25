@@ -162,24 +162,24 @@ void LandBuyGui::impl(Player& player) {
         int const   width       = data->mPos.getWidth();
         int const   height      = data->mPos.getHeight();
         auto const& squareRange = Config::cfg.land.bought.squareRange;
-        if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
-            (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
-            (data->mDraw3D && (height < squareRange.minHeight || height > pl.getDimension().getHeight())
-            ) // 高度必须大于最小值 && 小于世界高度 && 3D
-        ) {
-            mc::sendText<mc::LogLevel::Error>(
-                pl,
-                "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}, 当前长宽高: {}x{}x{}"_tr(
-                    squareRange.min,
-                    squareRange.max,
-                    squareRange.minHeight,
-                    length,
-                    width,
-                    height
-                )
-            );
-            return;
-        }
+        // if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
+        //     (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
+        //     (data->mDraw3D && (height < squareRange.minHeight || height > pl.getDimension().getHeight())// TODO: Fix this
+        //     ) // 高度必须大于最小值 && 小于世界高度 && 3D
+        // ) {
+        //     mc::sendText<mc::LogLevel::Error>(
+        //         pl,
+        //         "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}, 当前长宽高: {}x{}x{}"_tr(
+        //             squareRange.min,
+        //             squareRange.max,
+        //             squareRange.minHeight,
+        //             length,
+        //             width,
+        //             height
+        //         )
+        //     );
+        //     return;
+        // }
 
         auto lands = db.getLandAt(data->mPos.mMin_A, data->mPos.mMax_B, data->mDimid);
         if (!lands.empty()) {
@@ -293,21 +293,21 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
         int const   width       = data->mPos.getWidth();
         int const   height      = data->mPos.getHeight();
         auto const& squareRange = Config::cfg.land.bought.squareRange;
-        if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
-            (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
-            (data->mDraw3D && (height < squareRange.minHeight || height > pl.getDimension().getHeight())
-            ) // 高度必须大于最小值 && 小于世界高度 && 3D
-        ) {
-            mc::sendText<mc::LogLevel::Error>(
-                pl,
-                "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}"_tr(
-                    squareRange.min,
-                    squareRange.max,
-                    squareRange.minHeight
-                )
-            );
-            return;
-        }
+        // if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
+        //     (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
+        //     (data->mDraw3D && (height < squareRange.minHeight || height > pl.getDimension().getHeight())// TODO: Fix this
+        //     ) // 高度必须大于最小值 && 小于世界高度 && 3D
+        // ) {
+        //     mc::sendText<mc::LogLevel::Error>(
+        //         pl,
+        //         "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}"_tr(
+        //             squareRange.min,
+        //             squareRange.max,
+        //             squareRange.minHeight
+        //         )
+        //     );
+        //     return;
+        // }
 
         auto lands = db.getLandAt(data->mPos.mMin_A, data->mPos.mMax_B, data->mDimid);
         if (!lands.empty()) {
@@ -656,10 +656,10 @@ void LandManagerGui::EditLandDescGui::impl(Player& player, LandData_sptr const& 
 }
 void LandManagerGui::EditLandOwnerGui::impl(Player& player, LandData_sptr const& ptr) {
     ChoosePlayerUtilGui::impl(player, [ptr](Player& self, Player& target) {
-        if (self == target) {
-            mc::sendText(self, "不能将领地转让给自己, 左手倒右手哦!"_tr());
-            return;
-        }
+        // if (self == target) {// TODO: Fix this
+        //     mc::sendText(self, "不能将领地转让给自己, 左手倒右手哦!"_tr());
+        //     return;
+        // }
 
         LandOwnerChangeBeforeEvent ev(self, target, ptr->getLandID());
         ll::event::EventBus::getInstance().publish(ev);
@@ -744,10 +744,10 @@ void EditLandMemberGui::impl(Player& player, LandData_sptr ptr) {
 }
 void EditLandMemberGui::AddMemberGui::impl(Player& player, LandData_sptr ptr) {
     ChoosePlayerUtilGui::impl<EditLandMemberGui>(player, [ptr](Player& self, Player& target) {
-        if (self == target) {
-            mc::sendText(self, "不能添加自己为领地成员哦!"_tr());
-            return;
-        }
+        // if (self == target) {// TODO: Fix this
+        //     mc::sendText(self, "不能添加自己为领地成员哦!"_tr());
+        //     return;
+        // }
 
         LandMemberChangeBeforeEvent ev(self, target.getUuid().asString(), ptr->getLandID(), true);
         ll::event::EventBus::getInstance().publish(ev);

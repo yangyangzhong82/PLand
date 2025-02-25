@@ -4,6 +4,8 @@
 #include "mc/_HeaderOutputPredefine.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/core/utility/MCRESULT.h"
+#include "mc/deps/game_refs/StackRefResult.h"
+#include "mc/deps/game_refs/WeakRef.h"
 #include "mc/external/render_dragon/frame_renderer/CommandContext.h"
 #include "mc/locale/I18n.h"
 #include "mc/locale/Localization.h"
@@ -45,62 +47,69 @@
 namespace land::mc {
 
 [[nodiscard]] inline Block const& getBlock(BlockPos& bp, int dimid) {
-    return ll::service::getLevel()->getDimension(dimid)->getBlockSourceFromMainChunkSource().getBlock(bp);
+    auto weakDimension = ll::service::getLevel()->getDimension(dimid);
+    auto lock          = weakDimension.lock();
+    if (lock) {
+        return lock->getBlockSourceFromMainChunkSource().getBlock(bp);
+    }
+    throw std::runtime_error("dimension not found");
 }
 
 inline void executeCommand(const std::string& cmd, Player* player = nullptr) {
-    if (player) {
-        // player
-        CommandContext ctx = CommandContext(
-            cmd,
-            std::make_unique<PlayerCommandOrigin>(PlayerCommandOrigin(*player)),
-            CommandVersion::CurrentVersion()
-        );
-        ll::service::getMinecraft()->getCommands().executeCommand(ctx, true);
-    } else {
-        // console
-        CommandContext ctx = CommandContext(
-            cmd,
-            std::make_unique<ServerCommandOrigin>(
-                "Server",
-                ll::service::getLevel()->asServer(),
-                CommandPermissionLevel::Owner,
-                0
-            ),
-            CommandVersion::CurrentVersion()
-        );
-        ll::service::getMinecraft()->getCommands().executeCommand(ctx, true);
-    }
+    // if (player) {
+    //     // player
+    //     CommandContext ctx = CommandContext(
+    //         cmd,
+    //         std::make_unique<PlayerCommandOrigin>(PlayerCommandOrigin(*player)),
+    //         CommandVersion::CurrentVersion()
+    //     );
+    //     ll::service::getMinecraft()->getCommands().executeCommand(ctx, true);
+    // } else {
+    //     // console
+    //     CommandContext ctx = CommandContext(
+    //         cmd,
+    //         std::make_unique<ServerCommandOrigin>(
+    //             "Server",
+    //             ll::service::getLevel()->asServer(),
+    //             CommandPermissionLevel::Owner,
+    //             0
+    //         ),
+    //         CommandVersion::CurrentVersion()
+    //     );
+    //     ll::service::getMinecraft()->getCommands().executeCommand(ctx, true);
+    // }
+    // TODO: Fix this
 }
 [[nodiscard]] inline std::pair<bool, std::string> executeCommandEx(const std::string& cmd) {
-    std::pair<bool, std::string> result;
-    auto                         origin =
-        ServerCommandOrigin("Server", ll::service::getLevel()->asServer(), CommandPermissionLevel::Internal, 0);
-    auto command = ll::service::getMinecraft()->getCommands().compileCommand(
-        cmd.c_str(),
-        origin,
-        (CurrentCmdVersion)CommandVersion::CurrentVersion(),
-        [&](std::string const& err) { result.second.append(err).append("\n"); }
-    );
-    if (command) {
-        CommandOutput output(CommandOutputType::AllOutput);
-        command->run(origin, output);
-        for (auto& msg : output.getMessages()) {
-            std::string temp;
-            getI18n().getCurrentLanguage()->get(msg.getMessageId(), temp, msg.getParams());
-            result.second += temp.append("\n");
-        }
-        if (result.second.ends_with('\n')) {
-            result.second.pop_back();
-        }
-        result.first = output.getSuccessCount() ? true : false;
-        return result;
-    }
-    if (result.second.ends_with('\n')) {
-        result.second.pop_back();
-    }
-    result.first = false;
-    return result;
+    // std::pair<bool, std::string> result;
+    // auto                         origin =
+    //     ServerCommandOrigin("Server", ll::service::getLevel()->asServer(), CommandPermissionLevel::Internal, 0);
+    // auto command = ll::service::getMinecraft()->getCommands().compileCommand(
+    //     cmd.c_str(),
+    //     origin,
+    //     (CurrentCmdVersion)CommandVersion::CurrentVersion(),
+    //     [&](std::string const& err) { result.second.append(err).append("\n"); }
+    // );
+    // if (command) {
+    //     CommandOutput output(CommandOutputType::AllOutput);
+    //     command->run(origin, output);
+    //     for (auto& msg : output.getMessages()) {
+    //         std::string temp;
+    //         getI18n().getCurrentLanguage()->get(msg.getMessageId(), temp, msg.getParams());
+    //         result.second += temp.append("\n");
+    //     }
+    //     if (result.second.ends_with('\n')) {
+    //         result.second.pop_back();
+    //     }
+    //     result.first = output.getSuccessCount() ? true : false;
+    //     return result;
+    // }
+    // if (result.second.ends_with('\n')) {
+    //     result.second.pop_back();
+    // }
+    // result.first = false;
+    // return result;
+    return {}; // TODO: Fix this
 }
 
 [[nodiscard]] inline BlockPos face2Pos(BlockPos const& sour, uchar face) {
@@ -123,6 +132,9 @@ inline void executeCommand(const std::string& cmd, Player* player = nullptr) {
         break;
     case 5:
         ++dest.x; // 东
+        break;
+    default:
+        // Unknown face
         break;
     }
     return dest;
@@ -167,7 +179,7 @@ inline void sendText(Player* player, const std::string& fmt, Args&&... args) {
     if (player) {
         return sendText<type>(*player, fmt, args...);
     } else {
-        std::runtime_error("Failed in sendText: player is nullptr");
+        throw std::runtime_error("Failed in sendText: player is nullptr");
     }
 }
 template <LogLevel type = LogLevel::Normal, typename... Args>
@@ -176,7 +188,7 @@ inline void sendText(const std::string& realName, const std::string& fmt, Args&&
     if (level.has_value()) {
         return sendText<type>(level->getPlayer(realName), fmt, args...);
     } else {
-        std::runtime_error("Failed in sendText: level is nullptr");
+        throw std::runtime_error("Failed in sendText: level is nullptr");
     }
 }
 

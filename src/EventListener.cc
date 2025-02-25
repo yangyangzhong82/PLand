@@ -4,6 +4,7 @@
 #include "ll/api/event/ListenerBase.h"
 #include "ll/api/event/world/SpawnMobEvent.h"
 #include "mc/deps/core/math/Vec3.h"
+#include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
 #include "mc/network/packet/UpdateBlockPacket.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/world/level/BlockPos.h"
@@ -98,22 +99,23 @@ bool EventListener::setup() {
 
             auto& self   = ev.self();
             auto& source = ev.source();
-            logger->debug(
-                "[ActorHurt] Mob: {}, ActorDamageCause: {}, ActorType: {}",
-                self.getTypeName(),
-                static_cast<int>(source.getCause()),
-                static_cast<int>(source.getEntityType())
-            );
+            // logger->debug(
+            //     "[ActorHurt] Mob: {}, ActorDamageCause: {}, ActorType: {}",
+            //     self.getTypeName(),
+            //     static_cast<int>(source.getCause()),// TODO: Fix this
+            //     static_cast<int>(source.getEntityType())
+            // );
 
             auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
             if (PreCheck(land)) return; // land not found
 
-            if (source.getEntityType() == ActorType::Player && source.getCause() == ActorDamageCause::EntityAttack) {
-                // 玩家攻击 [ActorHurt] Mob: ikun, ActorDamageCause: 2, ActorType: 319
-                if (auto souPlayer = self.getILevel().getPlayer(source.getEntityUniqueID()); souPlayer) {
-                    if (PreCheck(land, souPlayer->getUuid().asString())) return;
-                }
-            }
+            // TODO: Fix this
+            // if (source.getEntityType() == ActorType::Player && source.getCause() == ActorDamageCause::EntityAttack) {
+            //     // 玩家攻击 [ActorHurt] Mob: ikun, ActorDamageCause: 2, ActorType: 319
+            //     if (auto souPlayer = self.getILevel().getPlayer(source.getEntityUniqueID()); souPlayer) {
+            //         if (PreCheck(land, souPlayer->getUuid().asString())) return;
+            //     }
+            // }
 
             if (land) {
                 auto const& tab = land->getLandPermTableConst();
@@ -347,7 +349,7 @@ bool EventListener::setup() {
 
             auto& player = ev.self();
             auto  val    = player.traceRay(5.5f, false, true, [&](BlockSource const&, Block const& bl, bool) {
-                if (bl.getMaterial().isLiquid()) return false; // 液体方块
+                // if (bl.getMaterial().isLiquid()) return false; // 液体方块// TODO: Fix this
                 return true;
             });
 
@@ -368,11 +370,12 @@ bool EventListener::setup() {
             }
 
             // 防止玩家在可含水方块里放水
-            if (BlockLiquidDetectionComponent::canContainLiquid(block)) {
-                ev.cancel();
-                static uchar flags = (1 << 0) | (1 << 1); // 0b11 BlockUpdateFlag::All v0.13.5
-                UpdateBlockPacket(pos, (uint)SubChunk::BlockLayer::Extra, block.getBlockItemId(), flags).sendTo(player);
-            };
+            // if (BlockLiquidDetectionComponent::canContainLiquid(block)) {// TODO: Fix this
+            //     ev.cancel();
+            //     static uchar flags = (1 << 0) | (1 << 1); // 0b11 BlockUpdateFlag::All v0.13.5
+            //     UpdateBlockPacket(pos, (uint)SubChunk::BlockLayer::Extra, block.getBlockItemId(),
+            //     flags).sendTo(player);
+            // };
         }),
         // ila
         bus->emplaceListener<ila::mc::PlayerAttackBlockBeforeEvent>(
@@ -697,7 +700,7 @@ bool EventListener::setup() {
             auto& player = ev.self();
             auto& pos    = ev.getPos();
 
-            logger->debug("[PlayerEditSign] {} -> {}", player.getName(), pos.toString());
+            // logger->debug("[PlayerEditSign] {} -> {}", player.getName(), pos.toString());// TODO: Fix this
 
             auto land = db->getLandAt(pos, player.getDimensionId());
             if (PreCheck(land, player.getUuid().asString())) {
