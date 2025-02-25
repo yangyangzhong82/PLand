@@ -2,7 +2,7 @@
 #include "ll/api/chrono/GameChrono.h"
 #include "ll/api/coro/CoroTask.h"
 #include "ll/api/i18n/I18n.h"
-#include "mc/common/ActorUniqueID.h"
+#include "mc/legacy/ActorUniqueID.h"
 #include "mc/platform/UUID.h"
 #include <atomic>
 #include <filesystem>
