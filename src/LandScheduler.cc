@@ -57,7 +57,7 @@ bool LandScheduler::setup() {
                         auto ev = PlayerLeaveLandEvent(player, lastLandID);
                         bus->publish(ev); // 离开上一个维度的领地
 #ifdef DEBUG
-                        // printf("(dim) player %s leave land %llu\n", player.getName().c_str(), lastLandID);// TODO: Fix this
+                        printf("(dim) player %s leave land %llu\n", player.getRealName().c_str(), lastLandID);
 #endif
                     }
                     lastDimid = curDimid;
@@ -69,14 +69,14 @@ bool LandScheduler::setup() {
                         auto ev = PlayerLeaveLandEvent(player, lastLandID);
                         bus->publish(ev); // 离开上一个领地
 #ifdef DEBUG
-                        // printf("player %s leave land %llu\n", player.getName().c_str(), lastLandID);// TODO: Fix this
+                        printf("player %s leave land %llu\n", player.getRealName().c_str(), lastLandID);
 #endif
                     }
                     if (curLandID != (LandID)-1) {
                         auto ev = PlayerEnterLandEvent(player, curLandID);
                         bus->publish(ev); // 进入新领地
 #ifdef DEBUG
-                        // printf("player %s enter land %llu\n", player.getName().c_str(), curLandID);// TODO: Fix this
+                        printf("player %s enter land %llu\n", player.getRealName().c_str(), curLandID);
 #endif
                     }
                     lastLandID = curLandID;
@@ -100,7 +100,7 @@ bool LandScheduler::setup() {
     auto* infos          = &ll::service::PlayerInfo::getInstance();
     auto* db             = &PLand::getInstance();
     mPlayerEnterListener = bus->emplaceListener<PlayerEnterLandEvent>([logger, infos, db](PlayerEnterLandEvent& ev) {
-        // logger->debug("Player {} enter land {}", ev.getPlayer().getName(), ev.getLandID());// TODO: Fix this
+        logger->debug("Player {} enter land {}", ev.getPlayer().getRealName(), ev.getLandID());
         if (!Config::cfg.land.tip.enterTip) {
             return;
         }
