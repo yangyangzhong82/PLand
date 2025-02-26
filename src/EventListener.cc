@@ -1,13 +1,18 @@
 #include "pland/EventListener.h"
+#include "ll/api/base/StdInt.h"
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/Listener.h"
 #include "ll/api/event/ListenerBase.h"
 #include "ll/api/event/world/SpawnMobEvent.h"
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
+#include "mc/network/NetworkBlockPosition.h"
 #include "mc/network/packet/UpdateBlockPacket.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/world/level/BlockPos.h"
+#include "mc/world/level/block/BlockProperty.h"
+#include "mc/world/level/block/components/BlockComponentDirectData.h"
+#include "mc/world/level/block/states/vanilla_states/VanillaStates.h"
 #include "mc/world/level/material/Material.h"
 #include "mc/world/phys/AABB.h"
 #include "mc/world/phys/HitResult.h"
@@ -19,6 +24,7 @@
 #include "pland/LandData.h"
 #include "pland/PLand.h"
 #include "pland/utils/MC.h"
+#include <cstdint>
 #include <functional>
 #include <unordered_set>
 #include <vector>
@@ -54,6 +60,10 @@
 #include "ila/event/minecraft/world/level/block/SculkCatalystAbsorbExperienceEvent.h"
 #include "ila/event/minecraft/world/level/block/SculkSpreadEvent.h"
 
+// Fix BlockProperty operator&
+inline BlockProperty operator&(BlockProperty a, BlockProperty b) {
+    return static_cast<BlockProperty>(static_cast<uint64_t>(a) & static_cast<uint64_t>(b));
+}
 
 static std::vector<ll::event::ListenerPtr> mListeners;
 
@@ -350,6 +360,7 @@ bool EventListener::setup() {
             auto& player = ev.self();
             auto  val    = player.traceRay(5.5f, false, true, [&](BlockSource const&, Block const& bl, bool) {
                 // if (bl.getMaterial().isLiquid()) return false; // 液体方块// TODO: Fix this
+                if (bl.hasState(VanillaStates::LiquidDepth())) return false;
                 return true;
             });
 
@@ -376,6 +387,17 @@ bool EventListener::setup() {
             //     UpdateBlockPacket(pos, (uint)SubChunk::BlockLayer::Extra, block.getBlockItemId(),
             //     flags).sendTo(player);
             // };
+            if (((uint64)block.getLegacyBlock().mProperties & (uint64)BlockProperty::CubeShaped) != 0) {
+                ev.cancel();
+                logger->debug("BlockLiquidDetectionComponent::canContainLiquid");
+                static uchar flags = (1 << 0) | (1 << 1); // 0b11 BlockUpdateFlag::All v0.13.5
+                auto         pkt   = UpdateBlockPacket{};
+                pkt.mPos           = NetworkBlockPosition(pos);
+                pkt.mLayer         = (uint)SubChunk::BlockLayer::Extra;
+                pkt.mRuntimeId     = block.getBlockItemId();
+                pkt.mUpdateFlags   = flags;
+                pkt.sendTo(player);
+            }
         }),
         // ila
         bus->emplaceListener<ila::mc::PlayerAttackBlockBeforeEvent>(
