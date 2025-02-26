@@ -1,6 +1,7 @@
 #include "pland/Particle.h"
 #include "mc/deps/core/utility/typeid_t.h"
 #include "mc/network/packet/SpawnParticleEffectPacket.h"
+#include "mc/util/MolangVariable.h"
 #include "mc/util/MolangVariableMap.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
@@ -8,6 +9,18 @@
 #include "mc/world/level/dimension/VanillaDimensions.h"
 #include "pland/Config.h"
 #include "pland/LandPos.h"
+
+
+// Fix LNK 2019
+// https://github.com/OEOTYAN/BedrockServerClientInterface/blob/main/src/bsci/particle/ParticleSpawner.cpp#L41-L48
+MolangVariableMap::MolangVariableMap(MolangVariableMap const& rhs) {
+    mMapFromVariableIndexToVariableArrayOffset = rhs.mMapFromVariableIndexToVariableArrayOffset;
+    mVariables                                 = {};
+    for (auto& ptr : *rhs.mVariables) {
+        mVariables->push_back(std::make_unique<MolangVariable>(*ptr));
+    }
+    mHasPublicVariables = rhs.mHasPublicVariables;
+}
 
 
 namespace land {
