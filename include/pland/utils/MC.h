@@ -42,6 +42,7 @@
 #include <mc/world/actor/player/Player.h>
 #include <memory>
 #include <string>
+#include <utility>
 
 
 namespace land::mc {
@@ -55,30 +56,17 @@ namespace land::mc {
     throw std::runtime_error("dimension not found");
 }
 
-inline void executeCommand(const std::string& cmd, Player* player = nullptr) {
-    // if (player) {
-    //     // player
-    //     CommandContext ctx = CommandContext(
-    //         cmd,
-    //         std::make_unique<PlayerCommandOrigin>(PlayerCommandOrigin(*player)),
-    //         CommandVersion::CurrentVersion()
-    //     );
-    //     ll::service::getMinecraft()->getCommands().executeCommand(ctx, true);
-    // } else {
-    //     // console
-    //     CommandContext ctx = CommandContext(
-    //         cmd,
-    //         std::make_unique<ServerCommandOrigin>(
-    //             "Server",
-    //             ll::service::getLevel()->asServer(),
-    //             CommandPermissionLevel::Owner,
-    //             0
-    //         ),
-    //         CommandVersion::CurrentVersion()
-    //     );
-    //     ll::service::getMinecraft()->getCommands().executeCommand(ctx, true);
-    // }
-    // TODO: Fix this
+inline void executeCommand(const std::string& cmd, Player* player) {
+    auto& minecraftCommands = ll::service::getMinecraft()->mCommands;
+    if (!minecraftCommands) {
+        return;
+    }
+    CommandContext ctx = CommandContext(
+        cmd,
+        std::make_unique<PlayerCommandOrigin>(PlayerCommandOrigin(*player)),
+        CommandVersion::CurrentVersion()
+    );
+    minecraftCommands->executeCommand(ctx, true);
 }
 [[nodiscard]] inline std::pair<bool, std::string> executeCommandEx(const std::string& cmd) {
     // std::pair<bool, std::string> result;

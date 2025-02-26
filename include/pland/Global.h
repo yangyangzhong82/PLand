@@ -34,6 +34,11 @@ namespace fs = std::filesystem;
 
 extern std::atomic<bool> GlobalRepeatCoroTaskRunning;
 
+
+template <typename T>
+inline T* Global = nullptr;
+
+
 } // namespace land
 
 
