@@ -29,6 +29,7 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/dimension/Dimension.h"
+#include "mc/world/level/dimension/DimensionHeightRange.h"
 #include <ll/api/service/Bedrock.h>
 #include <ll/api/service/ServerInfo.h>
 #include <ll/api/service/Service.h>
@@ -68,6 +69,21 @@ inline void executeCommand(const std::string& cmd, Player* player) {
     );
     minecraftCommands->executeCommand(ctx, true);
 }
+
+[[nodiscard]] inline short GetDimensionMinHeight(Dimension& dim) {
+    auto& range = dim.mHeightRange.get();
+    return range.mMin;
+}
+
+[[nodiscard]] inline short GetDimensionMaxHeight(Dimension& dim) {
+    auto& range = dim.mHeightRange.get();
+    return range.mMax;
+}
+
+[[nodiscard]] inline bool IsChunkFullLoaded(BlockPos const& pos, BlockSource& bs) {
+    return bs.areChunksFullyLoaded(pos, pos);
+}
+
 
 [[nodiscard]] inline BlockPos face2Pos(BlockPos const& sour, uchar face) {
     BlockPos dest = sour;

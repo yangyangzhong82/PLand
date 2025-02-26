@@ -61,53 +61,52 @@ public:
         auto& dim = player.getDimension();
         auto& bs  = player.getDimensionBlockSource();
 
-        // TODO: Fix this
-        // short const start = dim.getHeight();    // 世界高度
-        // short const end   = dim.getMinHeight(); // 地面高度
+        short const start = mc::GetDimensionMinHeight(dim); // 世界高度
+        short const end   = mc::GetDimensionMinHeight(dim); // 地面高度
 
-        // short current    = start; // 当前高度
-        // short safeHeight = -1;    // 安全高度
+        short current    = start; // 当前高度
+        short safeHeight = -1;    // 安全高度
 
-        // Block*   headBlock = nullptr; // 头块
-        // Block*   legBlock  = nullptr; // 脚块
-        // BlockPos currentPos(targetPos.x, current, targetPos.z);
-        // while (current > end) {
-        //     currentPos.y = current;
-        //     Block& bl    = const_cast<Block&>(bs.getBlock(currentPos));
+        Block*   headBlock = nullptr; // 头块
+        Block*   legBlock  = nullptr; // 脚块
+        BlockPos currentPos(targetPos.x, current, targetPos.z);
+        while (current > end) {
+            currentPos.y = current;
+            auto& bl     = const_cast<Block&>(bs.getBlock(currentPos));
 
-        //     // logger.debug(
-        //     //     "current: {}, currentPos.y: {}, bl: {}, headBlock: {}, legBlock: {}",
-        //     //     current,
-        //     //     currentPos.y,
-        //     //     bl.getTypeName(),
-        //     //     headBlock ? headBlock->getTypeName() : "nullptr",
-        //     //     legBlock ? legBlock->getTypeName() : "nullptr"
-        //     // );
+            // logger.debug(
+            //     "current: {}, currentPos.y: {}, bl: {}, headBlock: {}, legBlock: {}",
+            //     current,
+            //     currentPos.y,
+            //     bl.getTypeName(),
+            //     headBlock ? headBlock->getTypeName() : "nullptr",
+            //     legBlock ? legBlock->getTypeName() : "nullptr"
+            // );
 
-        //     if (std::find(dangerousBlocks.begin(), dangerousBlocks.end(), bl.getTypeName()) == dangerousBlocks.end()
-        //         && !bl.isAir() && headBlock->isAir() && legBlock->isAir()) {
-        //         safeHeight = current;
-        //         break;
-        //     }
+            if (std::find(dangerousBlocks.begin(), dangerousBlocks.end(), bl.getTypeName()) == dangerousBlocks.end()
+                && !bl.isAir() && headBlock->isAir() && legBlock->isAir()) {
+                safeHeight = current;
+                break;
+            }
 
-        //     if (!headBlock && !legBlock) {
-        //         headBlock = &bl;
-        //         legBlock  = &bl;
-        //     }
+            if (!headBlock && !legBlock) {
+                headBlock = &bl;
+                legBlock  = &bl;
+            }
 
-        //     // 交换头块和脚块
-        //     headBlock = legBlock;
-        //     legBlock  = &bl;
-        //     current--;
-        // }
+            // 交换头块和脚块
+            headBlock = legBlock;
+            legBlock  = &bl;
+            current--;
+        }
 
-        // if (safeHeight == -1) {
-        //     mc::sendText<mc::LogLevel::Info>(player, "无法找到安全位置"_tr());
-        //     player.teleport(sourcePos, sourceDimid); //  返回原位置
-        //     return;
-        // }
+        if (safeHeight == -1) {
+            mc::sendText<mc::LogLevel::Info>(player, "无法找到安全位置"_tr());
+            player.teleport(sourcePos, sourceDimid); //  返回原位置
+            return;
+        }
 
-        // player.teleport(Vec3(currentPos.x + 0.5, safeHeight + 1, currentPos.z + 0.5), dimid);
+        player.teleport(Vec3(currentPos.x + 0.5, safeHeight + 1, currentPos.z + 0.5), dimid);
     }
     void findSafePos(TeleportData& data) {
         findSafePos(*data.mPlayer, data.mTargetPos, data.mTargetDimid, data.mSourcePos, data.mSourceDimid);
@@ -129,19 +128,18 @@ public:
             dt.mPlayer->teleport(Vec3(dt.mTargetPos.x, 666, dt.mTargetPos.z), dt.mTargetDimid); // 临时传送
 
             auto& bs = dt.mPlayer->getDimensionBlockSource();
-            // if (bs.isChunkFullyLoaded(ChunkPos(dt.mTargetPos), bs.getChunkSource())) {
-            //     findSafePos(dt);
-            //     remove(id);
-            // } else {
-            //     if (++dt.mScheduleCounter > TeleportData::SCHEDULE_COUNTER_MAX) {
-            //         mc::sendText<mc::LogLevel::Info>(*dt.mPlayer, "无法找到安全位置, 区块加载超时"_tr());
-            //         dt.mPlayer->teleport(dt.mSourcePos, dt.mSourceDimid); //  返回原位置
-            //         remove(id);
-            //         co_return;
-            //     }
-            //     execute(id);
-            // }
-            // TODO: Fix this
+            if (mc::IsChunkFullLoaded(dt.mTargetPos, bs)) {
+                findSafePos(dt);
+                remove(id);
+            } else {
+                if (++dt.mScheduleCounter > TeleportData::SCHEDULE_COUNTER_MAX) {
+                    mc::sendText<mc::LogLevel::Info>(*dt.mPlayer, "无法找到安全位置, 区块加载超时"_tr());
+                    dt.mPlayer->teleport(dt.mSourcePos, dt.mSourceDimid); //  返回原位置
+                    remove(id);
+                    co_return;
+                }
+                execute(id);
+            }
             co_return;
         }).launch(ll::thread::ServerThreadExecutor::getDefault());
     }
@@ -151,11 +149,10 @@ public:
         auto& bs        = player.getDimensionBlockSource();
         Vec3  sourcePos = player.getPosition();
 
-        // if (bs.isChunkFullyLoaded(ChunkPos(pos), bs.getChunkSource())) {
-        //     findSafePos(player, pos, dimid, sourcePos, player.getDimensionId().id);
-        //     return;
-        // }
-        // TODO: Fix this
+        if (mc::IsChunkFullLoaded(pos, bs)) {
+            findSafePos(player, pos, dimid, sourcePos, player.getDimensionId().id);
+            return;
+        }
 
         execute(insert(player, pos, dimid, sourcePos, player.getDimensionId().id));
     }
