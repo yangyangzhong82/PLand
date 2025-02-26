@@ -68,37 +68,6 @@ inline void executeCommand(const std::string& cmd, Player* player) {
     );
     minecraftCommands->executeCommand(ctx, true);
 }
-[[nodiscard]] inline std::pair<bool, std::string> executeCommandEx(const std::string& cmd) {
-    // std::pair<bool, std::string> result;
-    // auto                         origin =
-    //     ServerCommandOrigin("Server", ll::service::getLevel()->asServer(), CommandPermissionLevel::Internal, 0);
-    // auto command = ll::service::getMinecraft()->getCommands().compileCommand(
-    //     cmd.c_str(),
-    //     origin,
-    //     (CurrentCmdVersion)CommandVersion::CurrentVersion(),
-    //     [&](std::string const& err) { result.second.append(err).append("\n"); }
-    // );
-    // if (command) {
-    //     CommandOutput output(CommandOutputType::AllOutput);
-    //     command->run(origin, output);
-    //     for (auto& msg : output.getMessages()) {
-    //         std::string temp;
-    //         getI18n().getCurrentLanguage()->get(msg.getMessageId(), temp, msg.getParams());
-    //         result.second += temp.append("\n");
-    //     }
-    //     if (result.second.ends_with('\n')) {
-    //         result.second.pop_back();
-    //     }
-    //     result.first = output.getSuccessCount() ? true : false;
-    //     return result;
-    // }
-    // if (result.second.ends_with('\n')) {
-    //     result.second.pop_back();
-    // }
-    // result.first = false;
-    // return result;
-    return {}; // TODO: Fix this
-}
 
 [[nodiscard]] inline BlockPos face2Pos(BlockPos const& sour, uchar face) {
     BlockPos dest = sour;
