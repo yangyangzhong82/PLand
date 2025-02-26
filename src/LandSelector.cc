@@ -83,9 +83,8 @@ bool                                   LandSelector::init() {
                             // 2DLand
                             auto dim = pl.getLevel().getDimension(data.mDimid);
                             if (auto lock = dim.lock(); lock) {
-                                // data.mPos.mMax_B.y = dim.getHeight();
-                                // data.mPos.mMin_A.y = dim.getMinHeight();
-                                // TODO: Fix this
+                                data.mPos.mMax_B.y = mc::GetDimensionMaxHeight(*lock);
+                                data.mPos.mMin_A.y = mc::GetDimensionMinHeight(*lock);
                             } else {
                                 mc::sendText<mc::LogLevel::Error>(pl, "获取维度失败"_tr());
                             }
