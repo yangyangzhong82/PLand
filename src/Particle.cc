@@ -26,8 +26,6 @@ Particle::Particle(LandPos& pos, int dimid, bool draw3D)
 
 bool Particle::draw(Player& player, bool refreshCache, bool usePlayerYDraw2D, bool dontCache) {
     {
-        static std::optional<class MolangVariableMap> molangVariables = std::nullopt;
-
         auto pos = mDraw3D ? mPos.getBorder() : mPos.getRange();
         auto dim = VanillaDimensions::fromSerializedInt(mDimid);
 
@@ -39,21 +37,21 @@ bool Particle::draw(Player& player, bool refreshCache, bool usePlayerYDraw2D, bo
                         Vec3{p.x + 0.5, p.y + 0.5, p.z + 0.5},
                         Config::cfg.selector.particle,
                         (char)dim,
-                        molangVariables
+                        std::nullopt
                     );
 
                     dontCache ? pkt.sendTo(player) : mPackets.push_back(pkt);
                 }
             } else {
                 // 2D
-                float y  = usePlayerYDraw2D ? (float)(player.getFeetBlockPos().y) : pos[0].y;
+                float y  = usePlayerYDraw2D ? (float)player.getFeetBlockPos().y : (float)pos[0].y;
                 y       += 0.5; // center
                 for (auto& p : pos) {
                     auto pkt = SpawnParticleEffectPacket(
                         Vec3{p.x + 0.5, y, p.z + 0.5},
                         Config::cfg.selector.particle,
                         (char)dim,
-                        molangVariables
+                        std::nullopt
                     );
 
                     dontCache ? pkt.sendTo(player) : mPackets.push_back(pkt);
