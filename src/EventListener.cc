@@ -99,23 +99,23 @@ bool EventListener::setup() {
 
             auto& self   = ev.self();
             auto& source = ev.source();
-            // logger->debug(
-            //     "[ActorHurt] Mob: {}, ActorDamageCause: {}, ActorType: {}",
-            //     self.getTypeName(),
-            //     static_cast<int>(source.getCause()),// TODO: Fix this
-            //     static_cast<int>(source.getEntityType())
-            // );
+            logger->debug(
+                "[ActorHurt] Mob: {}, ActorDamageCause: {}, ActorType: {}",
+                self.getTypeName(),
+                static_cast<int>(source.mCause),
+                static_cast<int>(source.getEntityType())
+            );
 
             auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
             if (PreCheck(land)) return; // land not found
 
-            // TODO: Fix this
-            // if (source.getEntityType() == ActorType::Player && source.getCause() == ActorDamageCause::EntityAttack) {
-            //     // 玩家攻击 [ActorHurt] Mob: ikun, ActorDamageCause: 2, ActorType: 319
-            //     if (auto souPlayer = self.getILevel().getPlayer(source.getEntityUniqueID()); souPlayer) {
-            //         if (PreCheck(land, souPlayer->getUuid().asString())) return;
-            //     }
-            // }
+            if (source.getEntityType() == ActorType::Player
+                && source.mCause == SharedTypes::Legacy::ActorDamageCause::EntityAttack) {
+                // 玩家攻击 [ActorHurt] Mob: ikun, ActorDamageCause: 2, ActorType: 319
+                if (auto souPlayer = self.getLevel().getPlayer(source.getEntityUniqueID()); souPlayer) {
+                    if (PreCheck(land, souPlayer->getUuid().asString())) return;
+                }
+            }
 
             if (land) {
                 auto const& tab = land->getLandPermTableConst();
@@ -700,7 +700,7 @@ bool EventListener::setup() {
             auto& player = ev.self();
             auto& pos    = ev.getPos();
 
-            // logger->debug("[PlayerEditSign] {} -> {}", player.getName(), pos.toString());// TODO: Fix this
+            logger->debug("[PlayerEditSign] {} -> {}", player.getRealName(), pos.toString());
 
             auto land = db->getLandAt(pos, player.getDimensionId());
             if (PreCheck(land, player.getUuid().asString())) {
