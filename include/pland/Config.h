@@ -9,7 +9,7 @@ namespace land {
 enum class EconomyKit : int { LegacyMoney, ScoreBoard };
 
 struct Config {
-    int              version{7};
+    int              version{8};
     ll::io::LogLevel logLevel{ll::io::LogLevel::Info};
 
     struct {
@@ -72,7 +72,6 @@ struct Config {
         bool PlayerAttackEvent{true};                         // 玩家攻击事件
         bool PlayerPickUpItemEvent{true};                     // 玩家拾取物品事件
         bool PlayerInteractBlockEvent1{true};                 // 玩家交互方块事件(功能性方块)
-        bool PlayerUseItemEvent{true};                        // 玩家使用物品事件
         bool PlayerAttackBlockBeforeEvent{true};              // 玩家攻击方块事件
         bool ArmorStandSwapItemBeforeEvent{true};             // 盔甲架交换物品事件
         bool PlayerDropItemBeforeEvent{true};                 // 玩家丢弃物品事件

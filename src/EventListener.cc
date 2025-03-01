@@ -194,12 +194,7 @@ bool EventListener::setup() {
             auto& block  = ev.block()->getTypeName();
             auto  item   = ev.item().getTypeName();
 
-            logger->debug(
-                "[UseItemOn] Pos: {}, Item: {}, Block: {}",
-                vec3.toString(),
-                ev.item().getTypeName(),
-                ev.block()->getTypeName()
-            );
+            logger->debug("[UseItemOn] Pos: {}, Item: {}, Block: {}", vec3.toString(), item, block);
 
             auto land = db->getLandAt(vec3, player.getDimensionId());
             if (PreCheck(land, player.getUuid().asString())) {
@@ -349,55 +344,6 @@ bool EventListener::setup() {
             if (WhiteListItems.contains(player.getSelectedItem().getTypeName())) return;
 
             ev.cancel();
-        }),
-        bus->emplaceListener<ll::event::PlayerUseItemEvent>([db, logger](ll::event::PlayerUseItemEvent& ev) {
-            if (!Config::cfg.listeners.PlayerUseItemEvent) return;
-
-            if (!ev.item().getTypeName().ends_with("bucket")) {
-                return;
-            }
-
-            auto& player = ev.self();
-            auto  val    = player.traceRay(5.5f, false, true, [&](BlockSource const&, Block const& bl, bool) {
-                // if (bl.getMaterial().isLiquid()) return false; // 液体方块// TODO: Fix this
-                if (bl.hasState(VanillaStates::LiquidDepth())) return false;
-                return true;
-            });
-
-            BlockPos const&  pos   = val.mBlock;
-            ItemStack const& item  = ev.item();
-            Block const&     block = player.getDimensionBlockSource().getBlock(pos);
-
-            logger->debug(
-                "[UseItem] Item: {}, Pos: {}, Block: {}",
-                item.getTypeName(),
-                pos.toString(),
-                block.getTypeName()
-            );
-
-            auto land = db->getLandAt(pos, player.getDimensionId());
-            if (PreCheck(land, player.getUuid().asString())) {
-                return;
-            }
-
-            // 防止玩家在可含水方块里放水
-            // if (BlockLiquidDetectionComponent::canContainLiquid(block)) {// TODO: Fix this
-            //     ev.cancel();
-            //     static uchar flags = (1 << 0) | (1 << 1); // 0b11 BlockUpdateFlag::All v0.13.5
-            //     UpdateBlockPacket(pos, (uint)SubChunk::BlockLayer::Extra, block.getBlockItemId(),
-            //     flags).sendTo(player);
-            // };
-            if (((uint64)block.getLegacyBlock().mProperties & (uint64)BlockProperty::CubeShaped) != 0) {
-                ev.cancel();
-                logger->debug("BlockLiquidDetectionComponent::canContainLiquid");
-                static uchar flags = (1 << 0) | (1 << 1); // 0b11 BlockUpdateFlag::All v0.13.5
-                auto         pkt   = UpdateBlockPacket{};
-                pkt.mPos           = NetworkBlockPosition(pos);
-                pkt.mLayer         = (uint)SubChunk::BlockLayer::Extra;
-                pkt.mRuntimeId     = block.getBlockItemId();
-                pkt.mUpdateFlags   = flags;
-                pkt.sendTo(player);
-            }
         }),
         // ila
         bus->emplaceListener<ila::mc::PlayerAttackBlockBeforeEvent>(
