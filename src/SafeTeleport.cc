@@ -141,6 +141,7 @@ class SafeTeleport::SafeTeleportImpl {
             } else {
                 task.updateState(TaskState::WaitingChunkLoad);
             }
+            break;
         }
         case TaskState::WaitingChunkLoad: {
             auto& target = task.targetPos_;
