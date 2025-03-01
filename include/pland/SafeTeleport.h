@@ -15,6 +15,8 @@ public:
     SafeTeleport()                               = default;
     SafeTeleport(const SafeTeleport&)            = delete;
     SafeTeleport& operator=(const SafeTeleport&) = delete;
+    SafeTeleport(SafeTeleport&&)                 = delete;
+    SafeTeleport& operator=(SafeTeleport&&)      = delete;
 
     LDAPI static SafeTeleport& getInstance();
 
