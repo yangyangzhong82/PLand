@@ -8,7 +8,7 @@ add_repositories("miracleforest-repo https://github.com/MiracleForest/xmake-repo
 -- add_requires("levilamina develop") to use develop version
 -- please note that you should add bdslibrary yourself if using dev version
 if is_config("target_type", "server") then
-    add_requires("levilamina 1.1.0-rc.1", {configs = {target_type = "server"}})
+    add_requires("levilamina 1.1.0", {configs = {target_type = "server"}})
 else
     add_requires("levilamina 1.0.1", {configs = {target_type = "client"}})
 end
@@ -41,45 +41,6 @@ option("devtool") -- 开发工具
     set_default(true)
     set_showmenu(true)
 option_end()
-
-
-rule("internal/update_rc")
-    before_build(function (target)
-        local tag = os.iorun("git describe --tags --abbrev=0")
-        if not tag then
-            print("Failed to get git tag, please make sure you are in the git repository.")
-            return;
-        end
-        local version = tag:match("v(%d+%.%d+%.%d+)")
-        if not version then
-            print("Failed to parse git tag: " .. tag)
-            return
-        end
-        local major, minor, patch = version:match("(%d+)%.(%d+)%.(%d+)")
-        local build = 0  -- 可选构建号
-        local rc_file = path.join(os.projectdir(), "resource", "Resource.rc")
-        io.gsub(
-            rc_file,
-            "FILEVERSION %d+,%d+,%d+,%d+",
-            string.format("FILEVERSION %s,%s,%s,%s", major, minor, patch, build)
-        )
-        io.gsub(
-            rc_file,
-            "PRODUCTVERSION %d+,%d+,%d+,%d+",
-            string.format("PRODUCTVERSION %s,%s,%s,%s", major, minor, patch, build)
-        )
-        io.gsub(
-            rc_file,
-            '"FileVersion", "%d+%.%d+%.%d+%.%d+"',
-            string.format('"FileVersion", "%s.%s.%s.%s"', major, minor, patch, build)
-        )
-        io.gsub(
-            rc_file,
-            '"ProductVersion", "%d+%.%d+%.%d+%.%d+"',
-            string.format('"ProductVersion", "%s.%s.%s.%s"', major, minor, patch, build)
-        )
-        print("Updated Resource.rc with version: " .. version)
-    end)
 
 
 target("PLand") -- Change this to your mod name.
@@ -133,7 +94,6 @@ target("PLand") -- Change this to your mod name.
     end
 
     if is_plat("windows") then
-        -- add_rules("internal/update_rc") -- MSVC 需要 Resource.rc 文件为 UTF-16 LE 编码, XMake 仅支持 U8 编码
         add_files("resource/Resource.rc")
     end
 
