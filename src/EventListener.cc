@@ -1,22 +1,15 @@
 #include "pland/EventListener.h"
-#include "ll/api/base/StdInt.h"
 #include "ll/api/event/EventBus.h"
-#include "ll/api/event/Listener.h"
 #include "ll/api/event/ListenerBase.h"
 #include "ll/api/event/world/SpawnMobEvent.h"
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
-#include "mc/network/NetworkBlockPosition.h"
-#include "mc/network/packet/UpdateBlockPacket.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/block/BlockProperty.h"
 #include "mc/world/level/block/components/BlockComponentDirectData.h"
-#include "mc/world/level/block/states/vanilla_states/VanillaStates.h"
-#include "mc/world/level/material/Material.h"
 #include "mc/world/phys/AABB.h"
 #include "mc/world/phys/HitResult.h"
-#include "mc\world\level\block\components\BlockLiquidDetectionComponent.h"
 #include "mc\world\level\chunk\SubChunk.h"
 #include "mod/MyMod.h"
 #include "pland/Config.h"
@@ -25,7 +18,6 @@
 #include "pland/PLand.h"
 #include "pland/utils/MC.h"
 #include <cstdint>
-#include <functional>
 #include <unordered_set>
 #include <vector>
 
@@ -37,7 +29,6 @@
 #include "ll/api/event/player/PlayerJoinEvent.h"
 #include "ll/api/event/player/PlayerPickUpItemEvent.h"
 #include "ll/api/event/player/PlayerPlaceBlockEvent.h"
-#include "ll/api/event/player/PlayerUseItemEvent.h"
 #include "ll/api/event/world/FireSpreadEvent.h"
 
 #include "ila/event/minecraft/world/ExplosionEvent.h"
@@ -271,7 +262,6 @@ bool EventListener::setup() {
                 }
             }
 
-            // if (WhiteListItems.contains(item)) return;
             ev.cancel();
         }),
         bus->emplaceListener<ll::event::FireSpreadEvent>([db](ll::event::FireSpreadEvent& ev) {
@@ -903,7 +893,6 @@ std::unordered_set<string> EventListener::InteractBlockHashMap = {
     "minecraft:lit_blast_furnace", // 燃烧中的高炉
     "minecraft:lit_smoker"         // 燃烧中的烟熏炉
 };
-std::unordered_set<string> EventListener::WhiteListItems = {"minecraft:clock"};
 
 
 } // namespace land
