@@ -576,7 +576,7 @@ bool EventListener::setup() {
         bus->emplaceListener<ila::mc::RedstoneUpdateBeforeEvent>([db, logger](ila::mc::RedstoneUpdateBeforeEvent& ev) {
             if (!Config::cfg.listeners.RedstoneUpdateBeforeEvent) return;
 
-            logger->debug("[RedstoneUpdate] Pos: {}", ev.getPos().toString());
+            // logger->debug("[RedstoneUpdate] Pos: {}", ev.getPos().toString());
 
             auto land = db->getLandAt(ev.getPos(), ev.blockSource().getDimensionId());
             if (PreCheck(land)) return; // land not found
