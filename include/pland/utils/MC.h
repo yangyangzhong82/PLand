@@ -25,9 +25,12 @@
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/ChunkPos.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/actor/BlockActor.h"
+#include "mc/world/level/chunk/ChunkSource.h"
+#include "mc/world/level/chunk/LevelChunk.h"
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/level/dimension/DimensionHeightRange.h"
 #include <ll/api/service/Bedrock.h>
@@ -80,8 +83,15 @@ inline void executeCommand(const std::string& cmd, Player* player) {
     return range.mMax;
 }
 
-[[nodiscard]] inline bool IsChunkFullLoaded(BlockPos const& pos, BlockSource& bs) {
-    return bs.areChunksFullyLoaded(pos, pos);
+[[nodiscard]] inline bool IsChunkFullyLoaded(ChunkSource& chs, ChunkPos const& pos) {
+    if (!chs.isWithinWorldLimit(pos)) return true;
+    auto chunk = chs.getOrLoadChunk(pos, ::ChunkSource::LoadMode::None, true);
+    return chunk && static_cast<int>(chunk->mLoadState->load()) >= static_cast<int>(ChunkState::Loaded)
+        && !chunk->mIsEmptyClientChunk && chunk->mIsRedstoneLoaded;
+}
+
+[[nodiscard]] inline bool IsChunkFullLyoaded(BlockPos const& pos, BlockSource& bs) {
+    return IsChunkFullyLoaded(bs.getChunkSource(), ChunkPos(pos));
 }
 
 

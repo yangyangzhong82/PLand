@@ -106,7 +106,6 @@ class SafeTeleport::SafeTeleportImpl {
             logger.debug(
                 "currentY: {}, bl: {}, headBlock: {}, legBlock: {}",
                 currentY,
-                currentPos.y,
                 bl.getTypeName(),
                 headBlock ? headBlock->getTypeName() : "nullptr",
                 legBlock ? legBlock->getTypeName() : "nullptr"
@@ -136,7 +135,7 @@ class SafeTeleport::SafeTeleportImpl {
     void handleTask(Task& task) {
         switch (task.state_) {
         case TaskState::WaitingProcess: {
-            if (mc::IsChunkFullLoaded(task.targetPos_.first, task.player_->getDimensionBlockSource())) {
+            if (mc::IsChunkFullLyoaded(task.targetPos_.first, task.player_->getDimensionBlockSource())) {
                 task.updateState(TaskState::ChunkLoadedWaitingProcess);
             } else {
                 task.updateState(TaskState::WaitingChunkLoad);
@@ -155,7 +154,7 @@ class SafeTeleport::SafeTeleportImpl {
                 return;
             }
 
-            if (mc::IsChunkFullLoaded(target.first, task.player_->getDimensionBlockSource())) {
+            if (mc::IsChunkFullLyoaded(target.first, task.player_->getDimensionBlockSource())) {
                 task.updateState(TaskState::ChunkLoadedWaitingProcess);
             } else {
                 task.scheduleCounter_++;
