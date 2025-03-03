@@ -4,7 +4,7 @@
 #include "pland/LandDraw.h"
 #include "pland/LandSelector.h"
 #include "pland/Particle.h"
-#include "pland/utils/MC.h"
+#include "pland/utils/McUtils.h"
 
 
 #include "ll/api/command/CommandRegistrar.h"
@@ -72,7 +72,7 @@ namespace land {
 
 #define CHECK_TYPE(ori, out, type)                                                                                     \
     if (ori.getOriginType() != type) {                                                                                 \
-        mc::sendText(out, "此命令仅限 {} 使用!"_tr(magic_enum::enum_name(type)));                                      \
+        mc_utils::sendText(out, "此命令仅限 {} 使用!"_tr(magic_enum::enum_name(type)));                                \
         return;                                                                                                        \
     }
 
@@ -108,7 +108,7 @@ static auto const Operator = [](CommandOrigin const& ori, CommandOutput& out, Op
     auto  pls = param.player.results(ori).data;
 
     if (pls->empty()) {
-        mc::sendText<mc::LogLevel::Error>(out, "未找到任何玩家，请确保玩家在线后重试"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Error>(out, "未找到任何玩家，请确保玩家在线后重试"_tr());
         return;
     }
 
@@ -120,15 +120,15 @@ static auto const Operator = [](CommandOrigin const& ori, CommandOutput& out, Op
         auto name = pl->getRealName();
         if (param.type == OperatorType::Op) {
             if (db.isOperator(uid)) {
-                mc::sendText(out, "{} 已经是管理员，请不要重复添加"_tr(name));
+                mc_utils::sendText(out, "{} 已经是管理员，请不要重复添加"_tr(name));
             } else {
-                if (db.addOperator(uid)) mc::sendText(out, "{} 已经被添加为管理员"_tr(name));
+                if (db.addOperator(uid)) mc_utils::sendText(out, "{} 已经被添加为管理员"_tr(name));
             }
         } else {
             if (db.isOperator(uid)) {
-                if (db.removeOperator(uid)) mc::sendText(out, "{} 已经被移除管理员"_tr(name));
+                if (db.removeOperator(uid)) mc_utils::sendText(out, "{} 已经被移除管理员"_tr(name));
             } else {
-                mc::sendText(out, "{} 不是管理员，无需移除"_tr(name));
+                mc_utils::sendText(out, "{} 不是管理员，无需移除"_tr(name));
             }
         }
     }
@@ -155,9 +155,9 @@ static auto const Set = [](CommandOrigin const& ori, CommandOutput& out, SetPara
         param.type == SetType::A ? selector.trySelectPointA(player, pos) : selector.trySelectPointB(player, pos);
 
     if (status) {
-        mc::sendText(out, "已选择点{}"_tr(param.type == SetType::A ? "A" : "B"));
+        mc_utils::sendText(out, "已选择点{}"_tr(param.type == SetType::A ? "A" : "B"));
     } else {
-        mc::sendText<mc::LogLevel::Error>(out, "您还没有开启开启领地选区，请先使用 /pland new 命令"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Error>(out, "您还没有开启开启领地选区，请先使用 /pland new 命令"_tr());
     }
 };
 
@@ -166,9 +166,9 @@ static auto const Cancel = [](CommandOrigin const& ori, CommandOutput& out) {
     auto& player = *static_cast<Player*>(ori.getEntity());
     bool  ok     = LandSelector::getInstance().tryCancel(player);
     if (ok) {
-        mc::sendText(out, "已取消新建领地"_tr());
+        mc_utils::sendText(out, "已取消新建领地"_tr());
     } else {
-        mc::sendText<mc::LogLevel::Error>(out, "您还没有开启开启领地选区，没有什么可以取消的哦~"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Error>(out, "您还没有开启开启领地选区，没有什么可以取消的哦~"_tr());
     }
 };
 
@@ -182,9 +182,9 @@ static auto const Buy = [](CommandOrigin const& ori, CommandOutput& out) {
 static auto const Reload = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::DedicatedServer);
     if (Config::tryLoad()) {
-        mc::sendText(out, "领地系统配置已重新加载"_tr());
+        mc_utils::sendText(out, "领地系统配置已重新加载"_tr());
     } else {
-        mc::sendText(out, "领地系统配置加载失败，请检查配置文件"_tr());
+        mc_utils::sendText(out, "领地系统配置加载失败，请检查配置文件"_tr());
     }
 };
 
@@ -195,7 +195,7 @@ static auto const Draw = [](CommandOrigin const& ori, CommandOutput& out, DrawPa
     if (ori.getOriginType() == CommandOriginType::DedicatedServer) {
         if (param.type == LandDraw::DrawType::Disable) {
             LandDraw::disable();
-            mc::sendText(out, "领地绘制已关闭"_tr());
+            mc_utils::sendText(out, "领地绘制已关闭"_tr());
             return;
         }
     }
@@ -204,10 +204,10 @@ static auto const Draw = [](CommandOrigin const& ori, CommandOutput& out, DrawPa
 
     if (param.type == LandDraw::DrawType::Disable) {
         LandDraw::disable(player);
-        mc::sendText(out, "领地绘制已关闭"_tr());
+        mc_utils::sendText(out, "领地绘制已关闭"_tr());
     } else {
         LandDraw::enable(player, param.type);
-        mc::sendText(out, "领地绘制已开启"_tr());
+        mc_utils::sendText(out, "领地绘制已开启"_tr());
     }
 };
 
@@ -247,13 +247,13 @@ static auto const SetLandTeleportPos = [](CommandOrigin const& ori, CommandOutpu
     auto& db   = PLand::getInstance();
     auto  land = db.getLandAt(player.getPosition(), player.getDimensionId().id);
     if (!land) {
-        mc::sendText<mc::LogLevel::Error>(out, "您当前不在领地内"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Error>(out, "您当前不在领地内"_tr());
         return;
     }
 
     auto uuid = player.getUuid().asString();
     if (!land->isLandOwner(uuid) && !db.isOperator(uuid)) {
-        mc::sendText<mc::LogLevel::Error>(out, "您不是领地主人，无法设置传送点"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Error>(out, "您不是领地主人，无法设置传送点"_tr());
         return;
     }
     land->mTeleportPos = player.getPosition();

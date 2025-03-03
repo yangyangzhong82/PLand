@@ -15,7 +15,7 @@
 #include "pland/LandData.h"
 #include "pland/Particle.h"
 #include "pland/utils/Date.h"
-#include "pland/utils/MC.h"
+#include "pland/utils/McUtils.h"
 #include <optional>
 #include <unordered_map>
 
@@ -47,7 +47,7 @@ bool                                   LandSelector::init() {
             mStabilized[pl.getUuid()] = Date::future(50 / 1000).getTime(); // 50ms
 
             if (this->isSelected(pl)) {
-                mc::executeCommand("pland buy", &pl);
+                mc_utils::executeCommand("pland buy", &pl);
                 return;
             }
 
@@ -64,14 +64,14 @@ bool                                   LandSelector::init() {
 
             if (!this->isSelectedPointA(pl)) {
                 if (this->trySelectPointA(pl, ev.blockPos())) {
-                    mc::sendText(pl, "已选择点A \"{}\""_tr(ev.blockPos().toString()));
+                    mc_utils::sendText(pl, "已选择点A \"{}\""_tr(ev.blockPos().toString()));
                 } else {
-                    mc::sendText<mc::LogLevel::Error>(pl, "选择失败"_tr());
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "选择失败"_tr());
                 }
 
             } else if (!this->isSelectedPointB(pl) && this->isSelectedPointA(pl)) {
                 if (this->trySelectPointB(pl, ev.blockPos())) {
-                    mc::sendText(pl, "已选择点B \"{}\""_tr(ev.blockPos().toString()));
+                    mc_utils::sendText(pl, "已选择点B \"{}\""_tr(ev.blockPos().toString()));
 
 
                     if (auto iter = mSelectors.find(pl.getUuid().asString()); iter != mSelectors.end()) {
@@ -83,15 +83,15 @@ bool                                   LandSelector::init() {
                             // 2DLand
                             auto dim = pl.getLevel().getDimension(data.mDimid);
                             if (auto lock = dim.lock(); lock) {
-                                data.mPos.mMax_B.y = mc::GetDimensionMaxHeight(*lock);
-                                data.mPos.mMin_A.y = mc::GetDimensionMinHeight(*lock);
+                                data.mPos.mMax_B.y = mc_utils::GetDimensionMaxHeight(*lock);
+                                data.mPos.mMin_A.y = mc_utils::GetDimensionMinHeight(*lock);
                             } else {
-                                mc::sendText<mc::LogLevel::Error>(pl, "获取维度失败"_tr());
+                                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "获取维度失败"_tr());
                             }
                         }
                     }
                 } else {
-                    mc::sendText<mc::LogLevel::Error>(pl, "选择失败"_tr());
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "选择失败"_tr());
                 }
             }
         });

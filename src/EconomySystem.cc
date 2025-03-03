@@ -6,7 +6,7 @@
 #include "mc/world/scores/PlayerScoreSetFunction.h"
 #include "mc/world/scores/ScoreInfo.h"
 #include "pland/Config.h"
-#include "pland/utils/MC.h"
+#include "pland/utils/McUtils.h"
 #include "pland/utils/Utils.h"
 #include <mc/world/actor/player/Player.h>
 #include <mc/world/scores/Objective.h>
@@ -16,13 +16,15 @@
 
 
 namespace land {
-using namespace mc;
 
 int ScoreBoard_Get(Player& player, string const& scoreName) {
     Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
     Objective*  obj        = scoreboard.getObjective(scoreName);
     if (!obj) {
-        sendText<LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: {}"_tr(scoreName));
+        mc_utils::sendText<mc_utils::LogLevel::Error>(
+            player,
+            "[Moneys] 插件错误: 找不到指定的计分板: {}"_tr(scoreName)
+        );
         return 0;
     }
     ScoreboardId const& id = scoreboard.getScoreboardId(player);
@@ -36,7 +38,7 @@ bool ScoreBoard_Set(Player& player, int score, string const& scoreName) {
     Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
     Objective*  obj        = scoreboard.getObjective(scoreName);
     if (!obj) {
-        sendText<LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: "_tr(scoreName));
+        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: "_tr(scoreName));
         return false;
     }
     const ScoreboardId& id = scoreboard.getScoreboardId(player);
@@ -52,7 +54,7 @@ bool ScoreBoard_Add(Player& player, int score, string const& scoreName) {
     Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
     Objective*  obj        = scoreboard.getObjective(scoreName);
     if (!obj) {
-        sendText<LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: "_tr(scoreName));
+        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: "_tr(scoreName));
         return false;
     }
     const ScoreboardId& id = scoreboard.getScoreboardId(player);
@@ -68,7 +70,7 @@ bool ScoreBoard_Reduce(Player& player, int score, string const& scoreName) {
     Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
     Objective*  obj        = scoreboard.getObjective(scoreName);
     if (!obj) {
-        sendText<LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: "_tr(scoreName));
+        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: "_tr(scoreName));
         return false;
     }
     const ScoreboardId& id = scoreboard.getScoreboardId(player);
@@ -164,7 +166,7 @@ string EconomySystem::getSpendTip(Player& player, long long money) {
 }
 
 void EconomySystem::sendLackMoneyTip(Player& player, long long money) {
-    sendText<LogLevel::Error>(
+    mc_utils::sendText<mc_utils::LogLevel::Error>(
         player,
         "[Moneys] 操作失败，此操作需要{0}:{1}，当前{2}:{3}"_tr(
             Config::cfg.economy.economyName,

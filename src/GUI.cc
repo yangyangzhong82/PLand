@@ -21,7 +21,7 @@
 #include "pland/PLand.h"
 #include "pland/SafeTeleport.h"
 #include "pland/utils/JSON.h"
-#include "pland/utils/MC.h"
+#include "pland/utils/McUtils.h"
 #include "pland/utils/Utils.h"
 #include "pland/wrapper/FormEx.h"
 #include <algorithm>
@@ -40,7 +40,7 @@ namespace land {
 // 独立GUI
 void ChooseLandDimAndNewLand::impl(Player& player) {
     if (!some(Config::cfg.land.bought.allowDimensions, player.getDimensionId().id)) {
-        mc::sendText(player, "你所在的维度无法购买领地"_tr());
+        mc_utils::sendText(player, "你所在的维度无法购买领地"_tr());
         return;
     }
 
@@ -63,11 +63,11 @@ void ChooseLandDimAndNewLand::impl(Player& player) {
 
             bool land3D = !((bool)res.value());
             if (land3D && !Config::cfg.land.bought.threeDimensionl.enabled) {
-                mc::sendText(pl, "3D领地功能未启用，请联系管理员"_tr());
+                mc_utils::sendText(pl, "3D领地功能未启用，请联系管理员"_tr());
                 return;
             }
             if (!land3D && !Config::cfg.land.bought.twoDimensionl.enabled) {
-                mc::sendText(pl, "2D领地功能未启用，请联系管理员"_tr());
+                mc_utils::sendText(pl, "2D领地功能未启用，请联系管理员"_tr());
                 return;
             }
 
@@ -75,13 +75,16 @@ void ChooseLandDimAndNewLand::impl(Player& player) {
             ll::event::EventBus::getInstance().publish(ev);
 
             LandSelector::getInstance().tryStartSelect(pl, pl.getDimensionId(), land3D);
-            mc::sendText(pl, "选区功能已开启，使用命令 /pland set 或使用 {} 来选择ab点"_tr(Config::cfg.selector.tool));
+            mc_utils::sendText(
+                pl,
+                "选区功能已开启，使用命令 /pland set 或使用 {} 来选择ab点"_tr(Config::cfg.selector.tool)
+            );
         });
 }
 void LandBuyGui::impl(Player& player) {
     auto dataPtr = LandSelector::getInstance().getSelector(player);
     if (!dataPtr) {
-        mc::sendText<mc::LogLevel::Error>(player, "请先使用 /pland new 来选择领地"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "请先使用 /pland new 来选择领地"_tr());
         return;
     }
 
@@ -95,7 +98,7 @@ void LandBuyGui::impl(Player& player) {
     dataPtr->mPos.fix();
     int const volume = dataPtr->mPos.getVolume();
     if (volume >= INT_MAX) {
-        mc::sendText<mc::LogLevel::Error>(player, "领地体积过大，无法购买"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "领地体积过大，无法购买"_tr());
         return;
     }
 
@@ -110,7 +113,7 @@ void LandBuyGui::impl(Player& player) {
 
     if (originalPrice < 0 || discountedPrice < 0) {
         // 范围过大导致溢出
-        mc::sendText<mc::LogLevel::Error>(player, "领地体积过大，无法购买"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "领地体积过大，无法购买"_tr());
         return;
     }
 
@@ -142,13 +145,13 @@ void LandBuyGui::impl(Player& player) {
     fm.appendButton("确认购买"_tr(), "textures/ui/realms_green_check", [discountedPrice](Player& pl) {
         auto& eco = EconomySystem::getInstance();
         if (eco.get(pl) < discountedPrice && Config::cfg.economy.enabled) {
-            mc::sendText<mc::LogLevel::Error>(pl, "您的余额不足，无法购买"_tr());
+            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您的余额不足，无法购买"_tr());
             return; // 预检查经济
         }
 
         auto& db = PLand::getInstance();
         if ((int)db.getLands(pl.getUuid().asString()).size() >= Config::cfg.land.maxLand) {
-            mc::sendText<mc::LogLevel::Error>(pl, "您已经达到最大领地数量"_tr());
+            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您已经达到最大领地数量"_tr());
             return;
         }
 
@@ -164,10 +167,11 @@ void LandBuyGui::impl(Player& player) {
         auto const& squareRange = Config::cfg.land.bought.squareRange;
         if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
             (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
-            (data->mDraw3D && (height < squareRange.minHeight || height > mc::GetDimensionMaxHeight(pl.getDimension()))
+            (data->mDraw3D
+             && (height < squareRange.minHeight || height > mc_utils::GetDimensionMaxHeight(pl.getDimension()))
             ) // 高度必须大于最小值 && 小于世界高度 && 3D
         ) {
-            mc::sendText<mc::LogLevel::Error>(
+            mc_utils::sendText<mc_utils::LogLevel::Error>(
                 pl,
                 "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}, 当前长宽高: {}x{}x{}"_tr(
                     squareRange.min,
@@ -185,11 +189,11 @@ void LandBuyGui::impl(Player& player) {
         if (!lands.empty()) {
             for (auto& land : lands) {
                 if (LandPos::isCollision(land->mPos, data->mPos)) {
-                    mc::sendText<mc::LogLevel::Error>(pl, "领地重叠，请重新选择"_tr());
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地重叠，请重新选择"_tr());
                     return;
                 }
                 if (!LandPos::isComplisWithMinSpacing(land->mPos, data->mPos)) {
-                    mc::sendText<mc::LogLevel::Error>(pl, "领地距离过近，请重新选择"_tr());
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地距离过近，请重新选择"_tr());
                     return;
                 }
             }
@@ -197,7 +201,7 @@ void LandBuyGui::impl(Player& player) {
 
         // 扣除经济
         if (!eco.reduce(pl, discountedPrice)) {
-            mc::sendText<mc::LogLevel::Error>(pl, "您的余额不足，无法购买"_tr());
+            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您的余额不足，无法购买"_tr());
             return;
         }
 
@@ -205,13 +209,13 @@ void LandBuyGui::impl(Player& player) {
         if (db.addLand(landPtr)) {
             landPtr->mOriginalBuyPrice = discountedPrice; // 保存购买价格
             selector.completeAndRelease(pl);
-            mc::sendText<mc::LogLevel::Info>(pl, "购买领地成功"_tr());
+            mc_utils::sendText<mc_utils::LogLevel::Info>(pl, "购买领地成功"_tr());
 
             PlayerBuyLandAfterEvent ev(pl, landPtr);
             ll::event::EventBus::getInstance().publish(ev);
 
         } else {
-            mc::sendText<mc::LogLevel::Error>(pl, "购买领地失败"_tr());
+            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "购买领地失败"_tr());
             eco.add(pl, discountedPrice); // 补回经济
         }
     });
@@ -225,7 +229,7 @@ void LandBuyGui::impl(Player& player) {
 void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
     auto dataPtr = LandSelector::getInstance().getSelector(player);
     if (!dataPtr) {
-        mc::sendText<mc::LogLevel::Error>(player, "请先使用 /pland new 来选择领地"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "请先使用 /pland new 来选择领地"_tr());
         return;
     }
 
@@ -235,7 +239,7 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
     dataPtr->mPos.fix();
     int const volume = dataPtr->mPos.getVolume();
     if (volume >= INT_MAX) {
-        mc::sendText<mc::LogLevel::Error>(player, "领地体积过大，无法购买"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "领地体积过大，无法购买"_tr());
         return;
     }
 
@@ -278,7 +282,7 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
     fm.appendButton("确认购买"_tr(), "textures/ui/realms_green_check", [needPay, refund, discountedPrice](Player& pl) {
         auto& eco = EconomySystem::getInstance();
         if ((needPay > 0 && eco.get(pl) < needPay) && Config::cfg.economy.enabled) {
-            mc::sendText<mc::LogLevel::Error>(pl, "您的余额不足，无法购买"_tr());
+            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您的余额不足，无法购买"_tr());
             return; // 预检查经济
         }
 
@@ -295,10 +299,11 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
         auto const& squareRange = Config::cfg.land.bought.squareRange;
         if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
             (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
-            (data->mDraw3D && (height < squareRange.minHeight || height > mc::GetDimensionMaxHeight(pl.getDimension()))
+            (data->mDraw3D
+             && (height < squareRange.minHeight || height > mc_utils::GetDimensionMaxHeight(pl.getDimension()))
             ) // 高度必须大于最小值 && 小于世界高度 && 3D
         ) {
-            mc::sendText<mc::LogLevel::Error>(
+            mc_utils::sendText<mc_utils::LogLevel::Error>(
                 pl,
                 "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}"_tr(
                     squareRange.min,
@@ -314,11 +319,11 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
             for (auto& land : lands) {
                 if (land->getLandID() == data->mBindLandData.lock()->getLandID()) continue; // 跳过自己
                 if (LandPos::isCollision(land->mPos, data->mPos)) {
-                    mc::sendText<mc::LogLevel::Error>(pl, "领地重叠，请重新选择"_tr());
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地重叠，请重新选择"_tr());
                     return;
                 }
                 if (!LandPos::isComplisWithMinSpacing(land->mPos, data->mPos)) {
-                    mc::sendText<mc::LogLevel::Error>(pl, "领地距离过近，请重新选择"_tr());
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地距离过近，请重新选择"_tr());
                     return;
                 }
             }
@@ -327,12 +332,12 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
         // 补差价 & 退还差价
         if (needPay > 0) {
             if (!eco.reduce(pl, needPay)) {
-                mc::sendText<mc::LogLevel::Error>(pl, "您的余额不足，无法购买"_tr());
+                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您的余额不足，无法购买"_tr());
                 return;
             }
         } else if (refund > 0) {
             if (!eco.add(pl, refund)) {
-                mc::sendText<mc::LogLevel::Error>(pl, "经济系统异常,退还差价失败"_tr());
+                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "经济系统异常,退还差价失败"_tr());
                 return;
             }
         }
@@ -344,12 +349,12 @@ void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player) {
             selector.completeAndRelease(pl);     // 释放数据
             db.refreshLandRange(landPtr.lock()); // 刷新领地范围
 
-            mc::sendText<mc::LogLevel::Info>(pl, "领地范围修改成功"_tr());
+            mc_utils::sendText<mc_utils::LogLevel::Info>(pl, "领地范围修改成功"_tr());
 
             LandRangeChangeAfterEvent ev(pl, landPtr.lock(), data->mPos, needPay, refund);
             ll::event::EventBus::getInstance().publish(ev);
 
-        } else mc::sendText<mc::LogLevel::Error>(pl, "领地范围修改失败"_tr());
+        } else mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地范围修改失败"_tr());
     });
     fm.appendButton("暂存订单"_tr(), "textures/ui/recipe_book_icon"); // close
     fm.appendButton("放弃订单"_tr(), "textures/ui/cancel", [](Player& pl) {
@@ -399,9 +404,9 @@ void SelectorChangeYGui::impl(Player& player, std::string const& exception) {
             dataPtr->mPos.mMax_B.y = endY;
             dataPtr->mParticle.draw(pl, true); // force update cache
 
-            mc::sendText(pl, "Y轴范围已修改为 {} ~ {}"_tr(startY, endY));
+            mc_utils::sendText(pl, "Y轴范围已修改为 {} ~ {}"_tr(startY, endY));
         } catch (...) {
-            mc::sendText<mc::LogLevel::Fatal>(pl, "插件内部错误, 请联系开发者"_tr());
+            mc_utils::sendText<mc_utils::LogLevel::Fatal>(pl, "插件内部错误, 请联系开发者"_tr());
             my_mod::MyMod::getInstance().getSelf().getLogger().error(
                 "An exception is caught in {} and user {} enters data: {}, {}",
                 __FUNCTION__,
@@ -516,7 +521,7 @@ void EditPlayerSettingGui::impl(Player& player) {
         }
         setting->showEnterLandTitle     = std::get<uint64_t>(res->at("showEnterLandTitle"));
         setting->showBottomContinuedTip = std::get<uint64_t>(res->at("showBottomContinuedTip"));
-        mc::sendText<mc::LogLevel::Info>(pl, "设置已保存"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Info>(pl, "设置已保存"_tr());
     });
 }
 
@@ -525,7 +530,7 @@ void EditPlayerSettingGui::impl(Player& player) {
 void LandManagerGui::impl(Player& player, LandID id) {
     auto land = PLand::getInstance().getLand(id);
     if (!land) {
-        mc::sendText<mc::LogLevel::Error>(player, "领地不存在"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "领地不存在"_tr());
         return;
     }
 
@@ -586,7 +591,7 @@ void LandManagerGui::EditLandPermGui::impl(Player& player, LandData_sptr const& 
 
         JSON::jsonToStructNoMerge(j, perm);
 
-        mc::sendText(pl, "权限表已更新");
+        mc_utils::sendText(pl, "权限表已更新");
     });
 }
 void LandManagerGui::DeleteLandGui::impl(Player& player, LandData_sptr const& ptr) {
@@ -621,13 +626,13 @@ void LandManagerGui::DeleteLandGui::impl(Player& player, LandData_sptr const& pt
 
         if (eco.add(pl, price)) {
             if (db.removeLand(ptr->getLandID())) {
-                mc::sendText(pl, "删除领地成功!"_tr());
-            } else mc::sendText(pl, "删除领地失败!"_tr());
+                mc_utils::sendText(pl, "删除领地成功!"_tr());
+            } else mc_utils::sendText(pl, "删除领地失败!"_tr());
 
             PlayerDeleteLandAfterEvent ev(pl, ptr->getLandID());
             ll::event::EventBus::getInstance().publish(ev);
 
-        } else mc::sendText(pl, "经济系统异常，操作失败"_tr());
+        } else mc_utils::sendText(pl, "经济系统异常，操作失败"_tr());
     });
 }
 void LandManagerGui::EditLandNameGui::impl(Player& player, LandData_sptr const& ptr) {
@@ -638,7 +643,7 @@ void LandManagerGui::EditLandNameGui::impl(Player& player, LandData_sptr const& 
         ptr->getLandName(),
         [ptr](Player& pl, string result) {
             ptr->setLandName(result);
-            mc::sendText(pl, "领地名称已更新!"_tr());
+            mc_utils::sendText(pl, "领地名称已更新!"_tr());
         }
     );
 }
@@ -650,14 +655,14 @@ void LandManagerGui::EditLandDescGui::impl(Player& player, LandData_sptr const& 
         ptr->getLandDescribe(),
         [ptr](Player& pl, string result) {
             ptr->setLandDescribe(result);
-            mc::sendText(pl, "领地描述已更新!"_tr());
+            mc_utils::sendText(pl, "领地描述已更新!"_tr());
         }
     );
 }
 void LandManagerGui::EditLandOwnerGui::impl(Player& player, LandData_sptr const& ptr) {
     ChoosePlayerUtilGui::impl(player, [ptr](Player& self, Player& target) {
         if (self.getUuid() == target.getUuid()) {
-            mc::sendText(self, "不能将领地转让给自己, 左手倒右手哦!"_tr());
+            mc_utils::sendText(self, "不能将领地转让给自己, 左手倒右手哦!"_tr());
             return;
         }
 
@@ -686,8 +691,8 @@ void LandManagerGui::EditLandOwnerGui::impl(Player& player, LandData_sptr const&
             }
 
             if (ptr->setLandOwner(target.getUuid().asString())) {
-                mc::sendText(self, "领地已转让给 {}"_tr(target.getRealName()));
-                mc::sendText(
+                mc_utils::sendText(self, "领地已转让给 {}"_tr(target.getRealName()));
+                mc_utils::sendText(
                     target,
                     "您已成功接手来自 \"{}\" 的领地 \"{}\""_tr(self.getRealName(), ptr->getLandName())
                 );
@@ -695,7 +700,7 @@ void LandManagerGui::EditLandOwnerGui::impl(Player& player, LandData_sptr const&
                 LandOwnerChangeAfterEvent ev(self, target, ptr->getLandID());
                 ll::event::EventBus::getInstance().publish(ev);
             } else {
-                mc::sendText<mc::LogLevel::Error>(self, "领地转让失败!"_tr());
+                mc_utils::sendText<mc_utils::LogLevel::Error>(self, "领地转让失败!"_tr());
             }
         });
     });
@@ -745,7 +750,7 @@ void EditLandMemberGui::impl(Player& player, LandData_sptr ptr) {
 void EditLandMemberGui::AddMemberGui::impl(Player& player, LandData_sptr ptr) {
     ChoosePlayerUtilGui::impl<EditLandMemberGui>(player, [ptr](Player& self, Player& target) {
         if (self.getUuid() == target.getUuid()) {
-            mc::sendText(self, "不能添加自己为领地成员哦!"_tr());
+            mc_utils::sendText(self, "不能添加自己为领地成员哦!"_tr());
             return;
         }
 
@@ -772,17 +777,17 @@ void EditLandMemberGui::AddMemberGui::impl(Player& player, LandData_sptr ptr) {
             }
 
             if (ptr->isLandMember(target.getUuid().asString())) {
-                mc::sendText(self, "该玩家已经是领地成员, 请不要重复添加哦!"_tr());
+                mc_utils::sendText(self, "该玩家已经是领地成员, 请不要重复添加哦!"_tr());
                 return;
             }
 
             if (ptr->addLandMember(target.getUuid().asString())) {
-                mc::sendText(self, "添加成功!"_tr());
+                mc_utils::sendText(self, "添加成功!"_tr());
 
                 LandMemberChangeAfterEvent ev(self, target.getUuid().asString(), ptr->getLandID(), true);
                 ll::event::EventBus::getInstance().publish(ev);
             } else {
-                mc::sendText(self, "添加失败!"_tr());
+                mc_utils::sendText(self, "添加失败!"_tr());
             }
         });
     });
@@ -816,12 +821,12 @@ void EditLandMemberGui::RemoveMemberGui::impl(Player& player, LandData_sptr ptr,
         }
 
         if (ptr->removeLandMember(member)) {
-            mc::sendText(self, "移除成功!"_tr());
+            mc_utils::sendText(self, "移除成功!"_tr());
 
             LandMemberChangeAfterEvent ev(self, member, ptr->getLandID(), false);
             ll::event::EventBus::getInstance().publish(ev);
         } else {
-            mc::sendText(self, "移除失败!"_tr());
+            mc_utils::sendText(self, "移除失败!"_tr());
         }
     });
 }
@@ -832,7 +837,7 @@ void LandTeleportGui::impl(Player& player) { ChooseLandUtilGui::impl<LandMainGui
 void LandTeleportGui::run(Player& player, LandID id) {
     auto land = PLand::getInstance().getLand(id);
     if (!land) {
-        mc::sendText<mc::LogLevel::Error>(player, "领地不存在"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "领地不存在"_tr());
         return;
     }
 
@@ -849,7 +854,7 @@ void LandTeleportGui::run(Player& player, LandID id) {
 void LandOPManagerGui::impl(Player& player) {
     auto* db = &PLand::getInstance();
     if (!db->isOperator(player.getUuid().asString())) {
-        mc::sendText<mc::LogLevel::Error>(player, "无权限访问此表单"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "无权限访问此表单"_tr());
         return;
     }
 
@@ -861,7 +866,7 @@ void LandOPManagerGui::impl(Player& player) {
     fm.appendButton("管理脚下领地"_tr(), "textures/ui/free_download", [db](Player& self) {
         auto lands = db->getLandAt(self.getPosition(), self.getDimensionId());
         if (!lands) {
-            mc::sendText<mc::LogLevel::Error>(self, "您当前所处位置没有领地"_tr());
+            mc_utils::sendText<mc_utils::LogLevel::Error>(self, "您当前所处位置没有领地"_tr());
             return;
         }
         LandManagerGui::impl(self, lands->getLandID());
