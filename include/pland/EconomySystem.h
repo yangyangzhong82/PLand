@@ -11,6 +11,8 @@ public:
     EconomySystem()                                = default;
     EconomySystem(const EconomySystem&)            = delete;
     EconomySystem& operator=(const EconomySystem&) = delete;
+    EconomySystem(EconomySystem&&)                 = delete;
+    EconomySystem& operator=(EconomySystem&&)      = delete;
 
     [[nodiscard]] LDAPI static EconomySystem& getInstance();
 
