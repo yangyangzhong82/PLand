@@ -429,6 +429,8 @@ ChunkID PLand::EncodeChunkID(int x, int z) {
     if (x >= 0) signBits |= (1ULL << 63);
     if (z >= 0) signBits |= (1ULL << 62);
     return signBits | (ux << 31) | (uz & 0x7FFFFFFF);
+    // Memory layout:
+    // [signBits][x][z] (signBits: 2 bits, x: 31 bits, z: 31 bits)
 }
 std::pair<int, int> PLand::DecodeChunkID(ChunkID id) {
     bool xPositive = (id & (1ULL << 63)) != 0;
