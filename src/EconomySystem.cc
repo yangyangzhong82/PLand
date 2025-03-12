@@ -38,7 +38,7 @@ bool ScoreBoard_Set(Player& player, int score, string const& scoreName) {
     Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
     Objective*  obj        = scoreboard.getObjective(scoreName);
     if (!obj) {
-        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: "_tr(scoreName));
+        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: {}"_tr(scoreName));
         return false;
     }
     const ScoreboardId& id = scoreboard.getScoreboardId(player);
@@ -54,7 +54,7 @@ bool ScoreBoard_Add(Player& player, int score, string const& scoreName) {
     Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
     Objective*  obj        = scoreboard.getObjective(scoreName);
     if (!obj) {
-        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: "_tr(scoreName));
+        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: {}"_tr(scoreName));
         return false;
     }
     const ScoreboardId& id = scoreboard.getScoreboardId(player);
@@ -70,7 +70,7 @@ bool ScoreBoard_Reduce(Player& player, int score, string const& scoreName) {
     Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
     Objective*  obj        = scoreboard.getObjective(scoreName);
     if (!obj) {
-        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: "_tr(scoreName));
+        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: {}"_tr(scoreName));
         return false;
     }
     const ScoreboardId& id = scoreboard.getScoreboardId(player);

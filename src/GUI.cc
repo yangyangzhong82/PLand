@@ -472,7 +472,7 @@ void EditStringUtilGui::impl(
 void FuzzySerarchUtilGui::impl(Player& player, std::vector<LandData_sptr> const& list, const CallBack& callback) {
     CustomForm fm;
     fm.setTitle(PLUGIN_NAME + " | 模糊搜索领地"_tr());
-    fm.appendInput("name", "请输入领地名称", "string");
+    fm.appendInput("name", "请输入领地名称"_tr(), "string");
     fm.sendTo(player, [list, callback](Player& player, CustomFormResult const& res, FormCancelReason) {
         if (!res) {
             return;
@@ -495,14 +495,16 @@ void LandMainGui::impl(Player& player) {
     fm.setTitle(PLUGIN_NAME + ("| 领地菜单"_tr()));
     fm.setContent("欢迎使用 Pland 领地管理插件\n\n请选择一个功能"_tr());
 
-    fm.appendButton("新建领地", "textures/ui/anvil_icon", [](Player& pl) { ChooseLandDimAndNewLand::impl(pl); });
-    fm.appendButton("管理领地", "textures/ui/icon_spring", [](Player& pl) {
+    fm.appendButton("新建领地"_tr(), "textures/ui/anvil_icon", [](Player& pl) { ChooseLandDimAndNewLand::impl(pl); });
+    fm.appendButton("管理领地"_tr(), "textures/ui/icon_spring", [](Player& pl) {
         ChooseLandUtilGui::impl<LandMainGui>(pl, LandManagerGui::impl);
     });
-    fm.appendButton("领地传送", "textures/ui/icon_recipe_nature", [](Player& pl) { LandTeleportGui::impl(pl); });
-    fm.appendButton("个人设置", "textures/ui/icon_recipe_nature", [](Player& pl) { EditPlayerSettingGui::impl(pl); });
+    fm.appendButton("领地传送"_tr(), "textures/ui/icon_recipe_nature", [](Player& pl) { LandTeleportGui::impl(pl); });
+    fm.appendButton("个人设置"_tr(), "textures/ui/icon_recipe_nature", [](Player& pl) {
+        EditPlayerSettingGui::impl(pl);
+    });
 
-    fm.appendButton("关闭", "textures/ui/cancel");
+    fm.appendButton("关闭"_tr(), "textures/ui/cancel");
     fm.sendTo(player);
 }
 
@@ -591,7 +593,7 @@ void LandManagerGui::EditLandPermGui::impl(Player& player, LandData_sptr const& 
 
         JSON::jsonToStructNoMerge(j, perm);
 
-        mc_utils::sendText(pl, "权限表已更新");
+        mc_utils::sendText(pl, "权限表已更新"_tr());
     });
 }
 void LandManagerGui::DeleteLandGui::impl(Player& player, LandData_sptr const& ptr) {
@@ -731,7 +733,7 @@ void LandManagerGui::ReSelectLandGui::impl(Player& player, LandData_sptr const& 
 void EditLandMemberGui::impl(Player& player, LandData_sptr ptr) {
     auto fm = SimpleFormEx::create<LandManagerGui, BackButtonPos::Upper>(ptr->getLandID());
 
-    fm.appendButton("添加成员", "textures/ui/color_plus", [ptr](Player& self) { AddMemberGui::impl(self, ptr); });
+    fm.appendButton("添加成员"_tr(), "textures/ui/color_plus", [ptr](Player& self) { AddMemberGui::impl(self, ptr); });
 
     auto& infos = ll::service::PlayerInfo::getInstance();
     for (auto& member : ptr->getLandMembers()) {
