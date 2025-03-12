@@ -1,6 +1,7 @@
 #include "pland/PLand.h"
 #include "fmt/core.h"
 #include "ll/api/data/KeyValueDB.h"
+#include "ll/api/i18n/I18n.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
 #include "mod/MyMod.h"
@@ -22,6 +23,10 @@
 
 
 namespace land {
+std::string PlayerSettings::SYSTEM_LOCALE_CODE() { return "system"; }
+std::string PlayerSettings::SERVER_LOCALE_CODE() { return "server"; }
+
+
 void PLand::_loadOperators() {
     if (!mDB->has(DB_KEY_OPERATORS())) {
         mDB->set(DB_KEY_OPERATORS(), "[]"); // empty array
@@ -35,7 +40,15 @@ void PLand::_loadPlayerSettings() {
         mDB->set(DB_KEY_PLAYER_SETTINGS(), "{}"); // empty object
     }
     auto settings = JSON::parse(*mDB->get(DB_KEY_PLAYER_SETTINGS()));
-    JSON::jsonToStructNoMerge(settings, mPlayerSettings);
+    if (!settings.is_object()) {
+        throw std::runtime_error("player settings is not an object");
+    }
+
+    for (auto& [key, value] : settings.items()) {
+        PlayerSettings settings_;
+        JSON::jsonToStructTryPatch(value, settings_);
+        mPlayerSettings.emplace(key, std::move(settings_));
+    }
 }
 
 void PLand::_loadLands() {

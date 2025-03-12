@@ -4,6 +4,7 @@
 #include "pland/LandData.h"
 #include <atomic>
 #include <memory>
+#include <string>
 #include <thread>
 #include <unordered_map>
 #include <utility>
@@ -15,8 +16,13 @@ class BlockPos;
 namespace land {
 
 struct PlayerSettings {
-    bool showEnterLandTitle{true};     // 是否显示进入领地提示
-    bool showBottomContinuedTip{true}; // 是否持续显示底部提示
+    bool        showEnterLandTitle{true};     // 是否显示进入领地提示
+    bool        showBottomContinuedTip{true}; // 是否持续显示底部提示
+    std::string localeCode{"server"};         // 语言 system / server / xxx
+
+
+    LDNDAPI static std::string SYSTEM_LOCALE_CODE();
+    LDNDAPI static std::string SERVER_LOCALE_CODE();
 };
 
 class PLand {
