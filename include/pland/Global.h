@@ -47,3 +47,5 @@ inline T* Global = nullptr;
 #else
 #define LDAPI __declspec(dllimport)
 #endif
+
+#define LDNDAPI [[nodiscard]] LDAPI

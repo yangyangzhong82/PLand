@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0]
+
+### Added
+
+- 新增 `en_US`、`ru_RU` 语言文件 #17
+
 ## [0.6.0] - 2025-03-01
 
 ### Changed
