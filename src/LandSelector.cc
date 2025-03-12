@@ -3,7 +3,6 @@
 #include "ll/api/coro/CoroTask.h"
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/ListenerBase.h"
-#include "ll/api/event/player/PlayerDisconnectEvent.h"
 #include "ll/api/event/player/PlayerInteractBlockEvent.h"
 #include "ll/api/thread/ServerThreadExecutor.h"
 #include "mc/server/ServerPlayer.h"
@@ -31,7 +30,6 @@ LandSelector& LandSelector::getInstance() {
 }
 
 ll::event::ListenerPtr                 mPlayerUseItemOn;
-ll::event::ListenerPtr                 mPlayerLeave;
 std::unordered_map<UUIDm, std::time_t> mStabilized; // 防抖
 bool                                   LandSelector::init() {
     auto& bus = ll::event::EventBus::getInstance();
@@ -64,14 +62,14 @@ bool                                   LandSelector::init() {
 
             if (!this->isSelectedPointA(pl)) {
                 if (this->trySelectPointA(pl, ev.blockPos())) {
-                    mc_utils::sendText(pl, "已选择点A \"{}\""_tr(ev.blockPos().toString()));
+                    mc_utils::sendText(pl, "已选择点A \"{}\""_trf(pl, ev.blockPos().toString()));
                 } else {
-                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "选择失败"_tr());
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "选择失败"_trf(pl));
                 }
 
             } else if (!this->isSelectedPointB(pl) && this->isSelectedPointA(pl)) {
                 if (this->trySelectPointB(pl, ev.blockPos())) {
-                    mc_utils::sendText(pl, "已选择点B \"{}\""_tr(ev.blockPos().toString()));
+                    mc_utils::sendText(pl, "已选择点B \"{}\""_trf(pl, ev.blockPos().toString()));
 
 
                     if (auto iter = mSelectors.find(pl.getUuid().asString()); iter != mSelectors.end()) {
@@ -86,21 +84,13 @@ bool                                   LandSelector::init() {
                                 data.mPos.mMax_B.y = mc_utils::GetDimensionMaxHeight(*lock);
                                 data.mPos.mMin_A.y = mc_utils::GetDimensionMinHeight(*lock);
                             } else {
-                                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "获取维度失败"_tr());
+                                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "获取维度失败"_trf(pl));
                             }
                         }
                     }
                 } else {
-                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "选择失败"_tr());
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "选择失败"_trf(pl));
                 }
-            }
-        });
-
-    mPlayerLeave =
-        bus.emplaceListener<ll::event::PlayerDisconnectEvent>([this](ll::event::PlayerDisconnectEvent const& ev) {
-            auto iter = this->mSelectors.find(ev.self().getUuid().asString());
-            if (iter != this->mSelectors.end()) {
-                this->mSelectors.erase(iter);
             }
         });
 
@@ -121,16 +111,18 @@ bool                                   LandSelector::init() {
                     SetTitlePacket titlePacket(SetTitlePacket::TitleType::Title);
                     SetTitlePacket subTitlePacket(SetTitlePacket::TitleType::Subtitle);
                     if (!data.mSelectedPointA) {
-                        titlePacket.mTitleText    = "[ 选区器 ]"_tr();
-                        subTitlePacket.mTitleText = "使用 /pland set a 或使用 {} 选择点A"_tr(Config::cfg.selector.tool);
+                        titlePacket.mTitleText = "[ 选区器 ]"_trf(*pl);
+                        subTitlePacket.mTitleText =
+                            "使用 /pland set a 或使用 {} 选择点A"_trf(*pl, Config::cfg.selector.tool);
 
                     } else if (!data.mSelectedPointB) {
-                        titlePacket.mTitleText    = "[ 选区器 ]"_tr();
-                        subTitlePacket.mTitleText = "使用 /pland set b 或使用 {} 选择点B"_tr(Config::cfg.selector.tool);
+                        titlePacket.mTitleText = "[ 选区器 ]"_trf(*pl);
+                        subTitlePacket.mTitleText =
+                            "使用 /pland set b 或使用 {} 选择点B"_trf(*pl, Config::cfg.selector.tool);
 
                     } else if (data.mCanDraw && Config::cfg.selector.drawParticle) {
-                        titlePacket.mTitleText    = "[ 选区完成 ]"_tr();
-                        subTitlePacket.mTitleText = "使用 /pland buy 呼出购买菜单"_tr(Config::cfg.selector.tool);
+                        titlePacket.mTitleText    = "[ 选区完成 ]"_trf(*pl);
+                        subTitlePacket.mTitleText = "使用 /pland buy 呼出购买菜单"_trf(*pl, Config::cfg.selector.tool);
 
                         // 绘制粒子
                         if (!data.mIsInitedParticle) {
@@ -161,7 +153,6 @@ bool                                   LandSelector::init() {
 bool LandSelector::uninit() {
     mStabilized.clear();
     auto& bus = ll::event::EventBus::getInstance();
-    bus.removeListener(mPlayerLeave);
     bus.removeListener(mPlayerUseItemOn);
     return true;
 }

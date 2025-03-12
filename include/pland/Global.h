@@ -6,6 +6,7 @@
 #include "mc/platform/UUID.h"
 #include <atomic>
 #include <filesystem>
+#include <unordered_map>
 
 class Player;
 
@@ -36,6 +37,7 @@ enum class LandPermType : int {
 
 extern std::atomic<bool> GlobalRepeatCoroTaskRunning;
 
+extern std::unordered_map<std::string, std::string> GlobalPlayerLocaleCodeCached;
 LDNDAPI extern std::string GetPlayerLocaleCodeFromSettings(Player& player); // PLand::getInstance().getPlayerLocaleCode
 
 } // namespace land

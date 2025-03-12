@@ -23,7 +23,7 @@ int ScoreBoard_Get(Player& player, string const& scoreName) {
     if (!obj) {
         mc_utils::sendText<mc_utils::LogLevel::Error>(
             player,
-            "[Moneys] 插件错误: 找不到指定的计分板: {}"_tr(scoreName)
+            "[Moneys] 插件错误: 找不到指定的计分板: {}"_trf(player, scoreName)
         );
         return 0;
     }
@@ -38,7 +38,10 @@ bool ScoreBoard_Set(Player& player, int score, string const& scoreName) {
     Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
     Objective*  obj        = scoreboard.getObjective(scoreName);
     if (!obj) {
-        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: {}"_tr(scoreName));
+        mc_utils::sendText<mc_utils::LogLevel::Error>(
+            player,
+            "[Moneys] 插件错误: 找不到指定的计分板: {}"_trf(player, scoreName)
+        );
         return false;
     }
     const ScoreboardId& id = scoreboard.getScoreboardId(player);
@@ -54,7 +57,10 @@ bool ScoreBoard_Add(Player& player, int score, string const& scoreName) {
     Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
     Objective*  obj        = scoreboard.getObjective(scoreName);
     if (!obj) {
-        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: {}"_tr(scoreName));
+        mc_utils::sendText<mc_utils::LogLevel::Error>(
+            player,
+            "[Moneys] 插件错误: 找不到指定的计分板: {}"_trf(player, scoreName)
+        );
         return false;
     }
     const ScoreboardId& id = scoreboard.getScoreboardId(player);
@@ -70,7 +76,10 @@ bool ScoreBoard_Reduce(Player& player, int score, string const& scoreName) {
     Scoreboard& scoreboard = ll::service::getLevel()->getScoreboard();
     Objective*  obj        = scoreboard.getObjective(scoreName);
     if (!obj) {
-        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "[Moneys] 插件错误: 找不到指定的计分板: {}"_tr(scoreName));
+        mc_utils::sendText<mc_utils::LogLevel::Error>(
+            player,
+            "[Moneys] 插件错误: 找不到指定的计分板: {}"_trf(player, scoreName)
+        );
         return false;
     }
     const ScoreboardId& id = scoreboard.getScoreboardId(player);
@@ -153,22 +162,24 @@ string EconomySystem::getSpendTip(Player& player, long long money) {
 
     if (Config::cfg.economy.enabled)
         return prefix
-             + "此操作消耗§6{0}§r:§e{1}§r | 当前§6{2}§r:§d{3}§r | 剩余§6{4}§r:§s{5}§r | {6}"_tr(
+             + "此操作消耗§6{0}§r:§e{1}§r | 当前§6{2}§r:§d{3}§r | 剩余§6{4}§r:§s{5}§r | {6}"_trf(
+                   player,
                    name,
                    money,
                    name,
                    currentMoney,
                    name,
                    currentMoney - money,
-                   currentMoney >= money ? "§6{}§r§a充足§r"_tr(name) : "§6{}§r§c不足§r"_tr(name)
+                   currentMoney >= money ? "§6{}§r§a充足§r"_trf(player, name) : "§6{}§r§c不足§r"_trf(player, name)
              );
-    else return prefix + "经济系统未启用，此操作不消耗§6{0}§r"_tr(name);
+    else return prefix + "经济系统未启用，此操作不消耗§6{0}§r"_trf(player, name);
 }
 
 void EconomySystem::sendLackMoneyTip(Player& player, long long money) {
     mc_utils::sendText<mc_utils::LogLevel::Error>(
         player,
-        "[Moneys] 操作失败，此操作需要{0}:{1}，当前{2}:{3}"_tr(
+        "[Moneys] 操作失败，此操作需要{0}:{1}，当前{2}:{3}"_trf(
+            player,
             Config::cfg.economy.economyName,
             money,
             Config::cfg.economy.economyName,

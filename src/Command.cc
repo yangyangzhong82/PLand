@@ -135,7 +135,8 @@ static auto const Operator = [](CommandOrigin const& ori, CommandOutput& out, Op
     }
 };
 
-static auto const ListOperator = [](CommandOrigin const& /* ori */, CommandOutput& out) {
+static auto const ListOperator = [](CommandOrigin const& ori, CommandOutput& out) {
+    CHECK_TYPE(ori, out, CommandOriginType::DedicatedServer);
     auto pls = PLand::getInstance().getOperators();
     if (pls.empty()) {
         mc_utils::sendText(out, "当前没有管理员"_tr());
@@ -179,9 +180,12 @@ static auto const Set = [](CommandOrigin const& ori, CommandOutput& out, SetPara
         param.type == SetType::A ? selector.trySelectPointA(player, pos) : selector.trySelectPointB(player, pos);
 
     if (status) {
-        mc_utils::sendText(out, "已选择点{}"_tr(param.type == SetType::A ? "A" : "B"));
+        mc_utils::sendText(out, "已选择点{}"_trf(player, param.type == SetType::A ? "A" : "B"));
     } else {
-        mc_utils::sendText<mc_utils::LogLevel::Error>(out, "您还没有开启开启领地选区，请先使用 /pland new 命令"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Error>(
+            out,
+            "您还没有开启开启领地选区，请先使用 /pland new 命令"_trf(player)
+        );
     }
 };
 
@@ -190,9 +194,12 @@ static auto const Cancel = [](CommandOrigin const& ori, CommandOutput& out) {
     auto& player = *static_cast<Player*>(ori.getEntity());
     bool  ok     = LandSelector::getInstance().tryCancel(player);
     if (ok) {
-        mc_utils::sendText(out, "已取消新建领地"_tr());
+        mc_utils::sendText(out, "已取消新建领地"_trf(player));
     } else {
-        mc_utils::sendText<mc_utils::LogLevel::Error>(out, "您还没有开启开启领地选区，没有什么可以取消的哦~"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Error>(
+            out,
+            "您还没有开启开启领地选区，没有什么可以取消的哦~"_trf(player)
+        );
     }
 };
 
@@ -228,10 +235,10 @@ static auto const Draw = [](CommandOrigin const& ori, CommandOutput& out, DrawPa
 
     if (param.type == LandDraw::DrawType::Disable) {
         LandDraw::disable(player);
-        mc_utils::sendText(out, "领地绘制已关闭"_tr());
+        mc_utils::sendText(out, "领地绘制已关闭"_trf(player));
     } else {
         LandDraw::enable(player, param.type);
-        mc_utils::sendText(out, "领地绘制已开启"_tr());
+        mc_utils::sendText(out, "领地绘制已开启"_trf(player));
     }
 };
 
@@ -271,13 +278,13 @@ static auto const SetLandTeleportPos = [](CommandOrigin const& ori, CommandOutpu
     auto& db   = PLand::getInstance();
     auto  land = db.getLandAt(player.getPosition(), player.getDimensionId().id);
     if (!land) {
-        mc_utils::sendText<mc_utils::LogLevel::Error>(out, "您当前不在领地内"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Error>(out, "您当前不在领地内"_trf(player));
         return;
     }
 
     auto uuid = player.getUuid().asString();
     if (!land->isLandOwner(uuid) && !db.isOperator(uuid)) {
-        mc_utils::sendText<mc_utils::LogLevel::Error>(out, "您不是领地主人，无法设置传送点"_tr());
+        mc_utils::sendText<mc_utils::LogLevel::Error>(out, "您不是领地主人，无法设置传送点"_trf(player));
         return;
     }
     land->mTeleportPos = player.getPosition();
