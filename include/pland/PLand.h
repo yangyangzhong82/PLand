@@ -64,6 +64,8 @@ public:
 
     LDNDAPI bool removeOperator(UUIDs const& uuid);
 
+    LDNDAPI std::vector<UUIDs> const& getOperators() const;
+
     LDNDAPI bool hasPlayerSettings(UUIDs const& uuid) const;
 
     LDNDAPI PlayerSettings* getPlayerSettings(UUIDs const& uuid);

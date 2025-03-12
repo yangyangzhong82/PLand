@@ -186,6 +186,10 @@ bool PLand::removeOperator(UUIDs const& uuid) {
     mLandOperators.erase(iter);
     return true;
 }
+std::vector<UUIDs> const& PLand::getOperators() const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+    return mLandOperators;
+}
 
 
 PlayerSettings* PLand::getPlayerSettings(UUIDs const& uuid) {

@@ -54,6 +54,7 @@
 #include <mc/world/actor/ActorType.h>
 #include <mc/world/actor/player/Player.h>
 #include <mc/world/level/GameType.h>
+#include <sstream>
 
 
 #include "magic_enum.hpp"
@@ -132,6 +133,29 @@ static auto const Operator = [](CommandOrigin const& ori, CommandOutput& out, Op
             }
         }
     }
+};
+
+static auto const ListOperator = [](CommandOrigin const& /* ori */, CommandOutput& out) {
+    auto pls = PLand::getInstance().getOperators();
+    if (pls.empty()) {
+        mc_utils::sendText(out, "当前没有管理员"_tr());
+        return;
+    }
+
+    std::ostringstream oss;
+    oss << "管理员: "_tr();
+    auto& infoDb = ll::service::PlayerInfo::getInstance();
+    for (auto& pl : pls) {
+        auto info = infoDb.fromUuid(pl);
+        if (info) {
+            oss << info->name;
+        } else {
+            oss << pl;
+        }
+        oss << " | ";
+    }
+    mc_utils::sendText(out, oss.str());
+    return;
 };
 
 
@@ -279,6 +303,9 @@ bool LandCommand::setup() {
 
     // pland <op/deop> <player> 添加/移除管理员
     cmd.overload<Lambda::OperatorParam>().required("type").required("player").execute(Lambda::Operator);
+
+    // pland list op
+    cmd.overload().text("list").text("op").execute(Lambda::ListOperator);
 
     // pland new 新建一个领地
     cmd.overload().text("new").execute(Lambda::New);
