@@ -236,5 +236,7 @@
     "任务失败，未找到安全坐标": "Failed. No safe coordinates.",
     "区块加载超时": "Chunk load timeout.",
     "传送任务已存在，请等待当前任务完成": "Teleport task already queued. Wait.",
-    "此功能已被管理员关闭": "This feature is disabled by admin."
+    "此功能已被管理员关闭": "This feature is disabled by admin.",
+    "当前没有管理员": "No admins",
+    "管理员: ": "Admins: "
 }
