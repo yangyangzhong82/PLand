@@ -1,4 +1,6 @@
 #include "pland/Command.h"
+#include "ll/api/form/CustomForm.h"
+#include "mod/MyMod.h"
 #include "pland/DataConverter.h"
 #include "pland/Global.h"
 #include "pland/LandDraw.h"
@@ -290,6 +292,52 @@ static auto const SetLandTeleportPos = [](CommandOrigin const& ori, CommandOutpu
     land->mTeleportPos = player.getPosition();
 };
 
+
+static auto const SetLanguage = [](CommandOrigin const& ori, CommandOutput& out) {
+    CHECK_TYPE(ori, out, CommandOriginType::Player);
+    auto& player = *static_cast<Player*>(ori.getEntity());
+
+    using ll::form::CustomForm;
+    using ll::form::CustomFormResult;
+    using ll::form::FormCancelReason;
+
+    static std::vector<std::string> langs = {
+        PlayerSettings::SERVER_LOCALE_CODE(),
+        PlayerSettings::SYSTEM_LOCALE_CODE()
+    };
+    if (langs.size() == 2) {
+        fs::path const& langDir = my_mod::MyMod::getInstance().getSelf().getLangDir();
+        for (auto const& lang : fs::directory_iterator(langDir)) {
+            if (lang.path().extension() == ".json") {
+                langs.push_back(lang.path().stem().string());
+            }
+        }
+    }
+    CustomForm fm(PLUGIN_NAME + ("| 选择语言"_trf(player)));
+    fm.appendLabel("system: 为使用当前客户端语言\nserver: 为使用服务端语言"_trf(player));
+    fm.appendLabel("当前使用语言包: {}"_trf(player, GetPlayerLocaleCodeFromSettings(player)));
+    fm.appendDropdown("lang", "选择语言"_trf(player), langs);
+    fm.sendTo(player, [](Player& pl, CustomFormResult const& res, FormCancelReason) {
+        if (!res) {
+            return;
+        }
+
+        auto lang = std::get<std::string>(res->at("lang"));
+
+        auto  uuid     = pl.getUuid().asString();
+        auto& db       = PLand::getInstance();
+        auto  settings = db.getPlayerSettings(uuid);
+        if (!settings) {
+            db.setPlayerSettings(uuid, PlayerSettings{});
+            settings = db.getPlayerSettings(uuid);
+        }
+
+        settings->localeCode               = lang;
+        GlobalPlayerLocaleCodeCached[uuid] = lang;
+        mc_utils::sendText<mc_utils::LogLevel::Info>(pl, "语言包已切换为: {}"_trf(pl, lang));
+    });
+};
+
 }; // namespace Lambda
 
 
@@ -341,6 +389,9 @@ bool LandCommand::setup() {
 
     // pland set teleport_pos 设置传送点
     cmd.overload().text("set").text("teleport_pos").execute(Lambda::SetLandTeleportPos);
+
+    // pland set language 设置语言
+    cmd.overload().text("set").text("language").execute(Lambda::SetLanguage);
 
 #ifdef LD_DEVTOOL
     // pland devtool

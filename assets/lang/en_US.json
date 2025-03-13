@@ -237,5 +237,10 @@
     "传送任务已存在，请等待当前任务完成": "Teleport task already queued. Wait.",
     "此功能已被管理员关闭": "This feature is disabled by admin.",
     "当前没有管理员": "No admins",
-    "管理员: ": "Admins: "
+    "管理员: ": "Admins: ",
+    "| 选择语言": "| Select Language",
+    "system: 为使用当前客户端语言\nserver: 为使用服务端语言": "system: To use the current client language\nserver: To use the server language",
+    "当前使用语言包: {}": "Current language pack: {}",
+    "选择语言": "Select Language",
+    "语言包已切换为: {}": "Language pack switched to: {}"
 }

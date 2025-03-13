@@ -57,6 +57,9 @@
 - `/pland list op`
   - 列出领地管理员列表。
 
+- `/pland set language`
+  - 选择语言（玩家）
+
 - `/pland draw <disable|current_land|near_land>`
   - 开启绘制领地范围(需在 `Config.json` 中设置 `setupDrawCommand: true`)
     - `disable` 关闭绘制(玩家执行关闭自己、控制台执行关闭所有玩家)
