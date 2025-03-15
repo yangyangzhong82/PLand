@@ -20,6 +20,8 @@ public:
 
     LDNDAPI bool isZero() const; // xyz是否都为0
 
+    LDNDAPI int distance(Vec3 const& pos) const; // 获取到pos的距离
+
     LDAPI PosBase& operator=(PosBase const& pos) = default;
     LDAPI bool     operator==(PosBase const& pos) const;
     LDAPI bool     operator!=(PosBase const& pos) const;

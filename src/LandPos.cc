@@ -23,6 +23,12 @@ PosBase& PosBase::operator=(const BlockPos& pos) {
 }
 PosBase PosBase::make(int x, int y, int z) { return PosBase{x, y, z}; }
 PosBase PosBase::make(BlockPos const& pos) { return PosBase{pos.x, pos.y, pos.z}; }
+int     PosBase::distance(Vec3 const& pos) const {
+    float dx = pos.x - (float)x;
+    float dy = pos.y - (float)y;
+    float dz = pos.z - (float)z;
+    return (int)std::sqrt(dx * dx + dy * dy + dz * dz);
+}
 
 // LandPos
 int LandPos::getDepth() const { return mMax_B.x - mMin_A.x; }
