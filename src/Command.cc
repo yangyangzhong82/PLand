@@ -1,15 +1,6 @@
 #include "pland/Command.h"
-#include "ll/api/form/CustomForm.h"
-#include "mod/MyMod.h"
-#include "pland/DataConverter.h"
-#include "pland/Global.h"
-#include "pland/LandDraw.h"
-#include "pland/LandSelector.h"
-#include "pland/Particle.h"
-#include "pland/utils/McUtils.h"
-
-
 #include "ll/api/command/CommandRegistrar.h"
+#include "ll/api/form/CustomForm.h"
 #include "ll/api/service/Bedrock.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/core/utility/optional_ref.h"
@@ -31,6 +22,12 @@
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/chunk/LevelChunk.h"
 #include "mc/world/level/dimension/Dimension.h"
+#include "mod/MyMod.h"
+#include "pland/DataConverter.h"
+#include "pland/DrawHandleManager.h"
+#include "pland/Global.h"
+#include "pland/LandSelector.h"
+#include "pland/utils/McUtils.h"
 #include <filesystem>
 #include <ll/api/command/Command.h>
 #include <ll/api/command/CommandHandle.h>
@@ -221,26 +218,42 @@ static auto const Reload = [](CommandOrigin const& ori, CommandOutput& out) {
     }
 };
 
+
+enum class DrawType : int { Disable = 0, NearLand, CurrentLand };
 struct DrawParam {
-    LandDraw::DrawType type;
+    DrawType type;
 };
 static auto const Draw = [](CommandOrigin const& ori, CommandOutput& out, DrawParam const& param) {
-    if (ori.getOriginType() == CommandOriginType::DedicatedServer) {
-        if (param.type == LandDraw::DrawType::Disable) {
-            LandDraw::disable();
-            mc_utils::sendText(out, "领地绘制已关闭"_tr());
+    CHECK_TYPE(ori, out, CommandOriginType::Player);
+
+    auto& player = *static_cast<Player*>(ori.getEntity());
+    auto& db     = PLand::getInstance();
+    auto  handle = DrawHandleManager::getInstance().getOrCreateHandle(player);
+
+    switch (param.type) {
+    case DrawType::Disable: {
+        handle->removeLands();
+        mc_utils::sendText(out, "领地绘制已关闭"_trf(player));
+        break;
+    }
+
+    case DrawType::CurrentLand: {
+        auto land = db.getLandAt(player.getPosition(), player.getDimensionId().id);
+        if (!land) {
+            mc_utils::sendText<mc_utils::LogLevel::Error>(out, "您当前不在领地内"_trf(player));
             return;
         }
+        handle->draw(land);
+        mc_utils::sendText(out, "已绘制领地"_trf(player));
+        break;
     }
-    CHECK_TYPE(ori, out, CommandOriginType::Player);
-    auto& player = *static_cast<Player*>(ori.getEntity());
 
-    if (param.type == LandDraw::DrawType::Disable) {
-        LandDraw::disable(player);
-        mc_utils::sendText(out, "领地绘制已关闭"_trf(player));
-    } else {
-        LandDraw::enable(player, param.type);
-        mc_utils::sendText(out, "领地绘制已开启"_trf(player));
+    case DrawType::NearLand: {
+        auto lands = db.getLandAt(player.getPosition(), Config::cfg.land.drawRange, player.getDimensionId().id);
+        for (auto& land : lands) handle->draw(land);
+        mc_utils::sendText(out, "已绘制附近 {} 个领地"_trf(player, lands.size()));
+        break;
+    }
     }
 };
 

@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 新增 `/pland list op` 命令 #15
 - 新增 `/pland set language` 命令 #19
 
+### Changed
+
+- 移除 `Particle`、`LandDraw`
+
 ## [0.6.0] - 2025-03-01
 
 ### Changed

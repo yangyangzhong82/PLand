@@ -12,6 +12,7 @@
 #include "mod/MyMod.h"
 #include "pland/Calculate.h"
 #include "pland/Config.h"
+#include "pland/DrawHandleManager.h"
 #include "pland/EconomySystem.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
@@ -410,7 +411,11 @@ void SelectorChangeYGui::impl(Player& player, std::string const& exception) {
 
             dataPtr->mPos.mMin_A.y = startY;
             dataPtr->mPos.mMax_B.y = endY;
-            dataPtr->mParticle.draw(pl, true); // force update cache
+            if (dataPtr->mIsDrawedBox) {
+                auto handle = DrawHandleManager::getInstance().getOrCreateHandle(pl);
+                handle->remove(dataPtr->mDrawedBoxGeoId);
+                handle->draw(dataPtr->mPos, dataPtr->mDimid);
+            }
 
             mc_utils::sendText(pl, "Y轴范围已修改为 {} ~ {}"_trf(pl, startY, endY));
         } catch (...) {

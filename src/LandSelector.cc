@@ -9,10 +9,10 @@
 #include "mc/world/item/ItemStack.h"
 #include "mod/MyMod.h"
 #include "pland/Config.h"
+#include "pland/DrawHandleManager.h"
 #include "pland/GUI.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
-#include "pland/Particle.h"
 #include "pland/utils/Date.h"
 #include "pland/utils/McUtils.h"
 #include <optional>
@@ -125,18 +125,12 @@ bool                                   LandSelector::init() {
                         subTitlePacket.mTitleText = "使用 /pland buy 呼出购买菜单"_trf(*pl, Config::cfg.selector.tool);
 
                         // 绘制粒子
-                        if (!data.mIsInitedParticle) {
-                            data.mParticle.mDimid  = data.mDimid;
-                            data.mParticle.mDraw3D = data.mDraw3D;
-                            data.mParticle.mPos    = data.mPos;
-                            data.mIsInitedParticle = true;
+                        if (!data.mIsDrawedBox) {
+                            data.mIsDrawedBox    = true;
+                            data.mDrawedBoxGeoId = DrawHandleManager::getInstance()
+                                                       .getOrCreateHandle(*data.mPlayer)
+                                                       ->draw(data.mPos, data.mDimid);
                         }
-                        data.mParticle.draw(*pl);
-                    }
-
-                    // 重新选区 & 绘制旧范围 (新范围无法绘制时绘制旧范围)
-                    if (data.mBindLandData.lock() != nullptr && !data.mCanDraw) {
-                        data.mOldRangeParticle.draw(*pl);
                     }
 
                     titlePacket.sendTo(*pl);
@@ -278,13 +272,22 @@ bool LandSelector::tryReSelect(Player& player, LandData_sptr land) {
     return true;
 }
 
-LandSelectorData::LandSelectorData(Player& player, LandData_sptr landData) {
-    this->mPlayer       = &player;
-    this->mDimid        = landData->mLandDimid;
-    this->mDraw3D       = landData->mIs3DLand;
-    this->mBindLandData = landData;
-
-    this->mOldRangeParticle = Particle(landData->mPos, landData->mLandDimid, landData->mIs3DLand);
+LandSelectorData::LandSelectorData(Player& player, LandData_sptr const& landData) {
+    this->mPlayer           = &player;
+    this->mDimid            = landData->mLandDimid;
+    this->mDraw3D           = landData->mIs3DLand;
+    this->mBindLandData     = landData;
+    this->mIsDrawedOldRange = true;
+    this->mOldRangeGeoId =
+        DrawHandleManager::getInstance().getOrCreateHandle(player)->draw(landData->mPos, landData->mLandDimid);
+}
+LandSelectorData::~LandSelectorData() {
+    if (mIsDrawedOldRange) {
+        DrawHandleManager::getInstance().getOrCreateHandle(*mPlayer)->remove(mOldRangeGeoId);
+    }
+    if (mIsDrawedBox) {
+        DrawHandleManager::getInstance().getOrCreateHandle(*mPlayer)->remove(mDrawedBoxGeoId);
+    }
 }
 
 

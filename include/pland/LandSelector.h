@@ -1,4 +1,5 @@
 #pragma once
+#include "bsci/GeometryGroup.h"
 #include "mc/deps/core/utility/typeid_t.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
@@ -6,7 +7,6 @@
 #include "pland/Global.h"
 #include "pland/LandData.h"
 #include "pland/LandPos.h"
-#include "pland/Particle.h"
 #include <optional>
 #include <unordered_map>
 
@@ -24,17 +24,20 @@ struct LandSelectorData {
     bool    mCanSelect{true};       // 能否选择
 
     // 粒子API
-    bool     mIsInitedParticle{false}; // 是否已经初始化mParticle
-    Particle mParticle;
+    bool                       mIsDrawedBox{false}; // 是否已经绘制了选区
+    bsci::GeometryGroup::GeoId mDrawedBoxGeoId;     // 绘制的GeoId
 
     // 重新选区
-    LandData_wptr mBindLandData;     // 绑定的LandData (此项不为空时，代表玩家正在重新选区<调整大小>)
-    Particle      mOldRangeParticle; // 旧的粒子范围
+    LandData_wptr              mBindLandData; // 绑定的LandData (此项不为空时，代表玩家正在重新选区<调整大小>)
+    bool                       mIsDrawedOldRange{false}; // 是否已经绘制了旧的选区
+    bsci::GeometryGroup::GeoId mOldRangeGeoId;           // 旧的GeoId
 
     // constructor
-    LDAPI LandSelectorData() = default;
-    LDAPI LandSelectorData(Player& player, int dim, bool draw3D) : mPlayer(&player), mDimid(dim), mDraw3D(draw3D) {}
-    LDAPI LandSelectorData(Player& player, LandData_sptr landData);
+    LDNDAPI LandSelectorData() = default;
+    LDNDAPI LandSelectorData(Player& player, int dim, bool draw3D) : mPlayer(&player), mDimid(dim), mDraw3D(draw3D) {}
+    LDNDAPI LandSelectorData(Player& player, LandData_sptr const& landData);
+
+    virtual ~LandSelectorData();
 };
 
 

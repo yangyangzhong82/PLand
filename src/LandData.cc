@@ -88,6 +88,9 @@ LandPermType LandData::getPermType(UUIDs const& uuid) const {
 
 nlohmann::json LandData::toJSON() const { return JSON::structTojson(*this); }
 
+bool LandData::operator==(LandData_sptr const& other) const { return mLandID == other->mLandID; }
+
+
 // static
 LandData_sptr LandData::make() { return std::make_shared<LandData>(); }
 LandData_sptr LandData::make(LandPos const& pos, LandDimid dimid, bool is3D, UUIDs const& owner) {

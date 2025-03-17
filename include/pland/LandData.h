@@ -163,6 +163,8 @@ public:
     LDNDAPI LandPermType getPermType(UUIDs const& uuid) const;
 
     LDNDAPI nlohmann::json toJSON() const;
+
+    LDNDAPI bool operator==(LandData_sptr const& other) const;
 };
 
 

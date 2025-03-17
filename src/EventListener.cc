@@ -13,6 +13,7 @@
 #include "mc\world\level\chunk\SubChunk.h"
 #include "mod/MyMod.h"
 #include "pland/Config.h"
+#include "pland/DrawHandleManager.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
 #include "pland/LandScheduler.h"
@@ -111,6 +112,7 @@ bool EventListener::setup() {
             LandScheduler::mDimidMap.erase(uuid);
             LandScheduler::mLandidMap.erase(uuid);
             LandSelector::getInstance().mSelectors.erase(uuidStr);
+            DrawHandleManager::getInstance().removeHandle(player);
         }),
         bus->emplaceListener<ll::event::ActorHurtEvent>([db, logger](ll::event::ActorHurtEvent& ev) {
             if (!Config::cfg.listeners.ActorHurtEvent) return;

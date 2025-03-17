@@ -12,11 +12,9 @@
 #include "pland/Config.h"
 #include "pland/EventListener.h"
 #include "pland/Global.h"
-#include "pland/LandDraw.h"
 #include "pland/LandScheduler.h"
 #include "pland/LandSelector.h"
 #include "pland/PLand.h"
-#include "pland/Particle.h"
 
 #ifdef LD_TEST
 #include "LandEventTest.h"
@@ -68,7 +66,6 @@ bool MyMod::enable() {
     land::LandSelector::getInstance().init();
     land::LandScheduler::setup();
     land::EventListener::setup();
-    land::LandDraw::setup();
 
 #ifdef LD_TEST
     test::SetupEventListener();
@@ -100,7 +97,6 @@ bool MyMod::disable() {
     land::LandSelector::getInstance().uninit();
     land::LandScheduler::release();
     land::EventListener::release();
-    land::LandDraw::release();
 
     return true;
 }
