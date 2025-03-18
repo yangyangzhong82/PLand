@@ -377,7 +377,7 @@ LandData_sptr PLand::getLandAt(BlockPos const& pos, LandDimid dimid) const {
     }
     return nullptr;
 }
-std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& center, int radius, LandDimid dimid) const {
+std::unordered_set<LandData_sptr> PLand::getLandAt(BlockPos const& center, int radius, LandDimid dimid) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);
 
     auto dimIter = mLandMap.find(dimid); // 查找维度
@@ -385,9 +385,9 @@ std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& center, int radius, 
         return {};
     }
 
-    auto&                       dim = dimIter->second;
-    std::unordered_set<ChunkID> visitedChunks; // 记录已访问的区块
-    std::vector<LandData_sptr>  lands;
+    auto&                             dim = dimIter->second;
+    std::unordered_set<ChunkID>       visitedChunks; // 记录已访问的区块
+    std::unordered_set<LandData_sptr> lands;
 
     int minChunkX = (center.x - radius) >> 4;
     int minChunkZ = (center.z - radius) >> 4;
@@ -407,7 +407,7 @@ std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& center, int radius, 
                 for (const auto& landId : chunkIt->second) {
                     auto landIt = mLandCache.find(landId); // 查找领地
                     if (landIt != mLandCache.end() && landIt->second->isRadiusInLand(center, radius)) {
-                        lands.push_back(landIt->second);
+                        lands.insert(landIt->second);
                     }
                 }
             }
@@ -415,7 +415,7 @@ std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& center, int radius, 
     }
     return lands;
 }
-std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const {
+std::unordered_set<LandData_sptr> PLand::getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);
 
     auto dimIter = mLandMap.find(dimid); // 查找维度
@@ -423,9 +423,9 @@ std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& pos1, BlockPos const
         return {};
     }
 
-    auto&                       dim = dimIter->second;
-    std::unordered_set<ChunkID> visitedChunks;
-    std::vector<LandData_sptr>  lands;
+    auto&                             dim = dimIter->second;
+    std::unordered_set<ChunkID>       visitedChunks;
+    std::unordered_set<LandData_sptr> lands;
 
     int minChunkX = std::min(pos1.x, pos2.x) >> 4;
     int minChunkZ = std::min(pos1.z, pos2.z) >> 4;
@@ -445,7 +445,7 @@ std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& pos1, BlockPos const
                 for (const auto& landId : chunkIt->second) {
                     auto landIt = mLandCache.find(landId); // 查找领地
                     if (landIt != mLandCache.end() && landIt->second->isAABBInLand(pos1, pos2)) {
-                        lands.push_back(landIt->second);
+                        lands.insert(landIt->second);
                     }
                 }
             }

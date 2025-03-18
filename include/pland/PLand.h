@@ -7,6 +7,7 @@
 #include <string>
 #include <thread>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -101,9 +102,10 @@ public: // 领地查询API
 
     LDNDAPI LandData_sptr getLandAt(BlockPos const& pos, LandDimid dimid) const;
 
-    LDNDAPI std::vector<LandData_sptr> getLandAt(BlockPos const& center, int radius, LandDimid dimid) const;
+    LDNDAPI std::unordered_set<LandData_sptr> getLandAt(BlockPos const& center, int radius, LandDimid dimid) const;
 
-    LDNDAPI std::vector<LandData_sptr> getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const;
+    LDNDAPI std::unordered_set<LandData_sptr>
+            getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const;
 
 public:
     LDAPI static ChunkID             EncodeChunkID(int x, int z);
