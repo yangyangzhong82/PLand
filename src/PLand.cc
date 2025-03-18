@@ -116,6 +116,9 @@ void PLand::_refreshLandRange(LandData_sptr const& ptr) {
     _updateLandMap(ptr, false);
     _updateLandMap(ptr, true);
 }
+
+LandID PLand::getNextLandID() { return mNextLandID++; }
+
 } // namespace land
 
 
@@ -233,10 +236,10 @@ bool PLand::addLand(LandData_sptr land) {
         return false;
     }
 
-    LandID id = generateLandID();
+    LandID id = getNextLandID();
     if (hasLand(id)) {
         for (size_t i = 0; i < 3; i++) {
-            id = generateLandID();
+            id = getNextLandID();
             if (!hasLand(id)) {
                 break;
             }
@@ -353,7 +356,6 @@ LandPermType PLand::getPermType(UUIDs const& uuid, LandID id, bool ignoreOperato
     return LandPermType::Guest;
 }
 
-LandID PLand::generateLandID() { return mNextLandID++; }
 
 LandData_sptr PLand::getLandAt(BlockPos const& pos, LandDimid dimid) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);

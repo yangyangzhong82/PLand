@@ -25,7 +25,7 @@ struct PlayerSettings {
     LDNDAPI static std::string SERVER_LOCALE_CODE();
 };
 
-class PLand {
+class PLand final {
 public:
     PLand()                        = default;
     PLand(const PLand&)            = delete;
@@ -46,6 +46,7 @@ private:
     // 维度 -> 区块 -> [领地] (快速查询领地)
     std::unordered_map<LandDimid, std::unordered_map<ChunkID, std::vector<LandID>>> mLandMap;
 
+
 private: //! private 方法非线程安全
     void _loadOperators();
     void _loadPlayerSettings();
@@ -55,6 +56,8 @@ private: //! private 方法非线程安全
 
     void _updateLandMap(LandData_sptr const& ptr, bool add);
     void _refreshLandRange(LandData_sptr const& ptr);
+
+    LandID getNextLandID();
 
 public:
     LDNDAPI static PLand& getInstance();
@@ -101,9 +104,6 @@ public: // 领地查询API
     LDNDAPI std::vector<LandData_sptr> getLandAt(BlockPos const& center, int radius, LandDimid dimid) const;
 
     LDNDAPI std::vector<LandData_sptr> getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const;
-
-public:
-    LDAPI LandID generateLandID();
 
 public:
     LDAPI static ChunkID             EncodeChunkID(int x, int z);
