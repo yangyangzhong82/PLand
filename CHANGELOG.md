@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - 移除 `Particle`、`LandDraw`
+- 优化 `PLand::getLandAt` 查询
 
 ## [0.6.0] - 2025-03-01
 

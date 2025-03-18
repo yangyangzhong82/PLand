@@ -18,6 +18,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -379,7 +380,14 @@ LandData_sptr PLand::getLandAt(BlockPos const& pos, LandDimid dimid) const {
 std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& center, int radius, LandDimid dimid) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);
 
-    std::vector<LandData_sptr> lands;
+    auto dimIter = mLandMap.find(dimid); // 查找维度
+    if (dimIter == mLandMap.end()) {
+        return {};
+    }
+
+    auto&                       dim = dimIter->second;
+    std::unordered_set<ChunkID> visitedChunks; // 记录已访问的区块
+    std::vector<LandData_sptr>  lands;
 
     int minChunkX = (center.x - radius) >> 4;
     int minChunkZ = (center.z - radius) >> 4;
@@ -389,15 +397,17 @@ std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& center, int radius, 
     for (int x = minChunkX; x <= maxChunkX; ++x) {
         for (int z = minChunkZ; z <= maxChunkZ; ++z) {
             ChunkID chunkId = EncodeChunkID(x, z);
-            auto    dimIt   = mLandMap.find(dimid); // 查找维度
-            if (dimIt != mLandMap.end()) {
-                auto chunkIt = dimIt->second.find(chunkId); // 查找区块
-                if (chunkIt != dimIt->second.end()) {
-                    for (const auto& landId : chunkIt->second) {
-                        auto landIt = mLandCache.find(landId); // 查找领地
-                        if (landIt != mLandCache.end() && landIt->second->isRadiusInLand(center, radius)) {
-                            lands.push_back(landIt->second);
-                        }
+            if (visitedChunks.find(chunkId) != visitedChunks.end()) {
+                continue; // 如果区块已经访问过，则跳过
+            }
+            visitedChunks.insert(chunkId);
+
+            auto chunkIt = dim.find(chunkId); // 查找区块
+            if (chunkIt != dim.end()) {
+                for (const auto& landId : chunkIt->second) {
+                    auto landIt = mLandCache.find(landId); // 查找领地
+                    if (landIt != mLandCache.end() && landIt->second->isRadiusInLand(center, radius)) {
+                        lands.push_back(landIt->second);
                     }
                 }
             }
@@ -408,7 +418,14 @@ std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& center, int radius, 
 std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& pos1, BlockPos const& pos2, LandDimid dimid) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);
 
-    std::vector<LandData_sptr> lands;
+    auto dimIter = mLandMap.find(dimid); // 查找维度
+    if (dimIter == mLandMap.end()) {
+        return {};
+    }
+
+    auto&                       dim = dimIter->second;
+    std::unordered_set<ChunkID> visitedChunks;
+    std::vector<LandData_sptr>  lands;
 
     int minChunkX = std::min(pos1.x, pos2.x) >> 4;
     int minChunkZ = std::min(pos1.z, pos2.z) >> 4;
@@ -418,15 +435,17 @@ std::vector<LandData_sptr> PLand::getLandAt(BlockPos const& pos1, BlockPos const
     for (int x = minChunkX; x <= maxChunkX; ++x) {
         for (int z = minChunkZ; z <= maxChunkZ; ++z) {
             ChunkID chunkId = EncodeChunkID(x, z);
-            auto    dimIt   = mLandMap.find(dimid); // 查找维度
-            if (dimIt != mLandMap.end()) {
-                auto chunkIt = dimIt->second.find(chunkId); // 查找区块
-                if (chunkIt != dimIt->second.end()) {
-                    for (const auto& landId : chunkIt->second) {
-                        auto landIt = mLandCache.find(landId); // 查找领地
-                        if (landIt != mLandCache.end() && landIt->second->isAABBInLand(pos1, pos2)) {
-                            lands.push_back(landIt->second);
-                        }
+            if (visitedChunks.find(chunkId) != visitedChunks.end()) {
+                continue;
+            }
+            visitedChunks.insert(chunkId);
+
+            auto chunkIt = dim.find(chunkId); // 查找区块
+            if (chunkIt != dim.end()) {
+                for (const auto& landId : chunkIt->second) {
+                    auto landIt = mLandCache.find(landId); // 查找领地
+                    if (landIt != mLandCache.end() && landIt->second->isAABBInLand(pos1, pos2)) {
+                        lands.push_back(landIt->second);
                     }
                 }
             }
