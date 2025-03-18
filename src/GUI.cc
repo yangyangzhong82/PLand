@@ -414,7 +414,7 @@ void SelectorChangeYGui::impl(Player& player, std::string const& exception) {
             if (dataPtr->mIsDrawedBox) {
                 auto handle = DrawHandleManager::getInstance().getOrCreateHandle(pl);
                 handle->remove(dataPtr->mDrawedBoxGeoId);
-                handle->draw(dataPtr->mPos, dataPtr->mDimid);
+                dataPtr->mDrawedBoxGeoId = handle->draw(dataPtr->mPos, dataPtr->mDimid);
             }
 
             mc_utils::sendText(pl, "Y轴范围已修改为 {} ~ {}"_trf(pl, startY, endY));

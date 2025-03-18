@@ -7,6 +7,7 @@
 #include "pland/Global.h"
 #include "pland/LandData.h"
 #include "pland/LandPos.h"
+#include <memory>
 #include <optional>
 #include <unordered_map>
 
@@ -23,7 +24,6 @@ struct LandSelectorData {
     bool    mCanDraw{false};        // 能否绘制
     bool    mCanSelect{true};       // 能否选择
 
-    // 粒子API
     bool                       mIsDrawedBox{false}; // 是否已经绘制了选区
     bsci::GeometryGroup::GeoId mDrawedBoxGeoId;     // 绘制的GeoId
 
@@ -32,22 +32,24 @@ struct LandSelectorData {
     bool                       mIsDrawedOldRange{false}; // 是否已经绘制了旧的选区
     bsci::GeometryGroup::GeoId mOldRangeGeoId;           // 旧的GeoId
 
-    // constructor
-    LDNDAPI LandSelectorData() = default;
-    LDNDAPI LandSelectorData(Player& player, int dim, bool draw3D) : mPlayer(&player), mDimid(dim), mDraw3D(draw3D) {}
-    LDNDAPI LandSelectorData(Player& player, LandData_sptr const& landData);
+
+    LDNDAPI explicit LandSelectorData(Player& player, int dim, bool draw3D);
+    LDNDAPI explicit LandSelectorData(Player& player, LandData_sptr const& landData);
 
     virtual ~LandSelectorData();
 };
 
 
-class LandSelector {
+class LandSelector final {
+    LandSelector() = default;
+
 public:
-    LandSelector()                               = default;
     LandSelector(const LandSelector&)            = delete;
     LandSelector& operator=(const LandSelector&) = delete;
+    LandSelector(LandSelector&&)                 = delete;
+    LandSelector& operator=(LandSelector&&)      = delete;
 
-    std::unordered_map<UUIDs, LandSelectorData> mSelectors;
+    std::unordered_map<UUIDm, std::unique_ptr<LandSelectorData>> mSelectors;
 
     LDNDAPI static LandSelector& getInstance();
 
@@ -56,11 +58,11 @@ public:
 
     LDNDAPI LandSelectorData* getSelector(Player& player);
 
-    LDAPI bool isSelectTool(ItemStack const& item) const;
-    LDAPI bool isSelecting(Player& player) const; // 是否正在选区
-    LDAPI bool isSelected(Player& player) const;  // 是否已经选完
-    LDAPI bool isSelectedPointA(Player& player) const;
-    LDAPI bool isSelectedPointB(Player& player) const;
+    LDNDAPI bool isSelectTool(ItemStack const& item) const;
+    LDNDAPI bool isSelecting(Player& player) const; // 是否正在选区
+    LDNDAPI bool isSelected(Player& player) const;  // 是否已经选完
+    LDNDAPI bool isSelectedPointA(Player& player) const;
+    LDNDAPI bool isSelectedPointB(Player& player) const;
 
     LDAPI bool isReSelector(Player& player) const;                  // 是否是重新选区
     LDAPI bool tryReSelect(Player& player, LandData_sptr landData); // 重新选区

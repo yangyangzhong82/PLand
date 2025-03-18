@@ -15,6 +15,7 @@
 #include "pland/LandData.h"
 #include "pland/utils/Date.h"
 #include "pland/utils/McUtils.h"
+#include <memory>
 #include <optional>
 #include <unordered_map>
 
@@ -72,17 +73,17 @@ bool                                   LandSelector::init() {
                     mc_utils::sendText(pl, "已选择点B \"{}\""_trf(pl, ev.blockPos().toString()));
 
 
-                    if (auto iter = mSelectors.find(pl.getUuid().asString()); iter != mSelectors.end()) {
+                    if (auto iter = mSelectors.find(pl.getUuid()); iter != mSelectors.end()) {
                         auto& data = iter->second;
-                        if (data.mDraw3D) {
+                        if (data->mDraw3D) {
                             // 3DLand
                             SelectorChangeYGui::impl(pl); // 发送GUI
                         } else {
                             // 2DLand
-                            auto dim = pl.getLevel().getDimension(data.mDimid);
+                            auto dim = pl.getLevel().getDimension(data->mDimid);
                             if (auto lock = dim.lock(); lock) {
-                                data.mPos.mMax_B.y = mc_utils::GetDimensionMaxHeight(*lock);
-                                data.mPos.mMin_A.y = mc_utils::GetDimensionMinHeight(*lock);
+                                data->mPos.mMax_B.y = mc_utils::GetDimensionMaxHeight(*lock);
+                                data->mPos.mMin_A.y = mc_utils::GetDimensionMinHeight(*lock);
                             } else {
                                 mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "获取维度失败"_trf(pl));
                             }
@@ -102,7 +103,7 @@ bool                                   LandSelector::init() {
             if (!GlobalRepeatCoroTaskRunning) co_return;
             for (auto& [uuid, data] : mSelectors) {
                 try {
-                    auto pl = data.mPlayer; // 玩家指针
+                    auto pl = data->mPlayer; // 玩家指针
                     if (pl == nullptr) {
                         mSelectors.erase(uuid); // 玩家断开连接
                         continue;
@@ -110,26 +111,26 @@ bool                                   LandSelector::init() {
 
                     SetTitlePacket titlePacket(SetTitlePacket::TitleType::Title);
                     SetTitlePacket subTitlePacket(SetTitlePacket::TitleType::Subtitle);
-                    if (!data.mSelectedPointA) {
+                    if (!data->mSelectedPointA) {
                         titlePacket.mTitleText = "[ 选区器 ]"_trf(*pl);
                         subTitlePacket.mTitleText =
                             "使用 /pland set a 或使用 {} 选择点A"_trf(*pl, Config::cfg.selector.tool);
 
-                    } else if (!data.mSelectedPointB) {
+                    } else if (!data->mSelectedPointB) {
                         titlePacket.mTitleText = "[ 选区器 ]"_trf(*pl);
                         subTitlePacket.mTitleText =
                             "使用 /pland set b 或使用 {} 选择点B"_trf(*pl, Config::cfg.selector.tool);
 
-                    } else if (data.mCanDraw && Config::cfg.selector.drawParticle) {
+                    } else if (data->mCanDraw && Config::cfg.selector.drawParticle) {
                         titlePacket.mTitleText    = "[ 选区完成 ]"_trf(*pl);
                         subTitlePacket.mTitleText = "使用 /pland buy 呼出购买菜单"_trf(*pl, Config::cfg.selector.tool);
 
                         // 绘制粒子
-                        if (!data.mIsDrawedBox) {
-                            data.mIsDrawedBox    = true;
-                            data.mDrawedBoxGeoId = DrawHandleManager::getInstance()
-                                                       .getOrCreateHandle(*data.mPlayer)
-                                                       ->draw(data.mPos, data.mDimid);
+                        if (!data->mIsDrawedBox) {
+                            data->mIsDrawedBox    = true;
+                            data->mDrawedBoxGeoId = DrawHandleManager::getInstance()
+                                                        .getOrCreateHandle(*data->mPlayer)
+                                                        ->draw(data->mPos, data->mDimid);
                         }
                     }
 
@@ -152,44 +153,45 @@ bool LandSelector::uninit() {
 }
 
 LandSelectorData* LandSelector::getSelector(Player& player) {
-    auto iter = mSelectors.find(player.getUuid().asString());
+    auto iter = mSelectors.find(player.getUuid());
     if (iter == mSelectors.end()) {
         return nullptr;
     }
-
-    return &iter->second;
+    return iter->second.get();
 }
 bool LandSelector::isSelectTool(ItemStack const& item) const { return item.getTypeName() == Config::cfg.selector.tool; }
 bool LandSelector::isSelecting(Player& player) const {
-    auto iter = mSelectors.find(player.getUuid().asString());
-    return iter != mSelectors.end() && iter->second.mCanSelect;
+    auto iter = mSelectors.find(player.getUuid());
+    return iter != mSelectors.end() && iter->second->mCanSelect;
 }
 bool LandSelector::isSelected(Player& player) const {
-    auto iter = mSelectors.find(player.getUuid().asString());
-    return iter != mSelectors.end() && !iter->second.mCanSelect;
+    auto iter = mSelectors.find(player.getUuid());
+    return iter != mSelectors.end() && !iter->second->mCanSelect;
 }
 bool LandSelector::isSelectedPointA(Player& player) const {
-    auto iter = mSelectors.find(player.getUuid().asString());
-    return iter != mSelectors.end() && iter->second.mSelectedPointA;
+    auto iter = mSelectors.find(player.getUuid());
+    return iter != mSelectors.end() && iter->second->mSelectedPointA;
 }
 bool LandSelector::isSelectedPointB(Player& player) const {
-    auto iter = mSelectors.find(player.getUuid().asString());
-    return iter != mSelectors.end() && iter->second.mSelectedPointB;
+    auto iter = mSelectors.find(player.getUuid());
+    return iter != mSelectors.end() && iter->second->mSelectedPointB;
 }
 
 
 bool LandSelector::tryStartSelect(Player& player, int dim, bool draw3D) {
-    auto uid = player.getUuid().asString();
+    auto uid = player.getUuid();
 
     if (mSelectors.find(uid) != mSelectors.end()) {
         return false;
     }
 
-    mSelectors[UUIDs(uid)] = LandSelectorData(player, dim, draw3D);
+    auto data = std::make_unique<LandSelectorData>(player, dim, draw3D);
+
+    mSelectors[UUIDs(uid)] = std::move(data);
     return true;
 }
 bool LandSelector::tryCancel(Player& player) {
-    auto uid = player.getUuid().asString();
+    auto uid = player.getUuid();
 
     auto iter = mSelectors.find(uid);
     if (iter == mSelectors.end()) {
@@ -204,35 +206,35 @@ bool LandSelector::tryCancel(Player& player) {
     return true;
 }
 bool LandSelector::trySelectPointA(Player& player, BlockPos pos) {
-    auto uid = player.getUuid().asString();
+    auto uid = player.getUuid();
 
     auto iter = mSelectors.find(uid);
     if (iter == mSelectors.end()) {
         return false;
     }
 
-    iter->second.mSelectedPointA = true;
-    iter->second.mPos.mMin_A     = pos;
+    iter->second->mSelectedPointA = true;
+    iter->second->mPos.mMin_A     = pos;
     return true;
 }
 bool LandSelector::trySelectPointB(Player& player, BlockPos pos) {
-    auto uid = player.getUuid().asString();
+    auto uid = player.getUuid();
 
     auto iter = mSelectors.find(uid);
     if (iter == mSelectors.end()) {
         return false;
     }
 
-    iter->second.mSelectedPointB = true;
-    iter->second.mPos.mMax_B     = pos;
-    iter->second.mCanSelect      = false;
-    iter->second.mCanDraw        = true;
-    iter->second.mPos.fix(); // fix  min/max
+    iter->second->mSelectedPointB = true;
+    iter->second->mPos.mMax_B     = pos;
+    iter->second->mCanSelect      = false;
+    iter->second->mCanDraw        = true;
+    iter->second->mPos.fix(); // fix  min/max
     return true;
 }
 
 bool LandSelector::completeAndRelease(Player& player) {
-    auto uid = player.getUuid().asString();
+    auto uid = player.getUuid();
 
     auto iter = mSelectors.find(uid);
     if (iter == mSelectors.end()) {
@@ -247,7 +249,7 @@ bool LandSelector::completeAndRelease(Player& player) {
     return true;
 }
 LandData_sptr LandSelector::makeLandFromSelector(Player& player) {
-    auto uid = player.getUuid().asString();
+    auto uid = player.getUuid();
 
     auto iter = mSelectors.find(uid);
     if (iter == mSelectors.end()) {
@@ -256,22 +258,25 @@ LandData_sptr LandSelector::makeLandFromSelector(Player& player) {
 
     auto& data = iter->second;
 
-    return LandData::make(data.mPos, data.mDimid, data.mDraw3D, data.mPlayer->getUuid().asString());
+    return LandData::make(data->mPos, data->mDimid, data->mDraw3D, data->mPlayer->getUuid().asString());
 }
 
 
 // ReSelect
 bool LandSelector::isReSelector(Player& player) const {
-    auto iter = mSelectors.find(player.getUuid().asString());
-    return iter != mSelectors.end() && iter->second.mBindLandData.lock() != nullptr;
+    auto iter = mSelectors.find(player.getUuid());
+    return iter != mSelectors.end() && iter->second->mBindLandData.lock() != nullptr;
 }
 bool LandSelector::tryReSelect(Player& player, LandData_sptr land) {
-    auto uid = player.getUuid().asString();
-
-    mSelectors.emplace(UUIDs(uid), LandSelectorData{player, land});
+    mSelectors.emplace(player.getUuid(), std::make_unique<LandSelectorData>(player, land));
     return true;
 }
 
+
+LandSelectorData::LandSelectorData(Player& player, int dim, bool draw3D)
+: mPlayer(&player),
+  mDimid(dim),
+  mDraw3D(draw3D) {}
 LandSelectorData::LandSelectorData(Player& player, LandData_sptr const& landData) {
     this->mPlayer           = &player;
     this->mDimid            = landData->mLandDimid;
@@ -282,10 +287,16 @@ LandSelectorData::LandSelectorData(Player& player, LandData_sptr const& landData
         DrawHandleManager::getInstance().getOrCreateHandle(player)->draw(landData->mPos, landData->mLandDimid);
 }
 LandSelectorData::~LandSelectorData() {
+#ifdef DEBUG
+    printf("LandSelectorData::~LandSelectorData()\n");
+#endif
     if (mIsDrawedOldRange) {
         DrawHandleManager::getInstance().getOrCreateHandle(*mPlayer)->remove(mOldRangeGeoId);
     }
     if (mIsDrawedBox) {
+#ifdef DEBUG
+        printf("LandSelectorData::~LandSelectorData() remove box\n");
+#endif
         DrawHandleManager::getInstance().getOrCreateHandle(*mPlayer)->remove(mDrawedBoxGeoId);
     }
 }
