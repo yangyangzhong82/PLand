@@ -5,6 +5,7 @@
 #include "ll/api/event/ListenerBase.h"
 #include "ll/api/event/player/PlayerInteractBlockEvent.h"
 #include "ll/api/thread/ServerThreadExecutor.h"
+#include "mc/deps/core/math/Color.h"
 #include "mc/network/packet/SetTitlePacket.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/world/item/ItemStack.h"
@@ -81,7 +82,20 @@ bool Selector::canSelectPointB() const { return !mPointB.has_value(); }
 
 void Selector::selectPointA(BlockPos const& pos) { this->mPointA = pos; }
 
-void Selector::selectPointB(BlockPos const& pos) { this->mPointB = pos; }
+void Selector::selectPointB(BlockPos const& pos) {
+    this->mPointB = pos;
+    fixAABBMinMax();
+}
+
+void Selector::fixAABBMinMax() {
+    if (!mPointA.has_value() || !mPointB.has_value()) {
+        return;
+    }
+
+    if (mPointA->x > mPointB->x) std::swap(mPointA->x, mPointB->x);
+    if (mPointA->y > mPointB->y) std::swap(mPointA->y, mPointB->y);
+    if (mPointA->z > mPointB->z) std::swap(mPointA->z, mPointB->z);
+}
 
 void Selector::drawAABB() {
     if (auto aabb = getAABB(); aabb && !mIsDrawedAABB) {
@@ -92,6 +106,10 @@ void Selector::drawAABB() {
 }
 
 void Selector::onABSelected() {
+    if (mIsDrawedAABB) {
+        return;
+    }
+
     auto& player = getPlayer();
 
     if (is3D()) {
@@ -112,15 +130,11 @@ void Selector::onABSelected() {
 
 void Selector::onFixesY() { drawAABB(); }
 
-// void Selector::onCancel()   = 0;
-// void Selector::onDrawAABB() = 0;
-// void Selector::onComplete() = 0;
-
 
 LandReSelector::LandReSelector(Player& player, LandData_sptr const& data)
 : Selector(player, data->getLandDimid(), data->is3DLand(), Type::ReSelector),
   mLandData(data),
-  mOldBoxGeoId{DrawHandleManager::getInstance().getOrCreateHandle(player)->draw(data->mPos, mDimensionId)} {}
+  mOldBoxGeoId{DrawHandleManager::getInstance().getOrCreateHandle(player)->draw(data->mPos, mDimensionId, mce::Color::RED())} {}
 
 LandReSelector::~LandReSelector() {
     if (mOldBoxGeoId) {

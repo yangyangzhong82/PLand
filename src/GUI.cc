@@ -354,6 +354,7 @@ void SelectorChangeYGui::impl(Player& player, std::string const& exception) {
     if (!selector) {
         return;
     }
+    selector->fixAABBMinMax();
 
     CustomForm fm(PLUGIN_NAME + ("| 确认Y轴范围"_trf(player)));
 
@@ -388,8 +389,8 @@ void SelectorChangeYGui::impl(Player& player, std::string const& exception) {
 
             selector->mPointA->y = startY;
             selector->mPointB->y = endY;
+            selector->fixAABBMinMax();
             selector->onFixesY();
-
             mc_utils::sendText(pl, "Y轴范围已修改为 {} ~ {}"_trf(pl, startY, endY));
         } catch (...) {
             mc_utils::sendText<mc_utils::LogLevel::Fatal>(pl, "插件内部错误, 请联系开发者"_trf(pl));

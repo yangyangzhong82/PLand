@@ -70,6 +70,9 @@ public:
     /* 获取选区 */
     LDNDAPI std::optional<LandPos> getAABB() const;
 
+    /* 修正AABB大小端 */
+    LDAPI void fixAABBMinMax();
+
     /* 从选区数据创建领地 */
     LDNDAPI LandData_sptr newLandData() const;
 
