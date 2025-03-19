@@ -134,7 +134,9 @@ void Selector::onFixesY() { drawAABB(); }
 LandReSelector::LandReSelector(Player& player, LandData_sptr const& data)
 : Selector(player, data->getLandDimid(), data->is3DLand(), Type::ReSelector),
   mLandData(data),
-  mOldBoxGeoId{DrawHandleManager::getInstance().getOrCreateHandle(player)->draw(data->mPos, mDimensionId, mce::Color::RED())} {}
+  mOldBoxGeoId{
+      DrawHandleManager::getInstance().getOrCreateHandle(player)->draw(data->mPos, mDimensionId, mce::Color::RED())
+  } {}
 
 LandReSelector::~LandReSelector() {
     if (mOldBoxGeoId) {
@@ -156,6 +158,9 @@ SelectorManager::SelectorManager() {
     Global_PlayerUseItemOn = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerInteractBlockEvent>(
         [this](ll::event::PlayerInteractBlockEvent const& ev) {
             auto& player = ev.self();
+            if (!this->hasSelector(player)) {
+                return;
+            }
 
             // 防抖
             if (auto iter = Global_Stabilized.find(player.getUuid()); iter != Global_Stabilized.end()) {
@@ -237,6 +242,7 @@ SelectorManager::SelectorManager() {
 }
 
 void SelectorManager::cleanup() {
+    mSelectors.clear();
     Global_Stabilized.clear();
     ll::event::EventBus::getInstance().removeListener(Global_PlayerUseItemOn);
 }
