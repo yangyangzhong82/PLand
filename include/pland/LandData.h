@@ -114,6 +114,8 @@ public:
     LandID              mParentLandID{static_cast<uint64_t>(-1)}; // 父领地ID
     std::vector<LandID> mSubLandIDs;                              // 子领地ID
 
+
+public:
     LDNDAPI static LandData_sptr make(); // 创建一个空领地数据(反射使用)
     LDNDAPI static LandData_sptr
     make(LandPos const& pos, LandDimid dimid, bool is3D, UUIDs const& owner); // 新建领地数据
@@ -153,9 +155,14 @@ public:
     LDNDAPI bool isLandMember(UUIDs const& uuid) const;
     LDNDAPI bool isSaleing() const;
 
-    LDNDAPI bool isSubLand() const;
-    LDNDAPI bool isParentLand() const;
+    LDNDAPI bool isSubLand() const;      // 是否为子领地
+    LDNDAPI bool isParentLand() const;   // 是否为父领地
+    LDNDAPI bool isMixLand() const;      // 是否为混合领地(同时拥有父领地和子领地)
+    LDNDAPI bool isOrdinaryLand() const; // 是否为普通领地(既不是子领地也不是父领地)
     LDNDAPI bool canCreateSubLand() const;
+
+    LDNDAPI LandData_sptr getParentLand() const;            // 获取父领地
+    LDNDAPI std::vector<LandData_sptr> getSubLands() const; // 获取子领地
 
     LDNDAPI bool isRadiusInLand(BlockPos const& pos, int radius) const;
     LDNDAPI bool isAABBInLand(BlockPos const& pos1, BlockPos const& pos2) const;

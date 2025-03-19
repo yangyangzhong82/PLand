@@ -94,6 +94,7 @@ public: // 领地查询API
     LDNDAPI LandData_wptr getLandWeakPtr(LandID id) const;
     LDNDAPI LandData_sptr getLand(LandID id) const;
     LDNDAPI std::vector<LandData_sptr> getLands() const;
+    LDNDAPI std::vector<LandData_sptr> getLands(std::vector<LandID> const& ids) const;
     LDNDAPI std::vector<LandData_sptr> getLands(LandDimid dimid) const;
     LDNDAPI std::vector<LandData_sptr> getLands(UUIDs const& uuid, bool includeShared = false) const;
     LDNDAPI std::vector<LandData_sptr> getLands(UUIDs const& uuid, LandDimid dimid) const;

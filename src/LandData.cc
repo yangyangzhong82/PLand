@@ -1,5 +1,6 @@
 #include "pland/LandData.h"
 #include "pland/Global.h"
+#include "pland/PLand.h"
 #include "pland/utils/JSON.h"
 #include <vector>
 
@@ -60,7 +61,23 @@ bool LandData::isLandMember(UUIDs const& uuid) const {
 
 bool LandData::isSubLand() const { return this->mParentLandID != LandID(-1) && this->mSubLandIDs.empty(); }
 bool LandData::isParentLand() const { return this->mParentLandID == LandID(-1) && !this->mSubLandIDs.empty(); }
+bool LandData::isMixLand() const { return isSubLand() && isParentLand(); }
+bool LandData::isOrdinaryLand() const { return !isSubLand() && !isParentLand(); }
 bool LandData::canCreateSubLand() const { return !isSubLand(); }
+
+LandData_sptr LandData::getParentLand() const {
+    if (isParentLand()) {
+        return nullptr;
+    }
+    return PLand::getInstance().getLand(this->mParentLandID);
+}
+
+std::vector<LandData_sptr> LandData::getSubLands() const {
+    if (!isParentLand()) {
+        return {}; // 不是父领地，没有子领地
+    }
+    return PLand::getInstance().getLands(this->mSubLandIDs);
+}
 
 bool LandData::isRadiusInLand(BlockPos const& pos, int radius) const {
     BlockPos minPos(pos.x - radius, mIs3DLand ? pos.y - radius : mPos.mMin_A.y, pos.z - radius);

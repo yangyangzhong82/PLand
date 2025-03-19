@@ -311,6 +311,17 @@ std::vector<LandData_sptr> PLand::getLands() const {
     }
     return lands;
 }
+std::vector<LandData_sptr> PLand::getLands(std::vector<LandID> const& ids) const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+
+    std::vector<LandData_sptr> lands;
+    for (auto id : ids) {
+        if (auto iter = mLandCache.find(id); iter != mLandCache.end()) {
+            lands.push_back(iter->second);
+        }
+    }
+    return lands;
+}
 std::vector<LandData_sptr> PLand::getLands(LandDimid dimid) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);
 
