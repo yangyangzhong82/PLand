@@ -159,10 +159,27 @@ static auto const ListOperator = [](CommandOrigin const& ori, CommandOutput& out
 };
 
 
-static auto const New = [](CommandOrigin const& ori, CommandOutput& out) {
+enum class NewType : int { Default = 0, SubLand };
+struct NewParam {
+    NewType type = NewType::Default;
+};
+static auto const New = [](CommandOrigin const& ori, CommandOutput& out, NewParam const& param) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
-    ChooseLandDimAndNewLand::impl(player);
+
+    switch (param.type) {
+    case NewType::Default:
+        ChooseLandDimAndNewLand::impl(player);
+        break;
+
+    case NewType::SubLand:
+        // TODO: implement
+        break;
+
+    default:
+        // UnImplemented
+        break;
+    }
 };
 
 enum class SetType : int { A, B };
@@ -378,8 +395,8 @@ bool LandCommand::setup() {
     // pland list op
     cmd.overload().text("list").text("op").execute(Lambda::ListOperator);
 
-    // pland new 新建一个领地
-    cmd.overload().text("new").execute(Lambda::New);
+    // pland new [NewType: type] 新建一个领地
+    cmd.overload<Lambda::NewParam>().text("new").optional("type").execute(Lambda::New);
 
     // pland this 获取当前领地信息
     cmd.overload().text("this").execute(Lambda::This);

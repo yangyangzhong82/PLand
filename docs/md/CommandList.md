@@ -13,17 +13,17 @@
 23:01:00.561 INFO [Server] - /pland cancel
 23:01:00.561 INFO [Server] - /pland gui
 23:01:00.561 INFO [Server] - /pland mgr
-23:01:00.561 INFO [Server] - /pland new
+23:01:00.561 INFO [Server] - /pland new [default|sub_land]
 23:01:00.561 INFO [Server] - /pland this
 23:01:00.561 INFO [Server] - /pland reload
 23:01:00.561 INFO [Server] - /pland list op
 23:01:00.561 INFO [Server] - /pland set <a|b>
 23:01:00.561 INFO [Server] - /pland set teleport_pos
-23:01:00.561 INFO [Server] - /pland draw <disable|current_land|near_land>
+23:01:00.561 INFO [Server] - /pland draw <disable|near_land|current_land>
 17:35:08.110 INFO [Server] - /pland import <clearDb: Boolean> <relationship_file: string> <data_file: string>
 ```
 
-?> 其中`pland` 为插件的顶层命令
+?> 其中 `pland` 为插件的顶层命令
 
 - `/pland`
   - 打开 GUI
@@ -31,8 +31,10 @@
 - `/pland <op/deop> <player: target>`
   - 添加或移除目标玩家的领地管理员权限。
 
-- `pland new`
+- `pland new [default|sub_land]`
   - 创建领地。
+    - `default` 创建普通领地
+    - `sub_land` 在当前领地内创建子领地(领地主人)
 
 - `/pland cancel`
   - 取消领地创建 (需要先执行 `/pland new` 命令)。
@@ -64,7 +66,7 @@
 - `/pland set language`
   - 选择语言（玩家）
 
-- `/pland draw <disable|current_land|near_land>`
+- `/pland draw <disable|near_land|current_land>`
   - 开启绘制领地范围(需在 `Config.json` 中设置 `setupDrawCommand: true`)
     - `disable` 关闭绘制
     - `current_land` 绘制当前所在的领地范围
