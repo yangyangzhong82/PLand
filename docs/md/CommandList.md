@@ -14,6 +14,7 @@
 23:01:00.561 INFO [Server] - /pland gui
 23:01:00.561 INFO [Server] - /pland mgr
 23:01:00.561 INFO [Server] - /pland new
+23:01:00.561 INFO [Server] - /pland this
 23:01:00.561 INFO [Server] - /pland reload
 23:01:00.561 INFO [Server] - /pland list op
 23:01:00.561 INFO [Server] - /pland set <a|b>
@@ -56,6 +57,9 @@
 
 - `/pland list op`
   - 列出领地管理员列表。
+
+- `/pland this`
+  - 打开当前位置的领地管理GUI（领地主人）
 
 - `/pland set language`
   - 选择语言（玩家）

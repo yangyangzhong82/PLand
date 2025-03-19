@@ -243,5 +243,7 @@
     "当前使用语言包: {}": "Current language pack: {}",
     "选择语言": "Select Language",
     "语言包已切换为: {}": "Language pack switched to: {}",
-    "选区开启失败，当前存在未完成的选区任务": "The selection area activation failed. There are currently unfinished selection area tasks."
+    "选区开启失败，当前存在未完成的选区任务": "The selection area activation failed. There are currently unfinished selection area tasks.",
+    "当前位置没有领地": "There is no land at the current location.",
+    "当前位置不是你的领地": "The current location is not your land."
 }

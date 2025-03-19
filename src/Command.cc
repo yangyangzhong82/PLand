@@ -336,6 +336,24 @@ static auto const SetLanguage = [](CommandOrigin const& ori, CommandOutput& out)
     });
 };
 
+static auto const This = [](CommandOrigin const& ori, CommandOutput& out) {
+    CHECK_TYPE(ori, out, CommandOriginType::Player);
+    auto& player = *static_cast<Player*>(ori.getEntity());
+
+    auto land = PLand::getInstance().getLandAt(player.getPosition(), player.getDimensionId());
+    if (!land) {
+        mc_utils::sendText<mc_utils::LogLevel::Info>(player, "当前位置没有领地"_trf(player));
+        return;
+    }
+
+    if (!land->isLandOwner(player.getUuid().asString())) {
+        mc_utils::sendText<mc_utils::LogLevel::Info>(player, "当前位置不是你的领地"_trf(player));
+        return;
+    }
+
+    LandManagerGui::impl(player, land->getLandID());
+};
+
 }; // namespace Lambda
 
 
@@ -362,6 +380,9 @@ bool LandCommand::setup() {
 
     // pland new 新建一个领地
     cmd.overload().text("new").execute(Lambda::New);
+
+    // pland this 获取当前领地信息
+    cmd.overload().text("this").execute(Lambda::This);
 
     // pland set <a/b> 选点a/b
     cmd.overload<Lambda::SetParam>().text("set").required("type").execute(Lambda::Set);
