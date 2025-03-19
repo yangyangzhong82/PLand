@@ -121,7 +121,7 @@ public:
 class LandReSelector final : public Selector {
     LandData_wptr mLandData;
 
-    bsci::GeometryGroup::GeoId mOldBoxGeoId;
+    std::optional<bsci::GeometryGroup::GeoId> mOldBoxGeoId;
 
 public:
     LDNDAPI explicit LandReSelector(Player& player, LandData_sptr const& data);

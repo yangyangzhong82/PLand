@@ -133,14 +133,14 @@ void Selector::onFixesY() { drawAABB(); }
 
 LandReSelector::LandReSelector(Player& player, LandData_sptr const& data)
 : Selector(player, data->getLandDimid(), data->is3DLand(), Type::ReSelector),
-  mLandData(data),
-  mOldBoxGeoId{
-      DrawHandleManager::getInstance().getOrCreateHandle(player)->draw(data->mPos, mDimensionId, mce::Color::RED())
-  } {}
+  mLandData(data) {
+    mOldBoxGeoId =
+        DrawHandleManager::getInstance().getOrCreateHandle(player)->draw(data->mPos, mDimensionId, mce::Color::RED());
+}
 
 LandReSelector::~LandReSelector() {
     if (mOldBoxGeoId) {
-        DrawHandleManager::getInstance().getOrCreateHandle(*mPlayer)->remove(mOldBoxGeoId);
+        DrawHandleManager::getInstance().getOrCreateHandle(*mPlayer)->remove(*mOldBoxGeoId);
     }
 }
 
