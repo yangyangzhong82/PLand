@@ -14,66 +14,149 @@
 
 namespace land {
 
-struct LandSelectorData {
-    Player* mPlayer{nullptr};
-    LandPos mPos;                   // 选择的位置
-    int     mDimid;                 // 维度
-    bool    mDraw3D;                // 是否绘制3D
-    bool    mSelectedPointA{false}; // 是否已经选择了第一个点
-    bool    mSelectedPointB{false}; // 是否已经选择了两个点
-    bool    mCanDraw{false};        // 能否绘制
-    bool    mCanSelect{true};       // 能否选择
 
-    bool                       mIsDrawedBox{false}; // 是否已经绘制了选区
-    bsci::GeometryGroup::GeoId mDrawedBoxGeoId;     // 绘制的GeoId
+class Selector {
+public:
+    enum class Type : int {
+        Default    = 0, // 默认
+        ReSelector = 1, // 重新选区
+        SubLand    = 2, // 子领地
+    };
 
-    // 重新选区
-    LandData_wptr              mBindLandData; // 绑定的LandData (此项不为空时，代表玩家正在重新选区<调整大小>)
-    bool                       mIsDrawedOldRange{false}; // 是否已经绘制了旧的选区
-    bsci::GeometryGroup::GeoId mOldRangeGeoId;           // 旧的GeoId
+private:
+    friend class SelectorManager;
+    friend class SelectorChangeYGui;
+
+protected:
+    Type    mType;
+    Player* mPlayer{nullptr}; // 玩家
+    int     mDimensionId;     // 维度
+    bool    mIs3D;            // 3D 圈地
+
+    std::optional<BlockPos> mPointA; // 第一个点
+    std::optional<BlockPos> mPointB; // 第二个点
+
+    bool                       mIsDrawedAABB{false}; // 是否已经绘制了选区
+    bsci::GeometryGroup::GeoId mDrawedAABBGeoId;     // 绘制的GeoId
+
+public:
+    Selector(Selector&)             = delete;
+    Selector& operator=(Selector&)  = delete;
+    Selector(Selector&&)            = delete;
+    Selector& operator=(Selector&&) = delete;
+
+    LDAPI virtual ~Selector();
+
+    LDNDAPI explicit Selector(Player& player, int dimid, bool is3D, Type type = Type::Default);
+
+    LDNDAPI static std::unique_ptr<Selector> createDefault(Player& player, int dimid, bool is3D);
+
+public:
+    /* 获取玩家 */
+    LDNDAPI Player& getPlayer() const;
+
+    /* 维度 */
+    LDNDAPI int getDimensionId() const;
+
+    /* 是否是3D选区 */
+    LDNDAPI bool is3D() const;
+
+    /* 获取A点 */
+    LDNDAPI std::optional<BlockPos> getPointA() const;
+
+    /* 获取B点 */
+    LDNDAPI std::optional<BlockPos> getPointB() const;
+
+    /* 获取选区 */
+    LDNDAPI std::optional<LandPos> getAABB() const;
+
+    /* 从选区数据创建领地 */
+    LDNDAPI LandData_sptr newLandData() const;
+
+    /* 获取选择器类别 */
+    LDNDAPI Type getType() const;
+
+    /* 转换选择器 */
+    template <typename T>
+    [[nodiscard]] T* As() {
+        return dynamic_cast<T*>(this);
+    }
 
 
-    LDNDAPI explicit LandSelectorData(Player& player, int dim, bool draw3D);
-    LDNDAPI explicit LandSelectorData(Player& player, LandData_sptr const& landData);
+public:
+    /* 是否为选区工具 */
+    LDNDAPI virtual bool isSelectorTool(ItemStack const& item) const;
 
-    virtual ~LandSelectorData();
+    /* 能否进行选区 (AB点) */
+    LDNDAPI virtual bool canSelect() const;
+
+    /* 能否选择A点 */
+    LDNDAPI virtual bool canSelectPointA() const;
+
+    /* 能否选择B点 */
+    LDNDAPI virtual bool canSelectPointB() const;
+
+    /* 选择A点 */
+    LDAPI virtual void selectPointA(BlockPos const& pos);
+
+    /* 选择B点 */
+    LDAPI virtual void selectPointB(BlockPos const& pos);
+
+    /* 绘制选区 */
+    LDAPI virtual void drawAABB();
+
+    /* 事件 */
+    LDAPI virtual void onABSelected(); // AB点选择完成
+    LDAPI virtual void onFixesY();     // 修正Y轴
+
+    // LDAPI virtual void onCancel()   = 0;
+    // LDAPI virtual void onDrawAABB() = 0;
+    // LDAPI virtual void onComplete() = 0;
 };
 
 
-class LandSelector final {
-    LandSelector() = default;
+class LandReSelector final : public Selector {
+    LandData_wptr mLandData;
+
+    bsci::GeometryGroup::GeoId mOldBoxGeoId;
 
 public:
-    LandSelector(const LandSelector&)            = delete;
-    LandSelector& operator=(const LandSelector&) = delete;
-    LandSelector(LandSelector&&)                 = delete;
-    LandSelector& operator=(LandSelector&&)      = delete;
+    LDNDAPI explicit LandReSelector(Player& player, LandData_sptr const& data);
 
-    std::unordered_map<UUIDm, std::unique_ptr<LandSelectorData>> mSelectors;
+    LDAPI ~LandReSelector() override;
 
-    LDNDAPI static LandSelector& getInstance();
+    LDNDAPI LandData_sptr getLandData() const;
+};
 
-    LDAPI bool init();   // 初始化
-    LDAPI bool uninit(); // 卸载
+class SubLandSelector final : public Selector {};
 
-    LDNDAPI LandSelectorData* getSelector(Player& player);
 
-    LDNDAPI bool isSelectTool(ItemStack const& item) const;
-    LDNDAPI bool isSelecting(Player& player) const; // 是否正在选区
-    LDNDAPI bool isSelected(Player& player) const;  // 是否已经选完
-    LDNDAPI bool isSelectedPointA(Player& player) const;
-    LDNDAPI bool isSelectedPointB(Player& player) const;
+/**
+ * @brief 选区管理器
+ * 管理玩家选区的生命周期，以及选区标题提示
+ */
+class SelectorManager final {
+    std::unordered_map<UUIDm, std::unique_ptr<Selector>> mSelectors;
 
-    LDAPI bool isReSelector(Player& player) const;                  // 是否是重新选区
-    LDAPI bool tryReSelect(Player& player, LandData_sptr landData); // 重新选区
+    explicit SelectorManager();
 
-    LDAPI bool tryStartSelect(Player& player, int dim, bool draw3D); // 开始选区
-    LDAPI bool trySelectPointA(Player& player, BlockPos pos);        // 选择第一个点
-    LDAPI bool trySelectPointB(Player& player, BlockPos pos);        // 选择第二个点
-    LDAPI bool tryCancel(Player& player);                            // 取消选区
+public:
+    SelectorManager(const SelectorManager&)            = delete;
+    SelectorManager& operator=(const SelectorManager&) = delete;
+    SelectorManager(SelectorManager&&)                 = delete;
+    SelectorManager& operator=(SelectorManager&&)      = delete;
 
-    LDAPI bool          completeAndRelease(Player& player);   // 完成选择并释放
-    LDAPI LandData_sptr makeLandFromSelector(Player& player); // 从选择器中生成LandData
+    LDNDAPI static SelectorManager& getInstance();
+
+    LDAPI void cleanup(); // 清理资源(插件卸载时调用)
+
+    LDNDAPI bool hasSelector(Player& player) const;
+
+    LDNDAPI bool start(std::unique_ptr<Selector> selector);
+
+    LDAPI void cancel(Player& player);
+
+    LDAPI Selector* get(Player& player) const;
 };
 
 

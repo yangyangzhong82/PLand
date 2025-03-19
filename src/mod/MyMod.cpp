@@ -61,9 +61,7 @@ bool MyMod::load() {
 }
 
 bool MyMod::enable() {
-
     land::LandCommand::setup();
-    land::LandSelector::getInstance().init();
     land::LandScheduler::setup();
     land::EventListener::setup();
 
@@ -94,7 +92,7 @@ bool MyMod::disable() {
     land::GlobalRepeatCoroTaskRunning = false;
 
     logger.debug("cleaning up...");
-    land::LandSelector::getInstance().uninit();
+    land::SelectorManager::getInstance().cleanup();
     land::LandScheduler::release();
     land::EventListener::release();
 

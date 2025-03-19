@@ -2,6 +2,7 @@
 #include "mc/world/actor/player/Player.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
+#include "pland/LandSelector.h"
 #include "pland/wrapper/FormEx.h"
 #include <functional>
 #include <vector>
@@ -16,7 +17,7 @@ public:
 
     class LandBuyWithReSelectGui {
     public:
-        LDAPI static void impl(Player& player);
+        LDAPI static void impl(Player& player, LandReSelector* reSelector);
     };
 };
 class ChooseLandDimAndNewLand {

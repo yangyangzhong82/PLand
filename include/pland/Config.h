@@ -9,7 +9,7 @@ namespace land {
 enum class EconomyKit : int { LegacyMoney, ScoreBoard };
 
 struct Config {
-    int              version{9};
+    int              version{10};
     ll::io::LogLevel logLevel{ll::io::LogLevel::Info};
 
     struct {
@@ -58,9 +58,7 @@ struct Config {
     } land;
 
     struct {
-        bool   drawParticle{true};                   // 是否绘制粒子效果
-        string particle{"minecraft:villager_happy"}; // 粒子效果
-        string tool{"minecraft:stick"};              // 工具
+        string tool{"minecraft:stick"}; // 工具
     } selector;
 
     struct {

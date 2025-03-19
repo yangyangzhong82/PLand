@@ -88,7 +88,6 @@
     "已选择点{}": "Point {} selected",
     "您还没有开启开启领地选区，请先使用 /pland new 命令": "You have not started a plot selection. Use /pland new first.",
     "已取消新建领地": "New plot creation canceled",
-    "您还没有开启开启领地选区，没有什么可以取消的哦~": "No active plot selection to cancel.",
     "领地系统配置已重新加载": "Plot system configuration reloaded",
     "领地系统配置加载失败，请检查配置文件": "Failed to load plot system config. Check config files.",
     "领地绘制已关闭": "Plot visualization disabled",
@@ -243,5 +242,6 @@
     "system: 为使用当前客户端语言\nserver: 为使用服务端语言": "system: To use the current client language\nserver: To use the server language",
     "当前使用语言包: {}": "Current language pack: {}",
     "选择语言": "Select Language",
-    "语言包已切换为: {}": "Language pack switched to: {}"
+    "语言包已切换为: {}": "Language pack switched to: {}",
+    "选区开启失败，当前存在未完成的选区任务": "The selection area activation failed. There are currently unfinished selection area tasks."
 }

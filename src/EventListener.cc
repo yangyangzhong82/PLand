@@ -111,7 +111,7 @@ bool EventListener::setup() {
             GlobalPlayerLocaleCodeCached.erase(uuidStr);
             LandScheduler::mDimidMap.erase(uuid);
             LandScheduler::mLandidMap.erase(uuid);
-            LandSelector::getInstance().mSelectors.erase(uuidStr);
+            SelectorManager::getInstance().cancel(player);
             DrawHandleManager::getInstance().removeHandle(player);
         }),
         bus->emplaceListener<ll::event::ActorHurtEvent>([db, logger](ll::event::ActorHurtEvent& ev) {

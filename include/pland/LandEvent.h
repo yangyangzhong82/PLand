@@ -38,20 +38,20 @@ public:
 // 玩家购买领地 (LandBuyGui)
 class PlayerBuyLandBeforeEvent final : public ll::event::Cancellable<ll::event::Event> {
 protected:
-    Player&           mPlayer;
-    LandSelectorData* mLandSelectorData;
-    int&              mPrice;
+    Player&   mPlayer;
+    Selector* mSelector;
+    int&      mPrice;
 
 public:
-    LDAPI constexpr explicit PlayerBuyLandBeforeEvent(Player& player, LandSelectorData* landSelectorData, int& price)
+    LDAPI constexpr explicit PlayerBuyLandBeforeEvent(Player& player, Selector* selector, int& price)
     : Cancellable(),
       mPlayer(player),
-      mLandSelectorData(landSelectorData),
+      mSelector(selector),
       mPrice(price) {}
 
-    LDNDAPI Player&           getPlayer() const;
-    LDNDAPI LandSelectorData* getLandSelectorData() const;
-    LDNDAPI int&              getPrice() const;
+    LDNDAPI Player&   getPlayer() const;
+    LDNDAPI Selector* getSelector() const;
+    LDNDAPI int&      getPrice() const;
 };
 class PlayerBuyLandAfterEvent final : public ll::event::Event {
 protected:

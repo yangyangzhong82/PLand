@@ -172,34 +172,19 @@ struct SetParam {
 static auto const Set = [](CommandOrigin const& ori, CommandOutput& out, SetParam const& param) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player   = *static_cast<Player*>(ori.getEntity());
-    auto& selector = LandSelector::getInstance();
+    auto  selector = SelectorManager::getInstance().get(player);
     auto& pos      = player.getPosition();
 
-    bool status =
-        param.type == SetType::A ? selector.trySelectPointA(player, pos) : selector.trySelectPointB(player, pos);
+    param.type == SetType::A ? selector->selectPointA(pos) : selector->selectPointB(pos);
 
-    if (status) {
-        mc_utils::sendText(out, "已选择点{}"_trf(player, param.type == SetType::A ? "A" : "B"));
-    } else {
-        mc_utils::sendText<mc_utils::LogLevel::Error>(
-            out,
-            "您还没有开启开启领地选区，请先使用 /pland new 命令"_trf(player)
-        );
-    }
+    mc_utils::sendText(out, "已选择点{}"_trf(player, param.type == SetType::A ? "A" : "B"));
 };
 
 static auto const Cancel = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
-    bool  ok     = LandSelector::getInstance().tryCancel(player);
-    if (ok) {
-        mc_utils::sendText(out, "已取消新建领地"_trf(player));
-    } else {
-        mc_utils::sendText<mc_utils::LogLevel::Error>(
-            out,
-            "您还没有开启开启领地选区，没有什么可以取消的哦~"_trf(player)
-        );
-    }
+    SelectorManager::getInstance().cancel(player);
+    mc_utils::sendText(out, "已取消新建领地"_trf(player));
 };
 
 
