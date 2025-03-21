@@ -161,8 +161,9 @@ public:
     LDNDAPI bool isOrdinaryLand() const; // 是否为普通领地(既不是子领地也不是父领地)
     LDNDAPI bool canCreateSubLand() const;
 
-    LDNDAPI LandData_sptr getParentLand() const;            // 获取父领地
-    LDNDAPI std::vector<LandData_sptr> getSubLands() const; // 获取子领地
+    LDNDAPI LandData_sptr getParentLand() const;               // 获取父领地
+    LDNDAPI std::vector<LandData_sptr> getSubLands() const;    // 获取子领地
+    LDNDAPI int                        getNestedLevel() const; // 获取嵌套层级(相对于父领地)
 
     LDNDAPI bool isRadiusInLand(BlockPos const& pos, int radius) const;
     LDNDAPI bool isAABBInLand(BlockPos const& pos1, BlockPos const& pos2) const;

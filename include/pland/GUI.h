@@ -11,15 +11,6 @@ namespace land {
 using namespace wrapper;
 
 // 独立GUI
-class LandBuyGui {
-public:
-    LDAPI static void impl(Player& player);
-
-    class LandBuyWithReSelectGui {
-    public:
-        LDAPI static void impl(Player& player, LandReSelector* reSelector);
-    };
-};
 class ChooseLandDimAndNewLand {
 public:
     LDAPI static void impl(Player& player);

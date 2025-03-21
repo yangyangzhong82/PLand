@@ -40,6 +40,10 @@ extern std::atomic<bool> GlobalRepeatCoroTaskRunning;
 extern std::unordered_map<std::string, std::string> GlobalPlayerLocaleCodeCached;
 LDNDAPI extern std::string GetPlayerLocaleCodeFromSettings(Player& player); // PLand::getInstance().getPlayerLocaleCode
 
+
+inline int constexpr GlobalSubLandMaxNestedLevel = 16; // 子领地最大嵌套层数
+
+
 } // namespace land
 
 

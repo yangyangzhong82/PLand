@@ -1,4 +1,5 @@
 #include "pland/LandData.h"
+#include "pland/Config.h"
 #include "pland/Global.h"
 #include "pland/PLand.h"
 #include "pland/utils/JSON.h"
@@ -62,8 +63,11 @@ bool LandData::isLandMember(UUIDs const& uuid) const {
 bool LandData::isSubLand() const { return this->mParentLandID != LandID(-1) && this->mSubLandIDs.empty(); }
 bool LandData::isParentLand() const { return this->mParentLandID == LandID(-1) && !this->mSubLandIDs.empty(); }
 bool LandData::isMixLand() const { return isSubLand() && isParentLand(); }
-bool LandData::isOrdinaryLand() const { return !isSubLand() && !isParentLand(); }
-bool LandData::canCreateSubLand() const { return !isSubLand(); }
+bool LandData::isOrdinaryLand() const { return !isMixLand(); }
+bool LandData::canCreateSubLand() const {
+    auto nestedLevel = getNestedLevel();
+    return nestedLevel < Config::cfg.land.subLand.maxNested && nestedLevel < GlobalSubLandMaxNestedLevel;
+}
 
 LandData_sptr LandData::getParentLand() const {
     if (isParentLand()) {
@@ -77,6 +81,16 @@ std::vector<LandData_sptr> LandData::getSubLands() const {
         return {}; // 不是父领地，没有子领地
     }
     return PLand::getInstance().getLands(this->mSubLandIDs);
+}
+int LandData::getNestedLevel() const {
+    if (isParentLand()) {
+        return 0;
+    }
+    auto parentLand = getParentLand();
+    if (!parentLand) {
+        return 0;
+    }
+    return parentLand->getNestedLevel() + 1;
 }
 
 bool LandData::isRadiusInLand(BlockPos const& pos, int radius) const {

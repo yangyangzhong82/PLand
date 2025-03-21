@@ -35,7 +35,7 @@ public:
 };
 
 
-// 玩家购买领地 (LandBuyGui)
+// 玩家购买领地 (BuyLandGui)
 class PlayerBuyLandBeforeEvent final : public ll::event::Cancellable<ll::event::Event> {
 protected:
     Player&   mPlayer;

@@ -9,7 +9,7 @@ namespace land {
 enum class EconomyKit : int { LegacyMoney, ScoreBoard };
 
 struct Config {
-    int              version{10};
+    int              version{12};
     ll::io::LogLevel logLevel{ll::io::LogLevel::Info};
 
     struct {
@@ -28,6 +28,12 @@ struct Config {
 
         bool setupDrawCommand{false}; // 安装领地绘制命令
         int  drawRange{64};           // 绘制 x 范围内的领地
+
+        struct {
+            bool   enabled{true};                           // 是否启用
+            int    maxNested{5};                            // 最大嵌套层数(默认5，最大16)
+            string calculate{"(square * 8 + height * 20)"}; // 价格公式
+        } subLand;
 
         struct {
             bool enterTip{true};           // 进入领地提示

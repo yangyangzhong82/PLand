@@ -130,12 +130,19 @@ void Selector::onABSelected() {
 
 void Selector::onFixesY() { drawAABB(); }
 
+} // namespace land
+
+
+namespace land {
 
 LandReSelector::LandReSelector(Player& player, LandData_sptr const& data)
 : Selector(player, data->getLandDimid(), data->is3DLand(), Type::ReSelector),
   mLandData(data) {
-    mOldBoxGeoId =
-        DrawHandleManager::getInstance().getOrCreateHandle(player)->draw(data->mPos, mDimensionId, mce::Color::RED());
+    mOldBoxGeoId = DrawHandleManager::getInstance().getOrCreateHandle(player)->draw(
+        data->mPos,
+        mDimensionId,
+        mce::Color::ORANGE()
+    );
 }
 
 LandReSelector::~LandReSelector() {
@@ -145,6 +152,32 @@ LandReSelector::~LandReSelector() {
 }
 
 LandData_sptr LandReSelector::getLandData() const { return mLandData.lock(); }
+
+} // namespace land
+
+
+namespace land {
+
+SubLandSelector::SubLandSelector(Player& player, LandData_sptr const& data)
+: Selector(player, data->getLandDimid(), data->is3DLand(), Type::SubLand),
+  mParentLandData(data) {
+    this->mParentRangeBoxGeoId =
+        DrawHandleManager::getInstance().getOrCreateHandle(player)->draw(data->mPos, mDimensionId, mce::Color::RED());
+}
+
+SubLandSelector::~SubLandSelector() {
+    if (mParentRangeBoxGeoId) {
+        DrawHandleManager::getInstance().getOrCreateHandle(*mPlayer)->remove(*mParentRangeBoxGeoId);
+    }
+}
+
+LandData_sptr SubLandSelector::getParentLandData() const { return mParentLandData.lock(); }
+
+
+void SubLandSelector::onABSelected() {
+    // Selector::onABSelected(); // Call base class
+    SelectorChangeYGui::impl(getPlayer()); // 发送GUI
+}
 
 } // namespace land
 
@@ -176,14 +209,13 @@ SelectorManager::SelectorManager() {
                 throw std::runtime_error("Data sync exception: selector not found"); // 未定义行为
             }
 
+            if (!selector->isSelectorTool(ev.item())) {
+                return;
+            }
             if (!selector->canSelect()) {
                 mc_utils::executeCommand("pland buy", &player);
                 return;
             }
-            if (!selector->isSelectorTool(ev.item())) {
-                return;
-            }
-
 
             if (selector->canSelectPointA()) {
                 selector->selectPointA(ev.blockPos());

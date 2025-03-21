@@ -10,7 +10,6 @@
 #include "ll/api/service/PlayerInfo.h"
 #include "mc/world/actor/player/Player.h"
 #include "mod/MyMod.h"
-#include "pland/Calculate.h"
 #include "pland/Config.h"
 #include "pland/DrawHandleManager.h"
 #include "pland/EconomySystem.h"
@@ -20,6 +19,7 @@
 #include "pland/LandPos.h"
 #include "pland/LandSelector.h"
 #include "pland/PLand.h"
+#include "pland/PriceCalculate.h"
 #include "pland/SafeTeleport.h"
 #include "pland/utils/JSON.h"
 #include "pland/utils/McUtils.h"
@@ -85,270 +85,6 @@ void ChooseLandDimAndNewLand::impl(Player& player) {
             }
         });
 }
-void LandBuyGui::impl(Player& player) {
-    auto selector = SelectorManager::getInstance().get(player);
-    if (!selector) {
-        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "请先使用 /pland new 来选择领地"_trf(player));
-        return;
-    }
-    if (selector->getType() == Selector::Type::ReSelector) {
-        auto reSelector = selector->As<LandReSelector>();
-        LandBuyWithReSelectGui::impl(player, reSelector); // 重新选择领地，切换到另一个购买界面
-        return;
-    }
-
-    bool const& is3D = selector->is3D();
-    auto        aabb = selector->getAABB();
-
-    aabb->fix();
-    int const volume = aabb->getVolume();
-    int const length = aabb->getDepth();
-    int const width  = aabb->getWidth();
-    int const height = aabb->getHeight();
-
-    int originalPrice = Calculate(*aabb).eval(
-        is3D ? Config::cfg.land.bought.threeDimensionl.calculate : Config::cfg.land.bought.twoDimensionl.calculate
-    );
-    int discountedPrice = Calculate::calculateDiscountPrice(originalPrice, Config::cfg.land.discountRate);
-    if (!Config::cfg.economy.enabled) discountedPrice = 0; // 免费
-
-    if (volume >= INT_MAX || originalPrice < 0 || discountedPrice < 0) {
-        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "领地体积过大，无法购买"_trf(player));
-        return;
-    }
-
-    // publish event
-    PlayerBuyLandBeforeEvent ev(player, selector, discountedPrice);
-    ll::event::EventBus::getInstance().publish(ev);
-    if (ev.isCancelled()) {
-        return;
-    }
-
-    auto fm = SimpleFormEx::create();
-    fm.setTitle(PLUGIN_NAME + ("| 购买领地"_trf(player)));
-    fm.setContent("领地类型: {}\n体积: {}x{}x{} = {}\n范围: {}\n原价: {}\n折扣价: {}\n{}"_trf(
-        player,
-        is3D ? "3D" : "2D",
-        length,
-        width,
-        height,
-        volume,
-        aabb->toString(),
-        originalPrice,
-        discountedPrice,
-        EconomySystem::getInstance().getSpendTip(player, discountedPrice)
-    ));
-
-    fm.appendButton(
-        "确认购买"_trf(player),
-        "textures/ui/realms_green_check",
-        [discountedPrice, aabb, length, width, height, is3D, selector](Player& pl) {
-            auto& economy = EconomySystem::getInstance();
-            if (economy.get(pl) < discountedPrice && Config::cfg.economy.enabled) {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您的余额不足，无法购买"_trf(pl));
-                return; // 预检查经济
-            }
-
-            auto& db = PLand::getInstance();
-            if ((int)db.getLands(pl.getUuid().asString()).size() >= Config::cfg.land.maxLand) {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您已经达到最大领地数量"_trf(pl));
-                return;
-            }
-
-            auto const& squareRange = Config::cfg.land.bought.squareRange;
-            if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
-                (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
-                (is3D && (height < squareRange.minHeight || height > mc_utils::GetDimensionMaxHeight(pl.getDimension()))
-                ) // 高度必须大于最小值 && 小于世界高度 && 3D
-            ) {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(
-                    pl,
-                    "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}, 当前长宽高: {}x{}x{}"_trf(
-                        pl,
-                        squareRange.min,
-                        squareRange.max,
-                        squareRange.minHeight,
-                        length,
-                        width,
-                        height
-                    )
-                );
-                return;
-            }
-
-            auto lands = db.getLandAt(aabb->mMin_A, aabb->mMax_B, selector->getDimensionId());
-            if (!lands.empty()) {
-                for (auto& land : lands) {
-                    if (LandPos::isCollision(land->mPos, *aabb)) {
-                        mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地重叠，请重新选择"_trf(pl));
-                        return;
-                    }
-                    if (!LandPos::isComplisWithMinSpacing(land->mPos, *aabb)) {
-                        mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地距离过近，请重新选择"_trf(pl));
-                        return;
-                    }
-                }
-            }
-
-            // 扣除经济
-            if (!economy.reduce(pl, discountedPrice)) {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您的余额不足，无法购买"_trf(pl));
-                return;
-            }
-
-            auto landPtr = selector->newLandData();
-            if (db.addLand(landPtr)) {
-                landPtr->mOriginalBuyPrice = discountedPrice; // 保存购买价格
-                mc_utils::sendText<mc_utils::LogLevel::Info>(pl, "购买领地成功"_trf(pl));
-
-                PlayerBuyLandAfterEvent ev(pl, landPtr);
-                ll::event::EventBus::getInstance().publish(ev);
-
-                SelectorManager::getInstance().cancel(pl);
-
-            } else {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "购买领地失败"_trf(pl));
-                economy.add(pl, discountedPrice); // 补回经济
-            }
-        }
-    );
-    fm.appendButton("暂存订单"_trf(player), "textures/ui/recipe_book_icon"); // close
-    fm.appendButton("放弃订单"_trf(player), "textures/ui/cancel", [](Player& pl) {
-        SelectorManager::getInstance().cancel(pl);
-    });
-
-    fm.sendTo(player);
-}
-void LandBuyGui::LandBuyWithReSelectGui::impl(Player& player, LandReSelector* reSelector) {
-    bool const& is3D = reSelector->is3D();
-    auto        aabb = reSelector->getAABB();
-
-    aabb->fix();
-    int const volume = aabb->getVolume();
-    int const length = aabb->getDepth();
-    int const width  = aabb->getWidth();
-    int const height = aabb->getHeight();
-
-    auto       landPtr         = reSelector->getLandData();
-    int const& originalPrice   = landPtr->mOriginalBuyPrice;        // 原始购买价格
-    int const  discountedPrice = Calculate::calculateDiscountPrice( // 新范围购买价格
-        Calculate(*aabb).eval(
-            is3D ? Config::cfg.land.bought.threeDimensionl.calculate : Config::cfg.land.bought.twoDimensionl.calculate
-        ),
-        Config::cfg.land.discountRate
-    );
-
-    // 计算需补差价 & 退还差价
-    int needPay = discountedPrice - originalPrice; // 需补差价
-    int refund  = originalPrice - discountedPrice; // 退还差价
-
-    if (volume >= INT_MAX || originalPrice < 0 || discountedPrice < 0) {
-        mc_utils::sendText<mc_utils::LogLevel::Error>(player, "领地体积过大，无法购买"_trf(player));
-        return;
-    }
-
-    // publish event
-    LandRangeChangeBeforeEvent ev(player, landPtr, *aabb, needPay, refund);
-    ll::event::EventBus::getInstance().publish(ev);
-    if (ev.isCancelled()) {
-        return;
-    }
-
-    auto fm = SimpleFormEx::create();
-    fm.setTitle(PLUGIN_NAME + ("| 购买领地 & 重新选区"_trf(player)));
-    fm.setContent("体积: {0}x{1}x{2} = {3}\n范围: {4}\n原购买价格: {5}\n需补差价: {6}\n需退差价: {7}\n{8}"_trf(
-        player,
-        length,                    // 1
-        width,                     // 2
-        height,                    // 3
-        volume,                    // 4
-        aabb->toString(),          // 5
-        originalPrice,             // 6
-        needPay < 0 ? 0 : needPay, // 7
-        refund < 0 ? 0 : refund,   // 8
-        needPay > 0 ? EconomySystem::getInstance().getSpendTip(player, discountedPrice) : ""
-    ));
-
-    fm.appendButton(
-        "确认购买"_trf(player),
-        "textures/ui/realms_green_check",
-        [needPay, refund, discountedPrice, aabb, length, width, height, is3D, reSelector, landPtr](Player& pl) {
-            auto& eco = EconomySystem::getInstance();
-            if ((needPay > 0 && eco.get(pl) < needPay) && Config::cfg.economy.enabled) {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您的余额不足，无法购买"_trf(pl));
-                return; // 预检查经济
-            }
-
-
-            auto const& squareRange = Config::cfg.land.bought.squareRange;
-            if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
-                (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
-                (is3D && (height < squareRange.minHeight || height > mc_utils::GetDimensionMaxHeight(pl.getDimension()))
-                ) // 高度必须大于最小值 && 小于世界高度 && 3D
-            ) {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(
-                    pl,
-                    "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}"_trf(
-                        pl,
-                        squareRange.min,
-                        squareRange.max,
-                        squareRange.minHeight
-                    )
-                );
-                return;
-            }
-
-            auto& db    = PLand::getInstance();
-            auto  lands = db.getLandAt(aabb->mMin_A, aabb->mMax_B, landPtr->getLandDimid());
-            if (!lands.empty()) {
-                for (auto& land : lands) {
-                    if (land->getLandID() == landPtr->getLandID()) continue; // 跳过自己
-                    if (LandPos::isCollision(land->mPos, *aabb)) {
-                        mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地重叠，请重新选择"_trf(pl));
-                        return;
-                    }
-                    if (!LandPos::isComplisWithMinSpacing(land->mPos, *aabb)) {
-                        mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地距离过近，请重新选择"_trf(pl));
-                        return;
-                    }
-                }
-            }
-
-            // 补差价 & 退还差价
-            if (needPay > 0) {
-                if (!eco.reduce(pl, needPay)) {
-                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您的余额不足，无法购买"_trf(pl));
-                    return;
-                }
-            } else if (refund > 0) {
-                if (!eco.add(pl, refund)) {
-                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "经济系统异常,退还差价失败"_trf(pl));
-                    return;
-                }
-            }
-
-            if (landPtr->_setLandPos(*aabb)) {
-                landPtr->mOriginalBuyPrice = discountedPrice; // 保存购买价格
-
-                db.refreshLandRange(landPtr); // 刷新领地范围
-
-                mc_utils::sendText<mc_utils::LogLevel::Info>(pl, "领地范围修改成功"_trf(pl));
-
-                LandRangeChangeAfterEvent ev(pl, landPtr, *aabb, needPay, refund);
-                ll::event::EventBus::getInstance().publish(ev);
-
-                SelectorManager::getInstance().cancel(pl);
-
-            } else mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地范围修改失败"_trf(pl));
-        }
-    );
-    fm.appendButton("暂存订单"_trf(player), "textures/ui/recipe_book_icon"); // close
-    fm.appendButton("放弃订单"_trf(player), "textures/ui/cancel", [](Player& pl) {
-        SelectorManager::getInstance().cancel(pl);
-    });
-
-    fm.sendTo(player);
-}
 void SelectorChangeYGui::impl(Player& player, std::string const& exception) {
     auto selector = SelectorManager::getInstance().get(player);
     if (!selector) {
@@ -360,49 +96,80 @@ void SelectorChangeYGui::impl(Player& player, std::string const& exception) {
 
     fm.appendLabel("确认选区的Y轴范围\n您可以在此调节Y轴范围，如果不需要修改，请直接点击提交"_trf(player));
 
+    bool const       isSubLand      = selector->getType() == Selector::Type::SubLand;
+    SubLandSelector* subSelector    = nullptr;
+    LandData_sptr    parentLandData = nullptr;
+    if (isSubLand) {
+        if (subSelector = selector->As<SubLandSelector>(); subSelector) {
+            if (parentLandData = subSelector->getParentLandData(); parentLandData) {
+                auto& aabb = parentLandData->getLandPos();
+                fm.appendLabel("当前为子领地模式，子领地的Y轴范围不能超过父领地。\n父领地Y轴范围: {} ~ {}"_trf(
+                    player,
+                    aabb.mMin_A.y,
+                    aabb.mMax_B.y
+                ));
+            }
+        }
+    }
+
     fm.appendInput("start", "开始Y轴"_trf(player), "int", std::to_string(selector->getPointA()->y));
     fm.appendInput("end", "结束Y轴"_trf(player), "int", std::to_string(selector->getPointB()->y));
 
     fm.appendLabel(exception);
 
-    fm.sendTo(player, [selector](Player& pl, CustomFormResult res, FormCancelReason) {
-        if (!res.has_value()) {
-            return;
-        }
-
-        string start = std::get<string>(res->at("start"));
-        string end   = std::get<string>(res->at("end"));
-
-        if (!isNumber(start) || !isNumber(end) || isOutOfRange(start) || isOutOfRange(end)) {
-            SelectorChangeYGui::impl(pl, "请输入正确的Y轴范围"_trf(pl));
-            return;
-        }
-
-        try {
-            int startY = std::stoi(start);
-            int endY   = std::stoi(end);
-
-            if (startY >= endY) {
-                SelectorChangeYGui::impl(pl, "请输入正确的Y轴范围, 开始Y轴必须小于结束Y轴"_trf(pl));
+    fm.sendTo(
+        player,
+        [selector, isSubLand, subSelector, parentLandData](Player& pl, CustomFormResult res, FormCancelReason) {
+            if (!res.has_value()) {
                 return;
             }
 
-            selector->mPointA->y = startY;
-            selector->mPointB->y = endY;
-            selector->fixAABBMinMax();
-            selector->onFixesY();
-            mc_utils::sendText(pl, "Y轴范围已修改为 {} ~ {}"_trf(pl, startY, endY));
-        } catch (...) {
-            mc_utils::sendText<mc_utils::LogLevel::Fatal>(pl, "插件内部错误, 请联系开发者"_trf(pl));
-            my_mod::MyMod::getInstance().getSelf().getLogger().error(
-                "An exception is caught in {} and user {} enters data: {}, {}",
-                __FUNCTION__,
-                pl.getRealName(),
-                start,
-                end
-            );
+            string start = std::get<string>(res->at("start"));
+            string end   = std::get<string>(res->at("end"));
+
+            if (!isNumber(start) || !isNumber(end) || isOutOfRange(start) || isOutOfRange(end)) {
+                SelectorChangeYGui::impl(pl, "请输入正确的Y轴范围"_trf(pl));
+                return;
+            }
+
+            try {
+                int startY = std::stoi(start);
+                int endY   = std::stoi(end);
+
+                if (startY >= endY) {
+                    SelectorChangeYGui::impl(pl, "请输入正确的Y轴范围, 开始Y轴必须小于结束Y轴"_trf(pl));
+                    return;
+                }
+
+                if (isSubLand) {
+                    if (!subSelector || !parentLandData) {
+                        throw std::runtime_error("subSelector or parentLandData is nullptr");
+                    }
+
+                    auto& aabb = parentLandData->getLandPos();
+                    if (startY < aabb.mMin_A.y || endY > aabb.mMax_B.y) {
+                        SelectorChangeYGui::impl(pl, "请输入正确的Y轴范围, 子领地的Y轴范围不能超过父领地"_trf(pl));
+                        return;
+                    }
+                }
+
+                selector->mPointA->y = startY;
+                selector->mPointB->y = endY;
+                selector->fixAABBMinMax();
+                selector->onFixesY();
+                mc_utils::sendText(pl, "Y轴范围已修改为 {} ~ {}"_trf(pl, startY, endY));
+            } catch (...) {
+                mc_utils::sendText<mc_utils::LogLevel::Fatal>(pl, "插件内部错误, 请联系开发者"_trf(pl));
+                my_mod::MyMod::getInstance().getSelf().getLogger().error(
+                    "An exception is caught in {} and user {} enters data: {}, {}",
+                    __FUNCTION__,
+                    pl.getRealName(),
+                    start,
+                    end
+                );
+            }
         }
-    });
+    );
 }
 
 
@@ -595,7 +362,7 @@ void LandManagerGui::EditLandPermGui::impl(Player& player, LandData_sptr const& 
     });
 }
 void LandManagerGui::DeleteLandGui::impl(Player& player, LandData_sptr const& ptr) {
-    int price = Calculate::calculateRefundsPrice(ptr->mOriginalBuyPrice, Config::cfg.land.refundRate);
+    int price = PriceCalculate::calculateRefundsPrice(ptr->mOriginalBuyPrice, Config::cfg.land.refundRate);
 
     PlayerDeleteLandBeforeEvent ev(player, ptr->getLandID(), price);
     ll::event::EventBus::getInstance().publish(ev);

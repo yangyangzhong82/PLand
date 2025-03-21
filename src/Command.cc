@@ -1,7 +1,9 @@
 #include "pland/Command.h"
+#include "Pland/gui/BuyLandGui.h"
 #include "ll/api/command/CommandRegistrar.h"
 #include "ll/api/form/CustomForm.h"
 #include "ll/api/service/Bedrock.h"
+#include "magic_enum.hpp"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/core/utility/optional_ref.h"
 #include "mc/nbt/CompoundTag.h"
@@ -23,11 +25,15 @@
 #include "mc/world/level/chunk/LevelChunk.h"
 #include "mc/world/level/dimension/Dimension.h"
 #include "mod/MyMod.h"
+#include "pland/Config.h"
 #include "pland/DataConverter.h"
 #include "pland/DrawHandleManager.h"
+#include "pland/GUI.h"
 #include "pland/Global.h"
 #include "pland/LandSelector.h"
+#include "pland/PLand.h"
 #include "pland/utils/McUtils.h"
+#include "pland/utils/Utils.h"
 #include <filesystem>
 #include <ll/api/command/Command.h>
 #include <ll/api/command/CommandHandle.h>
@@ -53,15 +59,9 @@
 #include <mc/world/actor/ActorType.h>
 #include <mc/world/actor/player/Player.h>
 #include <mc/world/level/GameType.h>
+#include <memory>
 #include <sstream>
 
-
-#include "magic_enum.hpp"
-
-#include "pland/Config.h"
-#include "pland/GUI.h"
-#include "pland/PLand.h"
-#include "pland/utils/Utils.h"
 
 #ifdef LD_DEVTOOL
 #include "devtools/DevTools.h"
@@ -168,13 +168,46 @@ static auto const New = [](CommandOrigin const& ori, CommandOutput& out, NewPara
     auto& player = *static_cast<Player*>(ori.getEntity());
 
     switch (param.type) {
-    case NewType::Default:
+    case NewType::Default: {
         ChooseLandDimAndNewLand::impl(player);
         break;
+    }
 
-    case NewType::SubLand:
-        // TODO: implement
+    case NewType::SubLand: {
+        if (!Config::cfg.land.subLand.enabled) {
+            mc_utils::sendText(out, "子领地功能未启用，请联系管理员"_trf(player));
+            return;
+        }
+
+        auto land = PLand::getInstance().getLandAt(player.getPosition(), player.getDimensionId());
+        if (!land) {
+            mc_utils::sendText(out, "当前位置没有领地"_trf(player));
+            return;
+        }
+
+        auto uuidStr = player.getUuid().asString();
+        if (!land->isLandOwner(uuidStr)) {
+            mc_utils::sendText(out, "当前位置不是你的领地"_trf(player));
+            return;
+        }
+
+        if (!land->canCreateSubLand()) {
+            mc_utils::sendText(out, "当前领地无法创建子领地"_trf(player));
+            return;
+        }
+
+        auto selector = std::make_unique<SubLandSelector>(player, land);
+        if (SelectorManager::getInstance().start(std::move(selector))) {
+            mc_utils::sendText(
+                player,
+                "选区功能已开启，使用命令 /pland set 或使用 {} 来选择ab点"_trf(player, Config::cfg.selector.tool)
+            );
+        } else {
+            mc_utils::sendText(player, "选区开启失败，当前存在未完成的选区任务"_trf(player));
+        }
+
         break;
+    }
 
     default:
         // UnImplemented
@@ -208,7 +241,7 @@ static auto const Cancel = [](CommandOrigin const& ori, CommandOutput& out) {
 static auto const Buy = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player = *static_cast<Player*>(ori.getEntity());
-    LandBuyGui::impl(player);
+    BuyLandGui::impl(player);
 };
 
 static auto const Reload = [](CommandOrigin const& ori, CommandOutput& out) {

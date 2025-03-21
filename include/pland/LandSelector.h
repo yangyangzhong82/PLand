@@ -28,10 +28,10 @@ private:
     friend class SelectorChangeYGui;
 
 protected:
-    Type    mType;
-    Player* mPlayer{nullptr}; // 玩家
-    int     mDimensionId;     // 维度
-    bool    mIs3D;            // 3D 圈地
+    Type const mType;
+    Player*    mPlayer{nullptr}; // 玩家
+    int        mDimensionId;     // 维度
+    bool       mIs3D;            // 3D 圈地
 
     std::optional<BlockPos> mPointA; // 第一个点
     std::optional<BlockPos> mPointB; // 第二个点
@@ -131,7 +131,19 @@ public:
     LDNDAPI LandData_sptr getLandData() const;
 };
 
-class SubLandSelector final : public Selector {};
+class SubLandSelector final : public Selector {
+    LandData_wptr                             mParentLandData;
+    std::optional<bsci::GeometryGroup::GeoId> mParentRangeBoxGeoId;
+
+public:
+    LDNDAPI explicit SubLandSelector(Player& player, LandData_sptr const& data);
+
+    LDAPI ~SubLandSelector() override;
+
+    LDNDAPI LandData_sptr getParentLandData() const;
+
+    LDAPI void onABSelected() override;
+};
 
 
 /**
