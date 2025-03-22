@@ -249,5 +249,8 @@
     "子领地功能未启用，请联系管理员": "The sub-land function is not enabled. Please contact the administrator.",
     "当前领地无法创建子领地": "Sub-land cannot be created in the current land.",
     "当前为子领地模式，子领地的Y轴范围不能超过父领地。\n父领地Y轴范围: {} ~ {}": "It is currently in the sub-land mode. The Y-axis range of the sub-land cannot exceed that of the parent land.\nParent land Y-axis range: {} ~ {}",
-    "请输入正确的Y轴范围, 子领地的Y轴范围不能超过父领地": "Please enter the correct Y-axis range. The Y-axis range of the sub-land cannot exceed that of the parent land."
+    "请输入正确的Y轴范围, 子领地的Y轴范围不能超过父领地": "Please enter the correct Y-axis range. The Y-axis range of the sub-land cannot exceed that of the parent land.",
+    "| 购买领地 & 子领地": "| Purchase Territory & Sub-land",
+    "[父领地]\n体积: {}x{}x{}={}\n范围: {}\n\n[子领地]\n体积: {}x{}x{}={}\n范围: {}\n\n[价格]\n原价: {}\n折扣价: {}\n{}": "[Parent Territory]\nVolume: {}x{}x{}={}\nRange: {}\n\n[Sub-land]\nVolume: {}x{}x{}={}\nRange: {}\n\n[Price]\nOriginal Price: {}\nDiscounted Price: {}\n{}",
+    "子领地不在父领地范围内": "The sub-land is not within the range of the parent land"
 }

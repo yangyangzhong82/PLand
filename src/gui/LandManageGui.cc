@@ -36,7 +36,7 @@ void LandManageGui::impl(Player& player, LandID id) {
 
     auto fm = SimpleFormEx::create();
     fm.setTitle(PLUGIN_NAME + ("| 领地管理 [{}]"_trf(player, land->getLandID())));
-    fm.setContent("领地: {}\n类型: {}\n大小: {}x{}x{} = {}\n范围: {}\n"_trf(
+    fm.setContent("领地: {}\n类型: {}\n大小: {}x{}x{} = {}\n范围: {}\n"_trf( 
         player,
         land->getLandName(),
         land->is3DLand() ? "3D" : "2D",

@@ -346,7 +346,7 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
 
     auto& parentPos = subSelector->getParentLandData()->getLandPos();
     fm.setContent(
-        "[父领地]\n体积: {}x{}x{}={}\n范围: {}\n\n[子领地]\n体积: {}x{}x{}={}\n范围: {}\n\n[价格]\n原价: {}\n折扣价: {}"_trf(
+        "[父领地]\n体积: {}x{}x{}={}\n范围: {}\n\n[子领地]\n体积: {}x{}x{}={}\n范围: {}\n\n[价格]\n原价: {}\n折扣价: {}\n{}"_trf(
             player,
             // 父领地
             parentPos.getDepth(),
@@ -362,7 +362,8 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
             aabb->toString(),
             // 价格
             originalPrice,
-            discountedPrice
+            discountedPrice,
+            EconomySystem::getInstance().getSpendTip(player, discountedPrice)
         )
     );
 
