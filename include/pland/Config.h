@@ -32,6 +32,7 @@ struct Config {
         struct {
             bool   enabled{true};                           // 是否启用
             int    maxNested{5};                            // 最大嵌套层数(默认5，最大16)
+            int    minSpacing{8};                           // 最小领地间距
             string calculate{"(square * 8 + height * 20)"}; // 价格公式
         } subLand;
 

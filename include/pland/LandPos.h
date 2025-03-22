@@ -59,11 +59,21 @@ public:
     LDAPI bool operator==(LandPos const& pos) const;
     LDAPI bool operator!=(LandPos const& pos) const;
 
-    // 两个领地是否碰撞(重合)
+    /**
+     * @brief 判断两个 AABB 是否有重叠部分
+     */
     LDNDAPI static bool isCollision(LandPos const& pos1, LandPos const& pos2);
 
-    // 两个领地是否满足最小间距
-    LDNDAPI static bool isComplisWithMinSpacing(LandPos const& pos1, LandPos const& pos2, bool ignoreY = false);
+    /**
+     * @brief 判断两个AABB是否满足最小间距要求
+     */
+    LDNDAPI static bool isComplisWithMinSpacing(LandPos const& pos1, LandPos const& pos2, int minSpacing);
+
+    /**
+     * @brief 判断一个 AABB 区域是否完整包含另一个 AABB 区域
+     * 如果目标 AABB 在源 AABB 内，则返回 true，否则返回 false
+     */
+    LDNDAPI static bool isContain(LandPos const& src, LandPos const& dst);
 };
 
 

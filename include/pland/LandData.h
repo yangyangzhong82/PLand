@@ -155,15 +155,49 @@ public:
     LDNDAPI bool isLandMember(UUIDs const& uuid) const;
     LDNDAPI bool isSaleing() const;
 
-    LDNDAPI bool isSubLand() const;      // 是否为子领地
-    LDNDAPI bool isParentLand() const;   // 是否为父领地
-    LDNDAPI bool isMixLand() const;      // 是否为混合领地(同时拥有父领地和子领地)
-    LDNDAPI bool isOrdinaryLand() const; // 是否为普通领地(既不是子领地也不是父领地)
+    /**
+     * @brief 是否为子领地
+     * 如果是子领地，则有父领地，没有子领地
+     */
+    LDNDAPI bool isSubLand() const;
+
+    /**
+     * @brief 是否为父领地
+     * 如果是父领地，则有子领地，没有父领地
+     */
+    LDNDAPI bool isParentLand() const;
+
+    /**
+     * @brief 是否为混合领地
+     * 如果是混合领地，则同时有父领地和子领地
+     */
+    LDNDAPI bool isMixLand() const;
+
+    /**
+     * @brief 是否为普通领地(既不是子领地也不是父领地)
+     */
+    LDNDAPI bool isOrdinaryLand() const;
+
+    /**
+     * @brief 是否可以创建子领地
+     * 如果满足嵌套层级限制，则可以创建子领地
+     */
     LDNDAPI bool canCreateSubLand() const;
 
-    LDNDAPI LandData_sptr getParentLand() const;               // 获取父领地
-    LDNDAPI std::vector<LandData_sptr> getSubLands() const;    // 获取子领地
-    LDNDAPI int                        getNestedLevel() const; // 获取嵌套层级(相对于父领地)
+    /**
+     * @brief 获取父领地
+     */
+    LDNDAPI LandData_sptr getParentLand() const;
+
+    /**
+     * @brief 获取子领地
+     */
+    LDNDAPI std::vector<LandData_sptr> getSubLands() const;
+
+    /**
+     * @brief 获取嵌套层级(相对于父领地)
+     */
+    LDNDAPI int getNestedLevel() const;
 
     LDNDAPI bool isRadiusInLand(BlockPos const& pos, int radius) const;
     LDNDAPI bool isAABBInLand(BlockPos const& pos1, BlockPos const& pos2) const;
