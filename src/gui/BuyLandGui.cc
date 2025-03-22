@@ -456,6 +456,7 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
 
                 landPtr->mOriginalBuyPrice = discountedPrice;            // 保存购买价格
                 parentLand->mSubLandIDs.push_back(landPtr->getLandID()); // 添加子领地
+                landPtr->mParentLandID = parentLand->getLandID();        // 设置父领地
 
                 PlayerBuyLandAfterEvent ev(pl, landPtr);
                 ll::event::EventBus::getInstance().publish(ev);

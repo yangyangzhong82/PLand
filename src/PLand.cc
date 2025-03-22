@@ -372,6 +372,8 @@ LandPermType PLand::getPermType(UUIDs const& uuid, LandID id, bool ignoreOperato
 LandData_sptr PLand::getLandAt(BlockPos const& pos, LandDimid dimid) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);
 
+    std::unordered_set<LandData_sptr> result;
+
     ChunkID chunkId = EncodeChunkID(pos.x >> 4, pos.z >> 4);
     auto    dimIt   = mLandMap.find(dimid); // 查找维度
     if (dimIt != mLandMap.end()) {
@@ -381,11 +383,26 @@ LandData_sptr PLand::getLandAt(BlockPos const& pos, LandDimid dimid) const {
                 auto landIt = mLandCache.find(landId); // 查找领地
                 if (landIt != mLandCache.end()
                     && landIt->second->getLandPos().hasPos(pos, !landIt->second->is3DLand())) {
-                    return landIt->second;
+                    // return landIt->second;
+                    result.insert(landIt->second);
                 }
             }
         }
     }
+
+    if (!result.empty()) {
+        if (result.size() == 1) {
+            return *result.begin();
+        }
+
+        // 重建领地关系
+        for (auto& land : result) {
+            if (land->isSubLand()) {
+                return land;
+            }
+        }
+    }
+
     return nullptr;
 }
 std::unordered_set<LandData_sptr> PLand::getLandAt(BlockPos const& center, int radius, LandDimid dimid) const {
