@@ -199,6 +199,11 @@ public:
      */
     LDNDAPI int getNestedLevel() const;
 
+    /**
+     * @brief 获取根领地(即最顶层的普通领地 isOrdinaryLand() == true)
+     */
+    LDNDAPI LandData_sptr getRootLand() const;
+
     LDNDAPI bool isRadiusInLand(BlockPos const& pos, int radius) const;
     LDNDAPI bool isAABBInLand(BlockPos const& pos1, BlockPos const& pos2) const;
 

@@ -92,6 +92,21 @@ int LandData::getNestedLevel() const {
     }
     return parentLand->getNestedLevel() + 1;
 }
+LandData_sptr LandData::getRootLand() const {
+    if (isParentLand()) {
+        return PLand::getInstance().getLand(this->mLandID); // 由于继承会影响反射，所以从数据库返回自生实例
+    }
+
+    LandData_sptr root = getParentLand();
+    while (!root->isOrdinaryLand()) {
+        root = root->getParentLand();
+        if (!root) {
+            return nullptr;
+        }
+    }
+
+    return root;
+}
 
 bool LandData::isRadiusInLand(BlockPos const& pos, int radius) const {
     BlockPos minPos(pos.x - radius, mIs3DLand ? pos.y - radius : mPos.mMin_A.y, pos.z - radius);
