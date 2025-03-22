@@ -7,6 +7,7 @@
 #include "mc/world/level/Level.h"
 #include "pland/Config.h"
 #include "pland/LandData.h"
+#include "pland/LandPos.h"
 #include "pland/PLand.h"
 #include <memory>
 
@@ -15,8 +16,17 @@ namespace land {
 
 DrawHandle::DrawHandle() : mGeometryGroup(bsci::GeometryGroup::createDefault()) {}
 
+
+AABB fixAABB(PosBase const& min, PosBase const& max) {
+    return AABB{
+        Vec3{min.x + 0.08, min.y + 0.08, min.z + 0.08},
+        Vec3{max.x + 0.98, max.y + 0.98, max.z + 0.98}
+    };
+}
+AABB fixAABB(LandPos const& aabb) { return fixAABB(aabb.mMin_A, aabb.mMax_B); }
+
 bsci::GeometryGroup::GeoId DrawHandle::draw(LandPos const& pos, DimensionType dim, const mce::Color& color) {
-    auto result = mGeometryGroup->box(dim, AABB{pos.mMin_A, pos.mMax_B}, color);
+    auto result = mGeometryGroup->box(dim, fixAABB(pos), color);
     return result;
 }
 
