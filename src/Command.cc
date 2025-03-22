@@ -32,6 +32,7 @@
 #include "pland/Global.h"
 #include "pland/LandSelector.h"
 #include "pland/PLand.h"
+#include "pland/gui/LandManageGui.h"
 #include "pland/utils/McUtils.h"
 #include "pland/utils/Utils.h"
 #include <filesystem>
@@ -401,7 +402,7 @@ static auto const This = [](CommandOrigin const& ori, CommandOutput& out) {
         return;
     }
 
-    LandManagerGui::impl(player, land->getLandID());
+    LandManageGui::impl(player, land->getLandID());
 };
 
 }; // namespace Lambda
