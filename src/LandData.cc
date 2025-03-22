@@ -62,8 +62,8 @@ bool LandData::isLandMember(UUIDs const& uuid) const {
 
 bool LandData::isSubLand() const { return this->mParentLandID != LandID(-1) && this->mSubLandIDs.empty(); }
 bool LandData::isParentLand() const { return this->mParentLandID == LandID(-1) && !this->mSubLandIDs.empty(); }
-bool LandData::isMixLand() const { return isSubLand() && isParentLand(); }
-bool LandData::isOrdinaryLand() const { return !isMixLand(); }
+bool LandData::isMixLand() const { return this->mParentLandID != LandID(-1) && !this->mSubLandIDs.empty(); }
+bool LandData::isOrdinaryLand() const { return this->mParentLandID == LandID(-1) && this->mSubLandIDs.empty(); }
 bool LandData::canCreateSubLand() const {
     auto nestedLevel = getNestedLevel();
     return nestedLevel < Config::cfg.land.subLand.maxNested && nestedLevel < GlobalSubLandMaxNestedLevel;

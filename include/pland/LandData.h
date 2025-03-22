@@ -156,25 +156,22 @@ public:
     LDNDAPI bool isSaleing() const;
 
     /**
-     * @brief 是否为子领地
-     * 如果是子领地，则有父领地，没有子领地
+     * @brief 是否为子领地(有父领地、无子领地)
      */
     LDNDAPI bool isSubLand() const;
 
     /**
-     * @brief 是否为父领地
-     * 如果是父领地，则有子领地，没有父领地
+     * @brief 是否为父领地(有子领地、无父领地)
      */
     LDNDAPI bool isParentLand() const;
 
     /**
-     * @brief 是否为混合领地
-     * 如果是混合领地，则同时有父领地和子领地
+     * @brief 是否为混合领地(有父领地、有子领地)
      */
     LDNDAPI bool isMixLand() const;
 
     /**
-     * @brief 是否为普通领地(既不是子领地也不是父领地)
+     * @brief 是否为普通领地(无父领地、无子领地)
      */
     LDNDAPI bool isOrdinaryLand() const;
 
