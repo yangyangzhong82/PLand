@@ -87,9 +87,7 @@ void PLand::_initLandMap() {
             auto  chunkID      = PLand::EncodeChunkID(ch.x, ch.z);
             auto& chunkLandVec = chunkMap[chunkID]; // 区块领地数组
 
-            if (!some(chunkLandVec, land->getLandID())) {
-                chunkLandVec.push_back(land->getLandID());
-            }
+            chunkLandVec.insert(land->getLandID());
         }
     }
     my_mod::MyMod::getInstance().getSelf().getLogger().info("初始化领地缓存系统完成");
@@ -100,16 +98,10 @@ void PLand::_updateLandMap(LandData_sptr const& ptr, bool add) {
     for (auto& ch : chunks) {
         auto& chunkLands = mLandMap[ptr->mLandDimid][EncodeChunkID(ch.x, ch.z)];
 
-        auto iter = std::find(chunkLands.begin(), chunkLands.end(), ptr->mLandID);
-
         if (add) {
-            if (iter == chunkLands.end()) {
-                chunkLands.push_back(ptr->mLandID);
-            }
+            chunkLands.insert(ptr->getLandID());
         } else {
-            if (iter != chunkLands.end()) {
-                chunkLands.erase(iter);
-            }
+            chunkLands.erase(ptr->getLandID());
         }
     }
 }

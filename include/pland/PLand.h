@@ -45,7 +45,7 @@ private:
     std::atomic<bool>                         mThreadStopFlag{false}; // 线程停止标志
 
     // 维度 -> 区块 -> [领地] (快速查询领地)
-    std::unordered_map<LandDimid, std::unordered_map<ChunkID, std::vector<LandID>>> mLandMap;
+    std::unordered_map<LandDimid, std::unordered_map<ChunkID, std::unordered_set<LandID>>> mLandMap;
 
 
 private: //! private 方法非线程安全
