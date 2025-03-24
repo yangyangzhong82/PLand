@@ -3,6 +3,7 @@
 #include "ll/api/form/CustomForm.h"
 #include "ll/api/form/FormBase.h"
 #include "ll/api/form/ModalForm.h"
+#include "ll/api/form/SimpleForm.h"
 #include "mc/world/actor/player/Player.h"
 #include "pland/Config.h"
 #include "pland/EconomySystem.h"
@@ -36,7 +37,26 @@ void LandManageGui::impl(Player& player, LandID id) {
 
     auto fm = SimpleFormEx::create();
     fm.setTitle(PLUGIN_NAME + ("| 领地管理 [{}]"_trf(player, land->getLandID())));
-    fm.setContent("领地: {}\n类型: {}\n大小: {}x{}x{} = {}\n范围: {}\n"_trf( 
+
+    string subContent;
+    if (land->isParentLand()) {
+        subContent = "下属子领地: {}"_trf(player, land->getSubLands().size());
+    } else if (land->isMixLand()) {
+        subContent = "下属子领地: {}\n父领地ID: {}\n父领地名称: {}"_trf(
+            player,
+            land->getSubLands().size(),
+            land->mParentLandID,
+            land->getParentLand() ? land->getParentLand()->getLandName() : "nullptr"
+        );
+    } else {
+        subContent = "父领地ID: {}\n父领地名称: {}"_trf(
+            player,
+            land->mParentLandID,
+            land->getParentLand() ? land->getParentLand()->getLandName() : "nullptr"
+        );
+    }
+
+    fm.setContent("领地: {}\n类型: {}\n大小: {}x{}x{} = {}\n范围: {}\n\n{}"_trf(
         player,
         land->getLandName(),
         land->is3DLand() ? "3D" : "2D",
@@ -44,8 +64,14 @@ void LandManageGui::impl(Player& player, LandID id) {
         land->getLandPos().getWidth(),
         land->getLandPos().getHeight(),
         land->getLandPos().getVolume(),
-        land->getLandPos().toString()
+        land->getLandPos().toString(),
+        subContent
     ));
+
+    bool const isSubLand      = land->isSubLand();
+    bool const isParentLand   = land->isParentLand();
+    bool const isMixLand      = isSubLand && isParentLand;
+    bool const isOrdinaryLand = land->isOrdinaryLand();
 
     fm.appendButton("编辑权限"_trf(player), "textures/ui/sidebar_icons/promotag", [land](Player& pl) {
         EditLandPermGui::impl(pl, land);
@@ -63,12 +89,18 @@ void LandManageGui::impl(Player& player, LandID id) {
     fm.appendButton("领地过户"_trf(player), "textures/ui/sidebar_icons/my_characters", [land](Player& pl) {
         EditLandOwnerGui::impl(pl, land);
     });
-    fm.appendButton("重新选区"_trf(player), "textures/ui/anvil_icon", [land](Player& pl) {
-        ReSelectLandGui::impl(pl, land);
-    });
-    fm.appendButton("删除领地"_trf(player), "textures/ui/icon_trash", [land](Player& pl) {
-        DeleteLandGui::impl(pl, land);
-    });
+
+    if (isOrdinaryLand) {
+        fm.appendButton("重新选区"_trf(player), "textures/ui/anvil_icon", [land](Player& pl) {
+            ReSelectLandGui::impl(pl, land);
+        });
+    }
+
+    if ((isOrdinaryLand || isSubLand || isParentLand) && !isMixLand) {
+        fm.appendButton("删除领地"_trf(player), "textures/ui/icon_trash", [land](Player& pl) {
+            DeleteLandGui::impl(pl, land);
+        });
+    }
 
     fm.sendTo(player);
 }
@@ -101,7 +133,30 @@ void LandManageGui::EditLandPermGui::impl(Player& player, LandData_sptr const& p
         mc_utils::sendText(pl, "权限表已更新"_trf(pl));
     });
 }
+
+
 void LandManageGui::DeleteLandGui::impl(Player& player, LandData_sptr const& ptr) {
+    if (ptr->isOrdinaryLand()) {
+        _deleteOrdinaryLandImpl(player, ptr);
+    } else if (ptr->isSubLand()) {
+        _deleteSubLandImpl(player, ptr);
+    } else if (ptr->isParentLand()) {
+        _deleteParentLandImpl(player, ptr);
+    } else if (ptr->isMixLand()) {
+        _deleteMixLandImpl(player, ptr);
+    }
+}
+void LandManageGui::DeleteLandGui::recursionCalculationRefoundPrice(long long& refundPrice, LandData_sptr const& ptr) {
+    refundPrice += PriceCalculate::calculateRefundsPrice(ptr->mOriginalBuyPrice, Config::cfg.land.refundRate);
+
+    if (ptr->isParentLand() || ptr->isMixLand()) {
+        std::vector<LandData_sptr> subLands = ptr->getSubLands();
+        for (auto& subLand : subLands) {
+            recursionCalculationRefoundPrice(refundPrice, subLand);
+        }
+    }
+}
+void LandManageGui::DeleteLandGui::_deleteOrdinaryLandImpl(Player& player, LandData_sptr const& ptr) {
     int price = PriceCalculate::calculateRefundsPrice(ptr->mOriginalBuyPrice, Config::cfg.land.refundRate);
 
     PlayerDeleteLandBeforeEvent ev(player, ptr->getLandID(), price);
@@ -143,6 +198,63 @@ void LandManageGui::DeleteLandGui::impl(Player& player, LandData_sptr const& ptr
         } else mc_utils::sendText(pl, "经济系统异常，操作失败"_trf(pl));
     });
 }
+void LandManageGui::DeleteLandGui::_deleteSubLandImpl(Player& player, LandData_sptr const& ptr) {
+    return _deleteOrdinaryLandImpl(player, ptr); // 按照普通领地处理
+}
+void LandManageGui::DeleteLandGui::_deleteParentLandImpl(Player& player, LandData_sptr const& ptr) {
+    auto fm = SimpleFormEx::create<LandManageGui, BackButtonPos::Lower>(ptr->getLandID());
+    fm.setTitle(PLUGIN_NAME + "| 删除领地 & 父领地"_trf(player));
+    fm.setContent(
+        "您当前操作的的是父领地\n当前领地下有 {} 个子领地\n您确定要删除领地吗?"_trf(player, ptr->getSubLands().size())
+    );
+
+    fm.appendButton("删除当前领地和子领地"_trf(player), [ptr](Player& pl) {
+        auto result = PLand::getInstance().removeLandAndSubLands(ptr);
+        if (result.first) {
+            mc_utils::sendText(pl, "删除领地成功!"_trf(pl));
+        } else {
+            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.second));
+        }
+    });
+    fm.appendButton("删除当前领地并提升子领地为父领地"_trf(player), [ptr](Player& pl) {
+        auto result = PLand::getInstance().removeLandAndPromoteSubLands(ptr);
+        if (result.first) {
+            mc_utils::sendText(pl, "删除领地成功!"_trf(pl));
+        } else {
+            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.second));
+        }
+    });
+
+    fm.sendTo(player);
+}
+void LandManageGui::DeleteLandGui::_deleteMixLandImpl(Player& player, LandData_sptr const& ptr) {
+    auto fm = SimpleFormEx::create<LandManageGui, BackButtonPos::Lower>(ptr->getLandID());
+    fm.setTitle(PLUGIN_NAME + "| 删除领地 & 混合领地"_trf(player));
+    fm.setContent(
+        "您当前操作的的是混合领地\n当前领地下有 {} 个子领地\n您确定要删除领地吗?"_trf(player, ptr->getSubLands().size())
+    );
+
+    fm.appendButton("删除当前领地和子领地"_trf(player), [ptr](Player& pl) {
+        auto result = PLand::getInstance().removeLandAndSubLands(ptr);
+        if (result.first) {
+            mc_utils::sendText(pl, "删除领地成功!"_trf(pl));
+        } else {
+            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.second));
+        }
+    });
+    fm.appendButton("删除当前领地并移交子领地给父领地"_trf(player), [ptr](Player& pl) {
+        auto result = PLand::getInstance().removeLandAndTransferSubLands(ptr);
+        if (result.first) {
+            mc_utils::sendText(pl, "删除领地成功!"_trf(pl));
+        } else {
+            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.second));
+        }
+    });
+
+    fm.sendTo(player);
+}
+
+
 void LandManageGui::EditLandNameGui::impl(Player& player, LandData_sptr const& ptr) {
     EditStringUtilGui::impl(
         player,

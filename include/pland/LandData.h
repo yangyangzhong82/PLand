@@ -156,6 +156,16 @@ public:
     LDNDAPI bool isSaleing() const;
 
     /**
+     * @brief 是否有父领地
+     */
+    LDNDAPI bool hasParentLand() const;
+
+    /**
+     * @brief 是否有子领地
+     */
+    LDNDAPI bool hasSubLand() const;
+
+    /**
      * @brief 是否为子领地(有父领地、无子领地)
      */
     LDNDAPI bool isSubLand() const;

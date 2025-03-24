@@ -60,13 +60,16 @@ bool LandData::isLandMember(UUIDs const& uuid) const {
     return std::find(mLandMembers.begin(), mLandMembers.end(), uuid) != mLandMembers.end();
 }
 
+bool LandData::hasParentLand() const { return this->mParentLandID != LandID(-1); }
+bool LandData::hasSubLand() const { return !this->mSubLandIDs.empty(); }
 bool LandData::isSubLand() const { return this->mParentLandID != LandID(-1) && this->mSubLandIDs.empty(); }
 bool LandData::isParentLand() const { return this->mParentLandID == LandID(-1) && !this->mSubLandIDs.empty(); }
 bool LandData::isMixLand() const { return this->mParentLandID != LandID(-1) && !this->mSubLandIDs.empty(); }
 bool LandData::isOrdinaryLand() const { return this->mParentLandID == LandID(-1) && this->mSubLandIDs.empty(); }
 bool LandData::canCreateSubLand() const {
     auto nestedLevel = getNestedLevel();
-    return nestedLevel < Config::cfg.land.subLand.maxNested && nestedLevel < GlobalSubLandMaxNestedLevel;
+    return nestedLevel < Config::cfg.land.subLand.maxNested && nestedLevel < GlobalSubLandMaxNestedLevel
+        && static_cast<int>(this->mSubLandIDs.size()) < Config::cfg.land.subLand.maxSubLand;
 }
 
 LandData_sptr LandData::getParentLand() const {

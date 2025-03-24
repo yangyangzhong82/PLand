@@ -158,7 +158,6 @@
     "设置已保存": "Settings saved.",
     "领地不存在": "Plot does not exist.",
     "| 领地管理 [{}]": "| Plot Management [{}]",
-    "领地: {}\n类型: {}\n大小: {}x{}x{} = {}\n范围: {}\n": "Plot: {}\nType: {}\nSize: {}x{}x{} = {}\nRange: {}\n",
     "编辑权限": "Edit Permissions",
     "修改成员": "Modify Members",
     "修改领地名称": "Rename Plot",
@@ -252,5 +251,17 @@
     "请输入正确的Y轴范围, 子领地的Y轴范围不能超过父领地": "Please enter the correct Y-axis range. The Y-axis range of the sub-land cannot exceed that of the parent land.",
     "| 购买领地 & 子领地": "| Purchase Territory & Sub-land",
     "[父领地]\n体积: {}x{}x{}={}\n范围: {}\n\n[子领地]\n体积: {}x{}x{}={}\n范围: {}\n\n[价格]\n原价: {}\n折扣价: {}\n{}": "[Parent Territory]\nVolume: {}x{}x{}={}\nRange: {}\n\n[Sub-land]\nVolume: {}x{}x{}={}\nRange: {}\n\n[Price]\nOriginal Price: {}\nDiscounted Price: {}\n{}",
-    "子领地不在父领地范围内": "The sub-land is not within the range of the parent land"
+    "子领地不在父领地范围内": "The sub-land is not within the range of the parent land",
+    "下属子领地: {}": "Subordinate sub-land: {}",
+    "下属子领地: {}\n父领地ID: {}\n父领地名称: {}": "Subordinate sub-land: {}\nParent land ID: {}\nParent land name: {}",
+    "父领地ID: {}\n父领地名称: {}": "Parent land ID: {}\nParent land name: {}",
+    "领地: {}\n类型: {}\n大小: {}x{}x{} = {}\n范围: {}\n\n{}": "Territory: {}\nType: {}\nSize: {}x{}x{} = {}\nRange: {}\n\n{}",
+    "| 删除领地 & 父领地": "| Delete Territory & Parent Territory",
+    "您当前操作的的是父领地\n当前领地下有 {} 个子领地\n您确定要删除领地吗?": "You are currently operating on the parent land. There are {} sub-territories under the current land. Are you sure you want to delete the land?",
+    "删除当前领地和子领地": "Delete the current land and sub-territories",
+    "删除领地失败，原因: {}": "Failed to delete the land. Reason: {}",
+    "删除当前领地并提升子领地为父领地": "Delete the current land and promote the sub-land to the parent land",
+    "| 删除领地 & 混合领地": "| Delete Territory & Mixed Territory",
+    "您当前操作的的是混合领地\n当前领地下有 {} 个子领地\n您确定要删除领地吗?": "You are currently operating on the mixed land. There are {} sub-territories under the current land. Are you sure you want to delete the land?",
+    "删除当前领地并移交子领地给父领地": "Delete the current land and transfer the sub-territories to the parent land"
 }

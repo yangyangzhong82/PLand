@@ -112,6 +112,20 @@ void PLand::_refreshLandRange(LandData_sptr const& ptr) {
 
 LandID PLand::getNextLandID() { return mNextLandID++; }
 
+Result<bool> PLand::_removeLand(LandData_sptr const& ptr) {
+    _updateLandMap(ptr, false); // 擦除映射表
+    if (!mLandCache.erase(ptr->getLandID())) {
+        return {false, "erase cache failed!"};
+    }
+
+    if (!this->mDB->del(std::to_string(ptr->getLandID()))) {
+        mLandCache.emplace(ptr->getLandID(), ptr); // rollback
+        _updateLandMap(ptr, true);
+        return {false, "del db failed!"};
+    }
+    return {true, std::nullopt};
+}
+
 } // namespace land
 
 
@@ -255,6 +269,13 @@ bool PLand::addLand(LandData_sptr land) {
 
     return true;
 }
+void PLand::refreshLandRange(LandData_sptr const& ptr) {
+    std::unique_lock<std::shared_mutex> lock(mMutex);
+    _refreshLandRange(ptr);
+}
+
+
+// 加锁方法
 bool PLand::removeLand(LandID landId) {
     std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
 
@@ -262,18 +283,116 @@ bool PLand::removeLand(LandID landId) {
     if (landIter == mLandCache.end()) {
         return false;
     }
-
-    _updateLandMap(landIter->second, false); // 擦除映射表
-
-    mLandCache.erase(landIter);             // 删除缓存
-    this->mDB->del(std::to_string(landId)); // 删除数据库记录
-
-    return true;
+    lock.unlock();
+    return removeOrdinaryLand(landIter->second).first;
 }
-void PLand::refreshLandRange(LandData_sptr const& ptr) {
+Result<bool> PLand::removeOrdinaryLand(LandData_sptr const& ptr) {
+    if (!ptr->isOrdinaryLand()) {
+        return {false, "not a ordinary land!"};
+    }
+
+    std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
+    return _removeLand(ptr);
+}
+Result<bool> PLand::removeLandAndSubLands(LandData_sptr const& ptr) {
+    if (!ptr->isParentLand() || !ptr->isMixLand()) {
+        return {false, "only parent land and mix land can remove sub lands!"};
+    }
+
     std::unique_lock<std::shared_mutex> lock(mMutex);
-    _refreshLandRange(ptr);
+
+    auto currentId = ptr->getLandID();
+    auto parent    = ptr->getParentLand();
+    if (parent) {
+        std::erase_if(parent->mSubLandIDs, [&](LandID const& id) { return id == currentId; });
+    }
+
+    std::stack<LandData_sptr>  stack;        // 栈
+    std::vector<LandData_sptr> removedLands; // 已移除的领地
+
+    stack.push(ptr);
+
+    while (!stack.empty()) {
+        auto current = stack.top();
+        stack.pop();
+
+        if (current->hasSubLand()) {
+            auto subLands = current->getSubLands();
+            for (auto& subLand : subLands) {
+                stack.push(subLand);
+            }
+        }
+
+        auto result = _removeLand(current);
+        if (result.first) {
+            removedLands.push_back(current);
+        } else {
+            // rollback
+            for (auto land : removedLands) {
+                mLandCache.emplace(land->getLandID(), land);
+                _updateLandMap(land, true);
+            }
+            if (parent) {
+                parent->mSubLandIDs.push_back(currentId); // 恢复父领地的子领地列表
+            }
+            return {false, "remove land or sub land failed!"};
+        }
+    }
+
+    return {true, std::nullopt};
 }
+Result<bool> PLand::removeLandAndPromoteSubLands(LandData_sptr const& ptr) {
+    if (!ptr->isParentLand()) {
+        return {false, "only root land's sub land can be promoted!"};
+    }
+
+    std::unique_lock<std::shared_mutex> lock(mMutex);
+
+    auto subLands = ptr->getSubLands();
+    for (auto& subLand : subLands) {
+        static const auto invalidID = LandID(-1); // 无效ID
+        subLand->mParentLandID      = invalidID;
+    }
+
+    auto result = _removeLand(ptr);
+    if (!result.first) {
+        // rollback
+        auto currentId = ptr->getLandID();
+        for (auto& subLand : subLands) {
+            subLand->mParentLandID = currentId;
+        }
+    }
+    return result;
+}
+Result<bool> PLand::removeLandAndTransferSubLands(LandData_sptr const& ptr) {
+    if (!ptr->isMixLand()) {
+        return {false, "only mix land's sub land can be transferred!"};
+    }
+
+    auto parent = ptr->getParentLand();
+    if (!parent) {
+        return {false, "parent land not found!"};
+    }
+
+    std::unique_lock<std::shared_mutex> lock(mMutex);
+
+    auto parentID = parent->getLandID();
+    auto subLands = ptr->getSubLands();
+    for (auto& subLand : subLands) {
+        subLand->mParentLandID = parentID;
+    }
+
+    auto result = _removeLand(ptr);
+    if (!result.first) {
+        // rollback
+        auto currentId = ptr->getLandID();
+        for (auto& subLand : subLands) {
+            subLand->mParentLandID = currentId;
+        }
+    }
+    return result;
+}
+
 
 LandData_wptr PLand::getLandWeakPtr(LandID id) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);

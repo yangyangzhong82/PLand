@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 
+
 class Player;
 class BlockPos;
 
@@ -25,6 +26,7 @@ struct PlayerSettings {
     LDNDAPI static std::string SYSTEM_LOCALE_CODE();
     LDNDAPI static std::string SERVER_LOCALE_CODE();
 };
+
 
 class PLand final {
 public:
@@ -60,6 +62,8 @@ private: //! private 方法非线程安全
 
     LandID getNextLandID();
 
+    Result<bool> _removeLand(LandData_sptr const& ptr);
+
 public:
     LDNDAPI static PLand& getInstance();
 
@@ -86,9 +90,34 @@ public:
 
     LDAPI bool addLand(LandData_sptr land);
 
-    LDAPI bool removeLand(LandID id);
-
     LDAPI void refreshLandRange(LandData_sptr const& ptr); // 刷新领地范围 (_refreshLandRange)
+
+    /**
+     * @brief 移除领地
+     * @deprecated 此接口已废弃，此接口实际调用 removeOrdinaryLand()，请使用 removeOrdinaryLand() 代替
+     */
+    [[deprecated("Please use removeOrdinaryLand() instead")]] LDAPI bool removeLand(LandID id);
+
+    /**
+     * @brief 移除普通领地
+     */
+    LDNDAPI Result<bool> removeOrdinaryLand(LandData_sptr const& ptr);
+
+    /**
+     * @brief 移除领地和其子领地
+     */
+    LDNDAPI Result<bool> removeLandAndSubLands(LandData_sptr const& ptr);
+
+    /**
+     * @brief 移除当前领地并提升子领地为普通领地
+     */
+    LDNDAPI Result<bool> removeLandAndPromoteSubLands(LandData_sptr const& ptr);
+
+    /**
+     * @brief 移除当前领地并移交子领地给当前领地的父领地
+     */
+    LDNDAPI Result<bool> removeLandAndTransferSubLands(LandData_sptr const& ptr);
+
 
 public: // 领地查询API
     LDNDAPI LandData_wptr getLandWeakPtr(LandID id) const;

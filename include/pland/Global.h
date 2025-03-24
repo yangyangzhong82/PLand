@@ -6,6 +6,7 @@
 #include "mc/platform/UUID.h"
 #include <atomic>
 #include <filesystem>
+#include <optional>
 #include <unordered_map>
 
 class Player;
@@ -43,6 +44,9 @@ LDNDAPI extern std::string GetPlayerLocaleCodeFromSettings(Player& player); // P
 
 inline int constexpr GlobalSubLandMaxNestedLevel = 16; // 子领地最大嵌套层数
 
+
+template <typename T>
+using Result = std::pair<T, std::optional<std::string>>; // T: 返回值, std::string: 错误信息
 
 } // namespace land
 
