@@ -429,7 +429,7 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
                 auto cur = stack.top();
                 stack.pop();
 
-                if (cur == parentLand) continue; // 排除当前领地
+                // if (cur == parentLand) continue; // 排除当前领地
 
                 lands.insert(cur);
                 for (auto& lan : cur->getSubLands()) {
