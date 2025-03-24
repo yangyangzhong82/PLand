@@ -98,7 +98,7 @@ public:
     int                 version{7};                            // 版本号
     LandPos             mPos;                                  // 领地对角坐标
     PosBase             mTeleportPos;                          // 领地传送坐标
-    LandID              mLandID{static_cast<uint64_t>(-1)};    // 领地唯一ID  (由 PLand::addLand() 时分配)
+    LandID              mLandID{LandID(-1)};                   // 领地唯一ID  (由 PLand::addLand() 时分配)
     LandDimid           mLandDimid;                            // 领地所在维度
     bool                mIs3DLand;                             // 是否为3D领地
     LandPermTable       mLandPermTable;                        // 领地权限
@@ -110,9 +110,9 @@ public:
     int                 mSalePrice{0};                         // 出售价格
     int                 mOriginalBuyPrice{0};                  // 原始购买价格
     bool                mIsConvertedLand{false};               // 是否为转换后的领地(其它插件创建的领地)
-    bool                mOwnerDataIsXUID{false}; // 领地主人数据是否为XUID (如果为true，则主人上线自动转换为UUID)
-    LandID              mParentLandID{static_cast<uint64_t>(-1)}; // 父领地ID
-    std::vector<LandID> mSubLandIDs;                              // 子领地ID
+    bool                mOwnerDataIsXUID{false};   // 领地主人数据是否为XUID (如果为true，则主人上线自动转换为UUID)
+    LandID              mParentLandID{LandID(-1)}; // 父领地ID
+    std::vector<LandID> mSubLandIDs;               // 子领地ID
 
 
 public:
