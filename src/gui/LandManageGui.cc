@@ -166,12 +166,6 @@ void LandManageGui::DeleteLandGui::recursionCalculationRefoundPrice(int& refundP
 void LandManageGui::DeleteLandGui::_deleteOrdinaryLandImpl(Player& player, LandData_sptr const& ptr) {
     int price = PriceCalculate::calculateRefundsPrice(ptr->mOriginalBuyPrice, Config::cfg.land.refundRate);
 
-    PlayerDeleteLandBeforeEvent ev(player, ptr->getLandID(), price);
-    ll::event::EventBus::getInstance().publish(ev);
-    if (ev.isCancelled()) {
-        return;
-    }
-
     ModalForm fm(
         PLUGIN_NAME + " | 确认删除?"_trf(player),
         "您确定要删除领地 {} 吗?\n删除领地后，您将获得 {} 金币的退款。\n此操作不可逆,请谨慎操作!"_trf(
@@ -188,6 +182,12 @@ void LandManageGui::DeleteLandGui::_deleteOrdinaryLandImpl(Player& player, LandD
         }
         if (!(bool)res.value()) {
             LandManageGui::impl(pl, ptr->getLandID());
+            return;
+        }
+
+        PlayerDeleteLandBeforeEvent ev(pl, ptr->getLandID(), price);
+        ll::event::EventBus::getInstance().publish(ev);
+        if (ev.isCancelled()) {
             return;
         }
 
@@ -222,6 +222,12 @@ void LandManageGui::DeleteLandGui::_deleteParentLandImpl(Player& player, LandDat
         int refundPrice = 0;
         recursionCalculationRefoundPrice(refundPrice, ptr);
 
+        PlayerDeleteLandBeforeEvent ev(pl, ptr->getLandID(), refundPrice);
+        ll::event::EventBus::getInstance().publish(ev);
+        if (ev.isCancelled()) {
+            return;
+        }
+
         auto& economy = EconomySystem::getInstance();
         if (!economy.add(pl, refundPrice)) {
             mc_utils::sendText(pl, "经济系统异常，操作失败"_trf(pl));
@@ -241,6 +247,12 @@ void LandManageGui::DeleteLandGui::_deleteParentLandImpl(Player& player, LandDat
     });
     fm.appendButton("删除当前领地并提升子领地为父领地"_trf(player), [ptr](Player& pl) {
         int refundPrice = PriceCalculate::calculateRefundsPrice(ptr->mOriginalBuyPrice, Config::cfg.land.refundRate);
+
+        PlayerDeleteLandBeforeEvent ev(pl, ptr->getLandID(), refundPrice);
+        ll::event::EventBus::getInstance().publish(ev);
+        if (ev.isCancelled()) {
+            return;
+        }
 
         auto& economy = EconomySystem::getInstance();
         if (!economy.add(pl, refundPrice)) {
@@ -273,6 +285,12 @@ void LandManageGui::DeleteLandGui::_deleteMixLandImpl(Player& player, LandData_s
         int refundPrice = 0;
         recursionCalculationRefoundPrice(refundPrice, ptr);
 
+        PlayerDeleteLandBeforeEvent ev(pl, ptr->getLandID(), refundPrice);
+        ll::event::EventBus::getInstance().publish(ev);
+        if (ev.isCancelled()) {
+            return;
+        }
+
         auto& economy = EconomySystem::getInstance();
         if (!economy.add(pl, refundPrice)) {
             mc_utils::sendText(pl, "经济系统异常，操作失败"_trf(pl));
@@ -292,6 +310,12 @@ void LandManageGui::DeleteLandGui::_deleteMixLandImpl(Player& player, LandData_s
     });
     fm.appendButton("删除当前领地并移交子领地给父领地"_trf(player), [ptr](Player& pl) {
         int refundPrice = PriceCalculate::calculateRefundsPrice(ptr->mOriginalBuyPrice, Config::cfg.land.refundRate);
+
+        PlayerDeleteLandBeforeEvent ev(pl, ptr->getLandID(), refundPrice);
+        ll::event::EventBus::getInstance().publish(ev);
+        if (ev.isCancelled()) {
+            return;
+        }
 
         auto& economy = EconomySystem::getInstance();
         if (!economy.add(pl, refundPrice)) {
