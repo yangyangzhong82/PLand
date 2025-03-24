@@ -24,6 +24,8 @@ public:
         LDAPI static void _deleteSubLandImpl(Player& player, LandData_sptr const& ptr);      // 删除子领地
         LDAPI static void _deleteParentLandImpl(Player& player, LandData_sptr const& ptr);   // 删除父领地
         LDAPI static void _deleteMixLandImpl(Player& player, LandData_sptr const& ptr);      // 删除混合领地
+
+        LDAPI static void _handleRemoveLandAndSubLandsCallback(Player& pl, LandData_sptr const& ptr);
     };
 
     class EditLandNameGui {
