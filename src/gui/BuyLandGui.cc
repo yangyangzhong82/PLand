@@ -14,6 +14,7 @@
 #include "pland/utils/McUtils.h"
 #include "pland/wrapper/FormEx.h"
 #include <climits>
+#include <stack>
 #include <stdexcept>
 #include <string>
 #include <unordered_set>
@@ -404,42 +405,46 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
                 return;
             }
 
+            // 碰撞检查，防止领地重叠
+            // 首先，这个位置必须在父领地的完整范围内
+            // 如果是第一次创建子领地，isOrdinaryLand 是为 true 的，理论不用查询其它领地，因为父领地在购买时已经检查过了
+            // 然后这个aabb位置必须从根领地开始计算，整个父子领地都不能重叠，直系父领地除外
+
             if (!LandPos::isContain(parentPos, *aabb)) {
                 mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "子领地不在父领地范围内"_trf(pl));
                 return;
             }
 
             auto parentLand = subSelector->getParentLandData();
-            if (parentLand->isOrdinaryLand()) {
-                // 普通领地，查询其它领地进行碰撞检测
-                auto lands = db.getLandAt(aabb->mMin_A, aabb->mMax_B, subSelector->getDimensionId());
-                if (!lands.empty()) {
-                    for (auto& land : lands) {
-                        if (land == parentLand) continue; // 当前领地在在父领地内部，跳过检测
-                        if (LandPos::isCollision(land->mPos, *aabb)) {
-                            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地重叠，请重新选择"_trf(pl));
-                            return;
-                        }
-                        if (!LandPos::isComplisWithMinSpacing(land->mPos, *aabb, Config::cfg.land.subLand.minSpacing)) {
-                            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地距离过近，请重新选择"_trf(pl));
-                            return;
-                        }
-                    }
-                }
+            auto rootLand   = parentLand->getRootLand();
+            if (!rootLand) {
+                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "父领地不存在"_trf(pl));
+                return;
+            }
 
-            } else if (parentLand->isMixLand() || parentLand->isSubLand()) {
-                auto lands = parentLand->getSubLands();
-                if (!lands.empty()) {
-                    for (auto& land : lands) {
-                        if (LandPos::isCollision(land->mPos, *aabb)) {
-                            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地重叠，请重新选择"_trf(pl));
-                            return;
-                        }
-                        if (!LandPos::isComplisWithMinSpacing(land->mPos, *aabb, Config::cfg.land.subLand.minSpacing)) {
-                            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地距离过近，请重新选择"_trf(pl));
-                            return;
-                        }
-                    }
+            std::unordered_set<LandData_sptr> lands;
+            std::stack<LandData_sptr>         stack;
+            stack.push(rootLand);
+            while (!stack.empty()) {
+                auto cur = stack.top();
+                stack.pop();
+
+                if (cur == parentLand) continue; // 排除当前领地
+
+                lands.insert(cur);
+                for (auto& lan : cur->getSubLands()) {
+                    stack.push(lan);
+                }
+            }
+
+            for (auto& land : lands) {
+                if (LandPos::isCollision(land->mPos, *aabb)) {
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地重叠，请重新选择"_trf(pl));
+                    return;
+                }
+                if (!LandPos::isComplisWithMinSpacing(land->mPos, *aabb, Config::cfg.land.subLand.minSpacing)) {
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地距离过近，请重新选择"_trf(pl));
+                    return;
                 }
             }
 
