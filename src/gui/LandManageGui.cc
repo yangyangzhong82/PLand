@@ -147,12 +147,19 @@ void LandManageGui::DeleteLandGui::impl(Player& player, LandData_sptr const& ptr
     }
 }
 void LandManageGui::DeleteLandGui::recursionCalculationRefoundPrice(long long& refundPrice, LandData_sptr const& ptr) {
-    refundPrice += PriceCalculate::calculateRefundsPrice(ptr->mOriginalBuyPrice, Config::cfg.land.refundRate);
+    std::stack<LandData_sptr> stack;
+    stack.push(ptr);
 
-    if (ptr->isParentLand() || ptr->isMixLand()) {
-        std::vector<LandData_sptr> subLands = ptr->getSubLands();
-        for (auto& subLand : subLands) {
-            recursionCalculationRefoundPrice(refundPrice, subLand);
+    while (!stack.empty()) {
+        LandData_sptr current = stack.top();
+        stack.pop();
+
+        refundPrice += PriceCalculate::calculateRefundsPrice(current->mOriginalBuyPrice, Config::cfg.land.refundRate);
+
+        if (current->hasSubLand()) {
+            for (auto& subLand : current->getSubLands()) {
+                stack.push(subLand);
+            }
         }
     }
 }
