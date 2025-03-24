@@ -30,7 +30,7 @@ struct Config {
         int  drawRange{64};           // 绘制 x 范围内的领地
 
         struct {
-            bool   enabled{true};                               // 是否启用
+            bool   enabled{false};                              // 是否启用
             int    maxNested{5};                                // 最大嵌套层数(默认5，最大16)
             int    minSpacing{8};                               // 子领地之间的最小间距
             int    maxSubLand{6};                               // 每个领地的最大子领地数量
