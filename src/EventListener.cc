@@ -350,14 +350,14 @@ bool EventListener::setup() {
 
                 Player& player = pl.value();
 
-                logger->debug("[AttackBlock] {}", ev.getPos().toString());
+                logger->debug("[AttackBlock] {}", ev.pos().toString());
 
-                auto land = db->getLandAt(ev.getPos(), player.getDimensionId());
+                auto land = db->getLandAt(ev.pos(), player.getDimensionId());
                 if (PreCheck(land, player.getUuid().asString())) {
                     return;
                 }
 
-                auto const& bl = player.getDimensionBlockSourceConst().getBlock(ev.getPos()).getTypeName();
+                auto const& bl = player.getDimensionBlockSourceConst().getBlock(ev.pos()).getTypeName();
                 if (land->getLandPermTableConst().allowAttackDragonEgg && bl == "minecraft:dragon_egg") return;
 
                 ev.cancel();
@@ -367,7 +367,7 @@ bool EventListener::setup() {
             [db, logger](ila::mc::ArmorStandSwapItemBeforeEvent& ev) {
                 if (!Config::cfg.listeners.ArmorStandSwapItemBeforeEvent) return;
 
-                Player& player = ev.getPlayer();
+                Player& player = ev.player();
 
                 logger->debug("[ArmorStandSwapItem]: executed");
 
@@ -407,7 +407,7 @@ bool EventListener::setup() {
                 return; // 忽略非玩家骑乘事件
             }
 
-            auto const& typeName = ev.getTarget().getTypeName();
+            auto const& typeName = ev.target().getTypeName();
             auto        land     = db->getLandAt(passenger.getPosition(), passenger.getDimensionId());
             if (PreCheck(land)) return; // land not found
             // 特殊处理：
@@ -432,11 +432,11 @@ bool EventListener::setup() {
         bus->emplaceListener<ila::mc::ExplosionBeforeEvent>([db, logger](ila::mc::ExplosionBeforeEvent& ev) {
             if (!Config::cfg.listeners.ExplosionBeforeEvent) return;
 
-            logger->debug("[Explode] Pos: {}", ev.getExplosion().mPos->toString());
+            logger->debug("[Explode] Pos: {}", ev.explosion().mPos->toString());
 
             auto lands = db->getLandAt(
-                BlockPos{ev.getExplosion().mPos},
-                (int)(ev.getExplosion().mRadius + 1.0),
+                BlockPos{ev.explosion().mPos},
+                (int)(ev.explosion().mRadius + 1.0),
                 ev.blockSource().getDimensionId()
             );
             for (auto& p : lands) {
@@ -449,9 +449,9 @@ bool EventListener::setup() {
         bus->emplaceListener<ila::mc::FarmDecayBeforeEvent>([db, logger](ila::mc::FarmDecayBeforeEvent& ev) {
             if (!Config::cfg.listeners.FarmDecayBeforeEvent) return;
 
-            logger->debug("[FarmDecay] Pos: {}", ev.getPos().toString());
+            logger->debug("[FarmDecay] Pos: {}", ev.pos().toString());
 
-            auto land = db->getLandAt(ev.getPos(), ev.blockSource().getDimensionId());
+            auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
             if (PreCheck(land)) return; // land not found
             if (land) {
                 if (land->getLandPermTableConst().allowFarmDecay) return;
@@ -486,8 +486,8 @@ bool EventListener::setup() {
         bus->emplaceListener<ila::mc::PistonPushBeforeEvent>([db, logger](ila::mc::PistonPushBeforeEvent& ev) {
             if (!Config::cfg.listeners.PistonPushBeforeEvent) return;
 
-            auto const& piston = ev.getPistonPos();
-            auto const& push   = ev.getPushPos();
+            auto const& piston = ev.pistonPos();
+            auto const& push   = ev.pushPos();
             auto&       region = ev.blockSource();
 
             logger->debug("[PistonTryPush] piston: {}, push: {}", piston.toString(), push.toString());
@@ -502,9 +502,9 @@ bool EventListener::setup() {
             [db, logger](ila::mc::PlayerOperatedItemFrameBeforeEvent& ev) {
                 if (!Config::cfg.listeners.PlayerOperatedItemFrameBeforeEvent) return;
 
-                logger->debug("[PlayerUseItemFrame] pos: {}", ev.getBlockPos().toString());
+                logger->debug("[PlayerUseItemFrame] pos: {}", ev.blockPos().toString());
 
-                auto land = db->getLandAt(ev.getBlockPos(), ev.self().getDimensionId());
+                auto land = db->getLandAt(ev.blockPos(), ev.self().getDimensionId());
                 if (PreCheck(land, ev.self().getUuid().asString())) return;
 
                 if (land->getLandPermTableConst().useItemFrame) return;
@@ -516,9 +516,9 @@ bool EventListener::setup() {
             [db, logger](ila::mc::ActorTriggerPressurePlateBeforeEvent& ev) {
                 if (!Config::cfg.listeners.ActorTriggerPressurePlateBeforeEvent) return;
 
-                logger->debug("[PressurePlateTrigger] pos: {}", ev.getPos().toString());
+                logger->debug("[PressurePlateTrigger] pos: {}", ev.pos().toString());
 
-                auto land = db->getLandAt(ev.getPos(), ev.self().getDimensionId());
+                auto land = db->getLandAt(ev.pos(), ev.self().getDimensionId());
                 if (land && land->getLandPermTableConst().usePressurePlate) return;
                 if (PreCheck(land)) return; // land not found
 
@@ -571,9 +571,9 @@ bool EventListener::setup() {
         bus->emplaceListener<ila::mc::RedstoneUpdateBeforeEvent>([db, logger](ila::mc::RedstoneUpdateBeforeEvent& ev) {
             if (!Config::cfg.listeners.RedstoneUpdateBeforeEvent) return;
 
-            // logger->debug("[RedstoneUpdate] Pos: {}", ev.getPos().toString());
+            // logger->debug("[RedstoneUpdate] Pos: {}", ev.Pos().toString());
 
-            auto land = db->getLandAt(ev.getPos(), ev.blockSource().getDimensionId());
+            auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
             if (PreCheck(land)) return; // land not found
             if (land) {
                 if (land->getLandPermTableConst().allowRedstoneUpdate) return;
@@ -585,7 +585,7 @@ bool EventListener::setup() {
             if (!Config::cfg.listeners.WitherDestroyBeforeEvent) return;
 
             logger->debug("[WitherDestroyBlock] executed");
-            auto& aabb = ev.getBox();
+            auto& aabb = ev.box();
 
             auto lands = db->getLandAt(aabb.min, aabb.max, ev.blockSource().getDimensionId());
             for (auto const& p : lands) {
@@ -598,9 +598,9 @@ bool EventListener::setup() {
         bus->emplaceListener<ila::mc::MossGrowthBeforeEvent>([db, logger](ila::mc::MossGrowthBeforeEvent& ev) {
             if (!Config::cfg.listeners.MossGrowthBeforeEvent) return;
 
-            // logger->debug("[MossSpread] {}", ev.getPos().toString());
+            // logger->debug("[MossSpread] {}", ev.Pos().toString());
 
-            auto const& pos = ev.getPos();
+            auto const& pos = ev.pos();
 
             auto land = db->getLandAt(pos, ev.blockSource().getDimensionId());
             if (!land || land->getLandPermTableConst().useBoneMeal) {
@@ -619,8 +619,8 @@ bool EventListener::setup() {
         bus->emplaceListener<ila::mc::LiquidTryFlowBeforeEvent>([db, logger](ila::mc::LiquidTryFlowBeforeEvent& ev) {
             if (!Config::cfg.listeners.LiquidTryFlowBeforeEvent) return;
 
-            auto& sou = ev.getPos();
-            // auto& from = ev.getFlowFromPos();
+            auto& sou = ev.pos();
+            // auto& from = ev.FlowFromPos();
             // logger->debug("[LiquidFlow] {} -> {}", sou.toString(), from.toString());
 
             auto land = db->getLandAt(sou, ev.blockSource().getDimensionId());
@@ -632,7 +632,7 @@ bool EventListener::setup() {
                                                                     logger](ila::mc::SculkBlockGrowthBeforeEvent& ev) {
             if (!Config::cfg.listeners.SculkBlockGrowthBeforeEvent) return;
 
-            auto& pos = ev.getPos();
+            auto& pos = ev.pos();
             logger->debug("[SculkBlockGrowth] {}", pos.toString());
 
             auto land = db->getLandAt(pos, ev.blockSource().getDimensionId());
@@ -645,10 +645,10 @@ bool EventListener::setup() {
         bus->emplaceListener<ila::mc::SculkSpreadBeforeEvent>([db, logger](ila::mc::SculkSpreadBeforeEvent& ev) {
             if (!Config::cfg.listeners.SculkSpreadBeforeEvent) return;
 
-            // logger->debug("[SculkSpread] {} -> {}", ev.getSelfPos().toString(), ev.getTargetPos().toString());
+            // logger->debug("[SculkSpread] {} -> {}", ev.SelfPos().toString(), ev.TargetPos().toString());
 
-            auto sou = db->getLandAt(ev.getSelfPos(), ev.blockSource().getDimensionId());
-            auto tar = db->getLandAt(ev.getTargetPos(), ev.blockSource().getDimensionId());
+            auto sou = db->getLandAt(ev.selfPos(), ev.blockSource().getDimensionId());
+            auto tar = db->getLandAt(ev.targetPos(), ev.blockSource().getDimensionId());
 
             if (!sou && !tar) return; // 领地外蔓延
             if (sou && tar) return;   // 领地内蔓延
@@ -661,7 +661,7 @@ bool EventListener::setup() {
             if (!Config::cfg.listeners.PlayerEditSignBeforeEvent) return;
 
             auto& player = ev.self();
-            auto& pos    = ev.getPos();
+            auto& pos    = ev.pos();
 
             logger->debug("[PlayerEditSign] {} -> {}", player.getRealName(), pos.toString());
 
@@ -678,8 +678,8 @@ bool EventListener::setup() {
             [db, logger](ila::mc::SculkCatalystAbsorbExperienceBeforeEvent& ev) {
                 if (!Config::cfg.listeners.SculkCatalystAbsorbExperienceBeforeEvent) return;
 
-                // auto& actor  = ev.getDiedActor();
-                auto& actor  = ev.getActor();
+                // auto& actor  = ev.DiedActor();
+                auto& actor  = ev.actor();
                 auto& region = actor.getDimensionBlockSource();
                 auto  pos    = actor.getBlockPosCurrentlyStandingOn(&actor);
                 logger->debug("[SculkCatalystAbsorbExperience] Pos: {}", pos.toString());
