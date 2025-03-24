@@ -146,7 +146,7 @@ void LandManageGui::DeleteLandGui::impl(Player& player, LandData_sptr const& ptr
         _deleteMixLandImpl(player, ptr);
     }
 }
-void LandManageGui::DeleteLandGui::recursionCalculationRefoundPrice(long long& refundPrice, LandData_sptr const& ptr) {
+void LandManageGui::DeleteLandGui::recursionCalculationRefoundPrice(int& refundPrice, LandData_sptr const& ptr) {
     std::stack<LandData_sptr> stack;
     stack.push(ptr);
 
@@ -191,18 +191,21 @@ void LandManageGui::DeleteLandGui::_deleteOrdinaryLandImpl(Player& player, LandD
             return;
         }
 
-        auto& db  = PLand::getInstance();
-        auto& eco = EconomySystem::getInstance();
+        auto& economy = EconomySystem::getInstance();
+        if (!economy.add(pl, price)) {
+            mc_utils::sendText(pl, "经济系统异常，操作失败"_trf(pl));
+            return;
+        }
 
-        if (eco.add(pl, price)) {
-            if (db.removeLand(ptr->getLandID())) {
-                mc_utils::sendText(pl, "删除领地成功!"_trf(pl));
-            } else mc_utils::sendText(pl, "删除领地失败!"_trf(pl));
-
+        if (PLand::getInstance().removeLand(ptr->getLandID())) {
             PlayerDeleteLandAfterEvent ev(pl, ptr->getLandID());
             ll::event::EventBus::getInstance().publish(ev);
+            mc_utils::sendText(pl, "删除领地成功!"_trf(pl));
 
-        } else mc_utils::sendText(pl, "经济系统异常，操作失败"_trf(pl));
+        } else {
+            economy.reduce(pl, price); // rollback
+            mc_utils::sendText(pl, "删除领地失败!"_trf(pl));
+        }
     });
 }
 void LandManageGui::DeleteLandGui::_deleteSubLandImpl(Player& player, LandData_sptr const& ptr) {
@@ -216,18 +219,43 @@ void LandManageGui::DeleteLandGui::_deleteParentLandImpl(Player& player, LandDat
     );
 
     fm.appendButton("删除当前领地和子领地"_trf(player), [ptr](Player& pl) {
+        int refundPrice = 0;
+        recursionCalculationRefoundPrice(refundPrice, ptr);
+
+        auto& economy = EconomySystem::getInstance();
+        if (!economy.add(pl, refundPrice)) {
+            mc_utils::sendText(pl, "经济系统异常，操作失败"_trf(pl));
+            return;
+        }
+
         auto result = PLand::getInstance().removeLandAndSubLands(ptr);
         if (result.first) {
+            PlayerDeleteLandAfterEvent ev(pl, ptr->getLandID());
+            ll::event::EventBus::getInstance().publish(ev);
             mc_utils::sendText(pl, "删除领地成功!"_trf(pl));
+
         } else {
+            economy.reduce(pl, refundPrice); // rollback
             mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.second));
         }
     });
     fm.appendButton("删除当前领地并提升子领地为父领地"_trf(player), [ptr](Player& pl) {
+        int refundPrice = PriceCalculate::calculateRefundsPrice(ptr->mOriginalBuyPrice, Config::cfg.land.refundRate);
+
+        auto& economy = EconomySystem::getInstance();
+        if (!economy.add(pl, refundPrice)) {
+            mc_utils::sendText(pl, "经济系统异常，操作失败"_trf(pl));
+            return;
+        }
+
         auto result = PLand::getInstance().removeLandAndPromoteSubLands(ptr);
         if (result.first) {
+            PlayerDeleteLandAfterEvent ev(pl, ptr->getLandID());
+            ll::event::EventBus::getInstance().publish(ev);
             mc_utils::sendText(pl, "删除领地成功!"_trf(pl));
+
         } else {
+            economy.reduce(pl, refundPrice); // rollback
             mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.second));
         }
     });
@@ -242,18 +270,43 @@ void LandManageGui::DeleteLandGui::_deleteMixLandImpl(Player& player, LandData_s
     );
 
     fm.appendButton("删除当前领地和子领地"_trf(player), [ptr](Player& pl) {
+        int refundPrice = 0;
+        recursionCalculationRefoundPrice(refundPrice, ptr);
+
+        auto& economy = EconomySystem::getInstance();
+        if (!economy.add(pl, refundPrice)) {
+            mc_utils::sendText(pl, "经济系统异常，操作失败"_trf(pl));
+            return;
+        }
+
         auto result = PLand::getInstance().removeLandAndSubLands(ptr);
         if (result.first) {
+            PlayerDeleteLandAfterEvent ev(pl, ptr->getLandID());
+            ll::event::EventBus::getInstance().publish(ev);
             mc_utils::sendText(pl, "删除领地成功!"_trf(pl));
+
         } else {
+            economy.reduce(pl, refundPrice); // rollback
             mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.second));
         }
     });
     fm.appendButton("删除当前领地并移交子领地给父领地"_trf(player), [ptr](Player& pl) {
+        int refundPrice = PriceCalculate::calculateRefundsPrice(ptr->mOriginalBuyPrice, Config::cfg.land.refundRate);
+
+        auto& economy = EconomySystem::getInstance();
+        if (!economy.add(pl, refundPrice)) {
+            mc_utils::sendText(pl, "经济系统异常，操作失败"_trf(pl));
+            return;
+        }
+
         auto result = PLand::getInstance().removeLandAndTransferSubLands(ptr);
         if (result.first) {
+            PlayerDeleteLandAfterEvent ev(pl, ptr->getLandID());
+            ll::event::EventBus::getInstance().publish(ev);
             mc_utils::sendText(pl, "删除领地成功!"_trf(pl));
+
         } else {
+            economy.reduce(pl, refundPrice); // rollback
             mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.second));
         }
     });

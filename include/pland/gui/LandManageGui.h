@@ -19,7 +19,7 @@ public:
     public:
         LDAPI static void impl(Player& player, LandData_sptr const& ptr);
 
-        LDAPI static void recursionCalculationRefoundPrice(long long& refundPrice, LandData_sptr const& ptr);
+        LDAPI static void recursionCalculationRefoundPrice(int& refundPrice, LandData_sptr const& ptr);
         LDAPI static void _deleteOrdinaryLandImpl(Player& player, LandData_sptr const& ptr); // 删除普通领地
         LDAPI static void _deleteSubLandImpl(Player& player, LandData_sptr const& ptr);      // 删除子领地
         LDAPI static void _deleteParentLandImpl(Player& player, LandData_sptr const& ptr);   // 删除父领地
