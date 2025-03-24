@@ -23,7 +23,7 @@ class Player;
 namespace land {
 
 // 全局类型定义
-using LandID    = uint64_t;    // 领地ID
+using LandID    = int64_t;     // 领地ID
 using ChunkID   = uint64_t;    // 区块ID
 using LandDimid = int;         // 领地所在维度
 using UUIDm     = mce::UUID;   // class
