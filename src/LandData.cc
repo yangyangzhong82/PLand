@@ -73,7 +73,7 @@ bool LandData::canCreateSubLand() const {
 }
 
 LandData_sptr LandData::getParentLand() const {
-    if (isParentLand()) {
+    if (isParentLand() || !hasParentLand()) {
         return nullptr;
     }
     return PLand::getInstance().getLand(this->mParentLandID);
@@ -96,8 +96,8 @@ int LandData::getNestedLevel() const {
     return parentLand->getNestedLevel() + 1;
 }
 LandData_sptr LandData::getRootLand() const {
-    if (isParentLand()) {
-        return PLand::getInstance().getLand(this->mLandID); // 由于继承会影响反射，所以从数据库返回自生实例
+    if (!hasParentLand()) {
+        return PLand::getInstance().getLand(this->mLandID); // 如果是父领地，直接返回自己
     }
 
     LandData_sptr root = getParentLand();
