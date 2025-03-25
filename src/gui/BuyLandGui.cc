@@ -410,6 +410,12 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
             // 如果是第一次创建子领地，isOrdinaryLand 是为 true 的，理论不用查询其它领地，因为父领地在购买时已经检查过了
             // 然后这个aabb位置必须从根领地开始计算，整个父子领地都不能重叠，直系父领地除外
 
+
+            // 1. 要创建的子领地必须在父领地范围内，防止在子领地创建然后圈子领地外面的区域
+            // 2. 在碰撞检测时，当前领地如果在要创建子领地的父领地的范围内，则跳过
+            // 3. 碰撞检测时，要创建子领地的范围不能和任何当前父领地的子领地重叠
+            // 4. 因为第3点，会导致与父领地重叠，所以需要排除父领地
+
             if (!LandPos::isContain(parentPos, *aabb)) {
                 mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "子领地不在父领地范围内"_trf(pl));
                 return;
@@ -437,7 +443,22 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
                 }
             }
 
+            std::unordered_set<LandData_sptr> parentLands; // 要创建子领地的领地的父领地集合
+            stack.push(parentLand);
+            while (!stack.empty()) {
+                auto cur = stack.top();
+                stack.pop();
+
+                parentLands.insert(cur);
+                if (cur->getParentLand()) {
+                    stack.push(cur->getParentLand());
+                }
+            }
+
             for (auto& land : lands) {
+                if (land == parentLand) continue;                          // 排除当前领地
+                if (parentLands.find(land) != parentLands.end()) continue; // 排除父领地
+
                 if (LandPos::isCollision(land->mPos, *aabb)) {
                     mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地重叠，请重新选择"_trf(pl));
                     return;
