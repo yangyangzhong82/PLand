@@ -101,11 +101,8 @@ LandData_sptr LandData::getRootLand() const {
     }
 
     LandData_sptr root = getParentLand();
-    while (!root->isOrdinaryLand()) {
+    while (root->hasParentLand()) {
         root = root->getParentLand();
-        if (!root) {
-            return nullptr;
-        }
     }
 
     return root;
