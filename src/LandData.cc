@@ -132,6 +132,7 @@ LandPermType LandData::getPermType(UUIDs const& uuid) const {
     return LandPermType::Guest;
 }
 
+void           LandData::load(nlohmann::json const& data) { JSON::jsonToStruct(data, *this); }
 nlohmann::json LandData::toJSON() const { return JSON::structTojson(*this); }
 
 bool LandData::operator==(LandData_sptr const& other) const { return mLandID == other->mLandID; }

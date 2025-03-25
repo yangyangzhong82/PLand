@@ -216,6 +216,7 @@ public:
 
     LDNDAPI LandPermType getPermType(UUIDs const& uuid) const;
 
+    LDAPI void load(nlohmann::json const& data);
     LDNDAPI nlohmann::json toJSON() const;
 
     LDNDAPI bool operator==(LandData_sptr const& other) const;
