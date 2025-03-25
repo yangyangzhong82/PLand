@@ -64,7 +64,7 @@ void PLand::_loadLands() {
         auto json = JSON::parse(value);
         auto land = LandData::make();
 
-        land->load(json);
+        JSON::jsonToStruct(json, *land);
 
         // 保证landID唯一
         if (mNextLandID < land->getLandID()) {
@@ -171,7 +171,7 @@ void PLand::save() {
     mDB->set(DB_KEY_PLAYER_SETTINGS(), JSON::stringify(JSON::structTojson(mPlayerSettings)));
 
     for (auto& [id, land] : mLandCache) {
-        mDB->set(std::to_string(land->mLandID), JSON::stringify(land->toJSON()));
+        mDB->set(std::to_string(land->mLandID), JSON::stringify(JSON::structTojson(*land)));
     }
 }
 void PLand::stopThread() {
