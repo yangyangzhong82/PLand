@@ -81,8 +81,8 @@ LandData_sptr LandData::getParentLand() const {
 }
 
 std::vector<LandData_sptr> LandData::getSubLands() const {
-    if (!isParentLand()) {
-        return {}; // 不是父领地，没有子领地
+    if (!hasSubLand()) {
+        return {};
     }
     return PLand::getInstance().getLands(this->mSubLandIDs);
 }
