@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - 修复潜影贝无法生成潜影弹 #23
+- 修复部分实体无法受到任何伤害 #22
 
 ## [0.6.0] - 2025-03-01
 

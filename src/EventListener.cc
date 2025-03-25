@@ -145,19 +145,10 @@ bool EventListener::setup() {
 
             if (land) {
                 auto const& tab = land->getLandPermTableConst();
-                if (tab.allowAttackPlayer && self.isPlayer()) return;
-                if (tab.allowAttackAnimal && self.hasCategory(::ActorCategory::Animal)) return;
-                if (tab.allowAttackMonster && self.hasCategory(::ActorCategory::Monster)) return;
+                CANCEL_AND_RETURN_IF(!tab.allowAttackPlayer && self.isPlayer());
+                CANCEL_AND_RETURN_IF(!tab.allowAttackAnimal && self.hasCategory(::ActorCategory::Animal));
+                CANCEL_AND_RETURN_IF(!tab.allowAttackMonster && self.hasCategory(::ActorCategory::Monster));
             }
-
-            if (self.isPlayer()) {
-                auto const pl = self.getWeakEntity().tryUnwrap<Player>();
-                if (pl.has_value()) {
-                    if (PreCheck(land, pl->getUuid().asString())) return;
-                }
-            }
-
-            ev.cancel();
         }),
         bus->emplaceListener<ll::event::PlayerDestroyBlockEvent>([db, logger](ll::event::PlayerDestroyBlockEvent& ev) {
             if (!Config::cfg.listeners.PlayerDestroyBlockEvent) return;
