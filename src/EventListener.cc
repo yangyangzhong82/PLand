@@ -342,22 +342,18 @@ bool EventListener::setup() {
             [db, logger](ila::mc::PlayerAttackBlockBeforeEvent& ev) {
                 if (!Config::cfg.listeners.PlayerAttackBlockBeforeEvent) return;
 
-                optional_ref<Player> pl = ev.self();
-                if (!pl.has_value()) return;
+                auto& self = ev.self();
+                auto& pos  = ev.pos();
 
-                Player& player = pl.value();
+                logger->debug("[AttackBlock] {}", pos.toString());
 
-                logger->debug("[AttackBlock] {}", ev.pos().toString());
+                auto land = db->getLandAt(pos, self.getDimensionId());
+                if (PreCheck(land, self.getUuid().asString())) return; // land not found
 
-                auto land = db->getLandAt(ev.pos(), player.getDimensionId());
-                if (PreCheck(land, player.getUuid().asString())) {
-                    return;
-                }
-
-                auto const& bl = player.getDimensionBlockSourceConst().getBlock(ev.pos()).getTypeName();
-                if (land->getLandPermTableConst().allowAttackDragonEgg && bl == "minecraft:dragon_egg") return;
-
-                ev.cancel();
+                auto const& blockTypeName = self.getDimensionBlockSourceConst().getBlock(pos).getTypeName();
+                CANCEL_AND_RETURN_IF(
+                    !land->getLandPermTableConst().allowAttackDragonEgg && blockTypeName == "minecraft:dragon_egg"
+                );
             }
         ),
         bus->emplaceListener<ila::mc::ArmorStandSwapItemBeforeEvent>(
