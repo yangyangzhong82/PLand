@@ -61,6 +61,12 @@ inline BlockProperty operator&(BlockProperty a, BlockProperty b) {
     return static_cast<BlockProperty>(static_cast<uint64_t>(a) & static_cast<uint64_t>(b));
 }
 
+#define CANCEL_AND_RETURN_IF(COND)                                                                                     \
+    if (COND) {                                                                                                        \
+        ev.cancel();                                                                                                   \
+        return;                                                                                                        \
+    }
+
 static std::vector<ll::event::ListenerPtr> mListeners;
 
 namespace land {
@@ -555,15 +561,15 @@ bool EventListener::setup() {
 
             if (land) {
                 auto& tab = land->getLandPermTableConst();
-                if (type == "minecraft:fishing_hook" && !tab.useFishingHook) ev.cancel();       // 钓鱼竿
-                if (type == "minecraft:splash_potion" && !tab.allowThrowPotion) ev.cancel();    // 喷溅药水
-                if (type == "minecraft:lingering_potion" && !tab.allowThrowPotion) ev.cancel(); // 滞留药水
-                if (type == "minecraft:thrown_trident" && !tab.allowThrowTrident) ev.cancel();  // 三叉戟
-                if (type == "minecraft:arrow" && !tab.allowShoot) ev.cancel();                  // 箭
-                if (type == "minecraft:crossbow" && !tab.allowShoot) ev.cancel();               // 弩射烟花
-                if (type == "minecraft:snowball" && !tab.allowThrowSnowball) ev.cancel();       // 雪球
-                if (type == "minecraft:ender_pearl" && !tab.allowThrowEnderPearl) ev.cancel();  // 末影珍珠
-                if (type == "minecraft:egg" && !tab.allowThrowEgg) ev.cancel();                 // 鸡蛋
+                CANCEL_AND_RETURN_IF(type == "minecraft:fishing_hook" && !tab.useFishingHook);       // 钓鱼竿
+                CANCEL_AND_RETURN_IF(type == "minecraft:splash_potion" && !tab.allowThrowPotion);    // 喷溅药水
+                CANCEL_AND_RETURN_IF(type == "minecraft:lingering_potion" && !tab.allowThrowPotion); // 滞留药水
+                CANCEL_AND_RETURN_IF(type == "minecraft:thrown_trident" && !tab.allowThrowTrident);  // 三叉戟
+                CANCEL_AND_RETURN_IF(type == "minecraft:arrow" && !tab.allowShoot);                  // 箭
+                CANCEL_AND_RETURN_IF(type == "minecraft:crossbow" && !tab.allowShoot);               // 弩射烟花
+                CANCEL_AND_RETURN_IF(type == "minecraft:snowball" && !tab.allowThrowSnowball);       // 雪球
+                CANCEL_AND_RETURN_IF(type == "minecraft:ender_pearl" && !tab.allowThrowEnderPearl);  // 末影珍珠
+                CANCEL_AND_RETURN_IF(type == "minecraft:egg" && !tab.allowThrowEgg);                 // 鸡蛋
             }
         }),
         bus->emplaceListener<ila::mc::RedstoneUpdateBeforeEvent>([db, logger](ila::mc::RedstoneUpdateBeforeEvent& ev) {
