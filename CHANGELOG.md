@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 新增 `/pland set language` 命令 #19
 - 新增 `/pland this` 命令
 - `Config` 添加 `subLand` 子领地相配置 #18
+- 支持子领地
 
 ### Changed
 
@@ -24,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 重构 `Calculate` 为 `PriceCalculate`
 - 适配事件库 v0.4.0 #24
 - 重构部分代码
+
+### Fixed
+
+- 修复潜影贝无法生成潜影弹 #23
 
 ## [0.6.0] - 2025-03-01
 
