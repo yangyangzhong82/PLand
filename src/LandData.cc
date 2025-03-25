@@ -3,6 +3,7 @@
 #include "pland/Global.h"
 #include "pland/PLand.h"
 #include "pland/utils/JSON.h"
+#include <stack>
 #include <vector>
 
 namespace land {
@@ -86,14 +87,22 @@ std::vector<LandData_sptr> LandData::getSubLands() const {
     return PLand::getInstance().getLands(this->mSubLandIDs);
 }
 int LandData::getNestedLevel() const {
-    if (isParentLand()) {
+    if (!hasParentLand()) {
         return 0;
     }
-    auto parentLand = getParentLand();
-    if (!parentLand) {
-        return 0;
+
+    std::stack<LandData_sptr> stack;
+    stack.push(getParentLand());
+    int level = 0;
+    while (!stack.empty()) {
+        auto land = stack.top();
+        stack.pop();
+        level++;
+        if (land->hasParentLand()) {
+            stack.push(land->getParentLand());
+        }
     }
-    return parentLand->getNestedLevel() + 1;
+    return level;
 }
 LandData_sptr LandData::getRootLand() const {
     if (!hasParentLand()) {

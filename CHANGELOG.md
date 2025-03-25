@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 修复潜影贝无法生成潜影弹 #23
 - 修复部分实体无法受到任何伤害 #22
+- 修复创造模式无法破坏领地内方块 #20
 
 ## [0.6.0] - 2025-03-01
 

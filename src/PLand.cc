@@ -503,15 +503,30 @@ LandData_sptr PLand::getLandAt(BlockPos const& pos, LandDimid dimid) const {
 
     if (!result.empty()) {
         if (result.size() == 1) {
-            return *result.begin();
+            return *result.begin(); // 只有一个领地，即普通领地
         }
 
-        // 重建领地关系
+        // 子领地优先级最高，混合领地次之
+        // LandData_sptr subLand = nullptr;
+        // LandData_sptr mixLand = nullptr;
+        // for (auto& land : result) {
+        //     if (land->isSubLand()) {
+        //         subLand = land;
+        //     } else if (land->isMixLand()) {
+        //         mixLand = land;
+        //     }
+        // }
+        // return subLand ? subLand : mixLand;
+        LandData_sptr deepestLand = nullptr;
+        int           maxLevel    = -1;
         for (auto& land : result) {
-            if (land->isSubLand()) {
-                return land;
+            int currentLevel = land->getNestedLevel();
+            if (currentLevel > maxLevel) {
+                maxLevel    = currentLevel;
+                deepestLand = land;
             }
         }
+        return deepestLand;
     }
 
     return nullptr;
