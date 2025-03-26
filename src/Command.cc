@@ -226,7 +226,12 @@ static auto const Set = [](CommandOrigin const& ori, CommandOutput& out, SetPara
     auto  selector = SelectorManager::getInstance().get(player);
     auto& pos      = player.getPosition();
 
-    param.type == SetType::A ? selector->selectPointA(pos) : selector->selectPointB(pos);
+    if (param.type == SetType::A) {
+        selector->selectPointA(pos);
+    } else {
+        selector->selectPointB(pos);
+        selector->onABSelected();
+    }
 
     mc_utils::sendText(out, "已选择点{}"_trf(player, param.type == SetType::A ? "A" : "B"));
 };
