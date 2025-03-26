@@ -224,7 +224,7 @@ static auto const Set = [](CommandOrigin const& ori, CommandOutput& out, SetPara
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player   = *static_cast<Player*>(ori.getEntity());
     auto  selector = SelectorManager::getInstance().get(player);
-    auto& pos      = player.getPosition();
+    auto  pos      = player.getFeetBlockPos();
 
     if (param.type == SetType::A) {
         selector->selectPointA(pos);
