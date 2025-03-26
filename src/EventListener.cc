@@ -199,8 +199,8 @@ bool EventListener::setup() {
             auto& item   = ev.item();
             auto  block  = ev.block().has_value() ? &ev.block().get() : nullptr;
 
-            auto const itemTypeName  = item.getTypeName();
-            auto const blockTypeName = block ? block->getTypeName() : "";
+            auto const  itemTypeName  = item.getTypeName();
+            auto const& blockTypeName = block ? block->getTypeName() : "";
 
             logger->debug("[InteractBlock] Pos: {}, item: {}  block: {}", pos.toString(), itemTypeName, blockTypeName);
 
@@ -212,73 +212,67 @@ bool EventListener::setup() {
             auto const& tab = land->getLandPermTableConst();
 
             if (InteractItemHashMap.contains(itemTypeName)) {
-                if ((itemTypeName.ends_with("bucket") && tab.useBucket) ||             // 各种桶
-                    (itemTypeName.ends_with("axe") && tab.allowAxePeeled) ||           // 斧头给木头去皮
-                    (itemTypeName.ends_with("hoe") && tab.useHoe) ||                   // 锄头耕地
-                    (itemTypeName.ends_with("_shovel") && tab.useShovel) ||            // 锹铲除草径
-                    (itemTypeName == "minecraft:skull" && tab.allowPlace) ||           // 放置头颅
-                    (itemTypeName == "minecraft:banner" && tab.allowPlace) ||          // 放置旗帜
-                    (itemTypeName == "minecraft:glow_ink_sac" && tab.allowPlace) ||    // 发光墨囊给木牌上色
-                    (itemTypeName == "minecraft:end_crystal" && tab.allowPlace) ||     // 末地水晶
-                    (itemTypeName == "minecraft:ender_eye" && tab.allowPlace) ||       // 放置末影之眼
-                    (itemTypeName == "minecraft:flint_and_steel" && tab.useFiregen) || // 使用打火石
-                    (itemTypeName == "minecraft:bone_meal" && tab.useBoneMeal) ||      // 使用骨粉
-                    (itemTypeName == "minecraft:minecart" && tab.allowPlace) ||        // 放置矿车
-                    (itemTypeName == "minecraft:armor_stand" && tab.allowPlace)        // 盔甲架
-                ) {
-                    return;
-                }
+                CANCEL_AND_RETURN_IF(
+                    (itemTypeName.ends_with("bucket") && !tab.useBucket) ||             // 各种桶
+                    (itemTypeName.ends_with("axe") && !tab.allowAxePeeled) ||           // 斧头给木头去皮
+                    (itemTypeName.ends_with("hoe") && !tab.useHoe) ||                   // 锄头耕地
+                    (itemTypeName.ends_with("_shovel") && !tab.useShovel) ||            // 锹铲除草径
+                    (itemTypeName == "minecraft:skull" && !tab.allowPlace) ||           // 放置头颅
+                    (itemTypeName == "minecraft:banner" && !tab.allowPlace) ||          // 放置旗帜
+                    (itemTypeName == "minecraft:glow_ink_sac" && !tab.allowPlace) ||    // 发光墨囊给木牌上色
+                    (itemTypeName == "minecraft:end_crystal" && !tab.allowPlace) ||     // 末地水晶
+                    (itemTypeName == "minecraft:ender_eye" && !tab.allowPlace) ||       // 放置末影之眼
+                    (itemTypeName == "minecraft:flint_and_steel" && !tab.useFiregen) || // 使用打火石
+                    (itemTypeName == "minecraft:bone_meal" && !tab.useBoneMeal) ||      // 使用骨粉
+                    (itemTypeName == "minecraft:minecart" && !tab.allowPlace) ||        // 放置矿车
+                    (itemTypeName == "minecraft:armor_stand" && !tab.allowPlace)        // 盔甲架
+                );
             }
             if (InteractItemHashMap.contains(blockTypeName)) {
-                if ( // clang-format off
-                    (blockTypeName.ends_with( "button") && tab.useButton) ||         // 各种按钮
-                    (blockTypeName.ends_with( "_door") && tab.useDoor) ||            // 各种门
-                    (blockTypeName.ends_with( "fence_gate") && tab.useFenceGate) ||  // 各种栏栅门
-                    (blockTypeName.ends_with( "trapdoor") && tab.useTrapdoor) ||     // 各种活板门
-                    (blockTypeName.ends_with( "_sign") && tab.editSign) ||           // 编辑告示牌
-                    (blockTypeName.ends_with("shulker_box") && tab.useShulkerBox) ||  // 潜影盒
-                    (blockTypeName == "minecraft:dragon_egg" && tab.allowAttackDragonEgg) || // 右键龙蛋
-                    (blockTypeName == "minecraft:bed" && tab.useBed) ||                      // 床
-                    ((blockTypeName == "minecraft:chest" || blockTypeName == "minecraft:trapped_chest") && tab.allowOpenChest) || // 箱子&陷阱箱
-                    (blockTypeName == "minecraft:crafting_table" && tab.useCraftingTable) || // 工作台
-                    ((blockTypeName == "minecraft:campfire" || blockTypeName == "minecraft:soul_campfire") && tab.useCampfire) || // 营火（烧烤）
-                    (blockTypeName == "minecraft:composter" && tab.useComposter) || // 堆肥桶（放置肥料）
-                    (blockTypeName == "minecraft:noteblock" && tab.useNoteBlock) || // 音符盒（调音）
-                    (blockTypeName == "minecraft:jukebox" && tab.useJukebox) ||     // 唱片机（放置/取出唱片）
-                    (blockTypeName == "minecraft:bell" && tab.useBell) ||           // 钟（敲钟）
-                    ((blockTypeName == "minecraft:daylight_detector_inverted" || blockTypeName == "minecraft:daylight_detector") && tab.useDaylightDetector) || // 光线传感器（切换日夜模式）
-                    (blockTypeName == "minecraft:lectern" && tab.useLectern) ||                // 讲台
-                    (blockTypeName == "minecraft:cauldron" && tab.useCauldron) ||              // 炼药锅
-                    (blockTypeName == "minecraft:lever" && tab.useLever) ||                    // 拉杆
-                    (blockTypeName == "minecraft:respawn_anchor" && tab.useRespawnAnchor) ||   // 重生锚（充能）
-                    (blockTypeName == "minecraft:flower_pot" && tab.editFlowerPot)            // 花盆
-                ) { // clang-format on
-                    return;
-                }
+                CANCEL_AND_RETURN_IF( // clang-format off
+                    (blockTypeName.ends_with( "button") && !tab.useButton) ||         // 各种按钮
+                    (blockTypeName.ends_with( "_door") && !tab.useDoor) ||            // 各种门
+                    (blockTypeName.ends_with( "fence_gate") && !tab.useFenceGate) ||  // 各种栏栅门
+                    (blockTypeName.ends_with( "trapdoor") && !tab.useTrapdoor) ||     // 各种活板门
+                    (blockTypeName.ends_with( "_sign") && !tab.editSign) ||           // 编辑告示牌
+                    (blockTypeName.ends_with("shulker_box") && !tab.useShulkerBox) ||  // 潜影盒
+                    (blockTypeName == "minecraft:dragon_egg" && !tab.allowAttackDragonEgg) || // 右键龙蛋
+                    (blockTypeName == "minecraft:bed" && !tab.useBed) ||                      // 床
+                    ((blockTypeName == "minecraft:chest" || blockTypeName == "minecraft:trapped_chest") && !tab.allowOpenChest) || // 箱子&陷阱箱
+                    (blockTypeName == "minecraft:crafting_table" && !tab.useCraftingTable) || // 工作台
+                    ((blockTypeName == "minecraft:campfire" || blockTypeName == "minecraft:soul_campfire") && !tab.useCampfire) || // 营火（烧烤）
+                    (blockTypeName == "minecraft:composter" && !tab.useComposter) || // 堆肥桶（放置肥料）
+                    (blockTypeName == "minecraft:noteblock" && !tab.useNoteBlock) || // 音符盒（调音）
+                    (blockTypeName == "minecraft:jukebox" && !tab.useJukebox) ||     // 唱片机（放置/取出唱片）
+                    (blockTypeName == "minecraft:bell" && !tab.useBell) ||           // 钟（敲钟）
+                    ((blockTypeName == "minecraft:daylight_detector_inverted" || blockTypeName == "minecraft:daylight_detector") && !tab.useDaylightDetector) || // 光线传感器（切换日夜模式）
+                    (blockTypeName == "minecraft:lectern" && !tab.useLectern) ||                // 讲台
+                    (blockTypeName == "minecraft:cauldron" && !tab.useCauldron) ||              // 炼药锅
+                    (blockTypeName == "minecraft:lever" && !tab.useLever) ||                    // 拉杆
+                    (blockTypeName == "minecraft:respawn_anchor" && !tab.useRespawnAnchor) ||   // 重生锚（充能）
+                    (blockTypeName == "minecraft:flower_pot" && !tab.editFlowerPot)            // 花盆
+                ); // clang-format on
             }
             if (InteractBlockHashMap.contains(blockTypeName)) {
-                if ((blockTypeName == "minecraft:cartography_table" && tab.useCartographyTable) || // 制图台
-                    (blockTypeName == "minecraft:smithing_table" && tab.useSmithingTable) ||       // 锻造台
-                    (blockTypeName == "minecraft:brewing_stand" && tab.useBrewingStand) ||         // 酿造台
-                    (blockTypeName == "minecraft:anvil" && tab.useAnvil) ||                        // 铁砧
-                    (blockTypeName == "minecraft:grindstone" && tab.useGrindstone) ||              // 磨石
-                    (blockTypeName == "minecraft:enchanting_table" && tab.useEnchantingTable) ||   // 附魔台
-                    (blockTypeName == "minecraft:barrel" && tab.useBarrel) ||                      // 桶
-                    (blockTypeName == "minecraft:beacon" && tab.useBeacon) ||                      // 信标
-                    (blockTypeName == "minecraft:hopper" && tab.useHopper) ||                      // 漏斗
-                    (blockTypeName == "minecraft:dropper" && tab.useDropper) ||                    // 投掷器
-                    (blockTypeName == "minecraft:dispenser" && tab.useDispenser) ||                // 发射器
-                    (blockTypeName == "minecraft:loom" && tab.useLoom) ||                          // 织布机
-                    (blockTypeName == "minecraft:stonecutter_block" && tab.useStonecutter) ||      // 切石机
-                    (blockTypeName.ends_with("blast_furnace") && tab.useBlastFurnace) ||           // 高炉
-                    (blockTypeName.ends_with("furnace") && tab.useFurnace) ||                      // 熔炉
-                    (blockTypeName.ends_with("smoker") && tab.useSmoker)                           // 烟熏炉
-                ) {
-                    return;
-                }
+                CANCEL_AND_RETURN_IF(
+                    (blockTypeName == "minecraft:cartography_table" && !tab.useCartographyTable) || // 制图台
+                    (blockTypeName == "minecraft:smithing_table" && !tab.useSmithingTable) ||       // 锻造台
+                    (blockTypeName == "minecraft:brewing_stand" && !tab.useBrewingStand) ||         // 酿造台
+                    (blockTypeName == "minecraft:anvil" && !tab.useAnvil) ||                        // 铁砧
+                    (blockTypeName == "minecraft:grindstone" && !tab.useGrindstone) ||              // 磨石
+                    (blockTypeName == "minecraft:enchanting_table" && !tab.useEnchantingTable) ||   // 附魔台
+                    (blockTypeName == "minecraft:barrel" && !tab.useBarrel) ||                      // 桶
+                    (blockTypeName == "minecraft:beacon" && !tab.useBeacon) ||                      // 信标
+                    (blockTypeName == "minecraft:hopper" && !tab.useHopper) ||                      // 漏斗
+                    (blockTypeName == "minecraft:dropper" && !tab.useDropper) ||                    // 投掷器
+                    (blockTypeName == "minecraft:dispenser" && !tab.useDispenser) ||                // 发射器
+                    (blockTypeName == "minecraft:loom" && !tab.useLoom) ||                          // 织布机
+                    (blockTypeName == "minecraft:stonecutter_block" && !tab.useStonecutter) ||      // 切石机
+                    (blockTypeName.ends_with("blast_furnace") && !tab.useBlastFurnace) ||           // 高炉
+                    (blockTypeName.ends_with("furnace") && !tab.useFurnace) ||                      // 熔炉
+                    (blockTypeName.ends_with("smoker") && !tab.useSmoker)                           // 烟熏炉
+                );
             }
-
-            ev.cancel();
         }),
         bus->emplaceListener<ll::event::FireSpreadEvent>([db](ll::event::FireSpreadEvent& ev) {
             if (!Config::cfg.listeners.FireSpreadEvent) return;
