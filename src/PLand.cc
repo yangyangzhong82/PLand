@@ -67,7 +67,7 @@ void PLand::_loadLands() {
         JSON::jsonToStruct(json, *land);
 
         // 保证landID唯一
-        if (mNextLandID < land->getLandID()) {
+        if (mNextLandID.load() <= land->getLandID()) {
             mNextLandID.store(land->getLandID() + 1);
         }
 
