@@ -163,54 +163,56 @@ void LandManageGui::DeleteLandGui::recursionCalculationRefoundPrice(int& refundP
         }
     }
 }
-void LandManageGui::DeleteLandGui::_deleteOrdinaryLandImpl(Player& player, LandData_sptr const& ptr) {
-    int price = PriceCalculate::calculateRefundsPrice(ptr->mOriginalBuyPrice, Config::cfg.land.refundRate);
 
-    ModalForm fm(
-        PLUGIN_NAME + " | 确认删除?"_trf(player),
-        "您确定要删除领地 {} 吗?\n删除领地后，您将获得 {} 金币的退款。\n此操作不可逆,请谨慎操作!"_trf(
-            player,
-            ptr->getLandName(),
-            price
-        ),
-        "确认"_trf(player),
-        "返回"_trf(player)
-    );
-    fm.sendTo(player, [ptr, price](Player& pl, ModalFormResult const& res, FormCancelReason) {
-        if (!res) {
-            return;
-        }
-        if (!(bool)res.value()) {
-            LandManageGui::impl(pl, ptr->getLandID());
-            return;
-        }
-
-        PlayerDeleteLandBeforeEvent ev(pl, ptr->getLandID(), price);
-        ll::event::EventBus::getInstance().publish(ev);
-        if (ev.isCancelled()) {
-            return;
-        }
-
-        auto& economy = EconomySystem::getInstance();
-        if (!economy.add(pl, price)) {
-            mc_utils::sendText(pl, "经济系统异常，操作失败"_trf(pl));
-            return;
-        }
-
-        if (PLand::getInstance().removeLand(ptr->getLandID())) {
-            PlayerDeleteLandAfterEvent ev(pl, ptr->getLandID());
-            ll::event::EventBus::getInstance().publish(ev);
-            mc_utils::sendText(pl, "删除领地成功!"_trf(pl));
-
-        } else {
-            economy.reduce(pl, price); // rollback
-            mc_utils::sendText(pl, "删除领地失败!"_trf(pl));
-        }
+#define _DeleteLandGui_DefaultImpl_Macro(FN)                                                                           \
+    int       price = PriceCalculate::calculateRefundsPrice(ptr->mOriginalBuyPrice, Config::cfg.land.refundRate);      \
+    ModalForm fm(                                                                                                      \
+        PLUGIN_NAME + " | 确认删除?"_trf(player),                                                                      \
+        "您确定要删除领地 {} 吗?\n删除领地后，您将获得 {} 金币的退款。\n此操作不可逆,请谨慎操作!"_trf(                 \
+            player,                                                                                                    \
+            ptr->getLandName(),                                                                                        \
+            price                                                                                                      \
+        ),                                                                                                             \
+        "确认"_trf(player),                                                                                            \
+        "返回"_trf(player)                                                                                             \
+    );                                                                                                                 \
+    fm.sendTo(player, [ptr, price](Player& pl, ModalFormResult const& res, FormCancelReason) {                         \
+        if (!res) {                                                                                                    \
+            return;                                                                                                    \
+        }                                                                                                              \
+        if (!(bool)res.value()) {                                                                                      \
+            LandManageGui::impl(pl, ptr->getLandID());                                                                 \
+            return;                                                                                                    \
+        }                                                                                                              \
+        PlayerDeleteLandBeforeEvent ev(pl, ptr->getLandID(), price);                                                   \
+        ll::event::EventBus::getInstance().publish(ev);                                                                \
+        if (ev.isCancelled()) {                                                                                        \
+            return;                                                                                                    \
+        }                                                                                                              \
+        auto& economy = EconomySystem::getInstance();                                                                  \
+        if (!economy.add(pl, price)) {                                                                                 \
+            mc_utils::sendText(pl, "经济系统异常，操作失败"_trf(pl));                                                  \
+            return;                                                                                                    \
+        }                                                                                                              \
+        auto result = FN(ptr);                                                                                         \
+        if (result.first) {                                                                                            \
+            PlayerDeleteLandAfterEvent ev(pl, ptr->getLandID());                                                       \
+            ll::event::EventBus::getInstance().publish(ev);                                                            \
+            mc_utils::sendText(pl, "删除领地成功!"_trf(pl));                                                           \
+        } else {                                                                                                       \
+            economy.reduce(pl, price);                                                                                 \
+            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.second));        \
+        }                                                                                                              \
     });
+
+void LandManageGui::DeleteLandGui::_deleteOrdinaryLandImpl(Player& player, LandData_sptr const& ptr) {
+    _DeleteLandGui_DefaultImpl_Macro(PLand::getInstance().removeOrdinaryLand);
 }
 void LandManageGui::DeleteLandGui::_deleteSubLandImpl(Player& player, LandData_sptr const& ptr) {
-    return _deleteOrdinaryLandImpl(player, ptr); // 按照普通领地处理
+    _DeleteLandGui_DefaultImpl_Macro(PLand::getInstance().removeSubLand);
 }
+#undef _DeleteLandGui_DefaultImpl_Macro
+
 
 // 代码重复
 void LandManageGui::DeleteLandGui::_handleRemoveLandAndSubLandsCallback(Player& pl, LandData_sptr const& ptr) {

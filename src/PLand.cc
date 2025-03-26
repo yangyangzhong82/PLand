@@ -294,6 +294,28 @@ Result<bool> PLand::removeOrdinaryLand(LandData_sptr const& ptr) {
     std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
     return _removeLand(ptr);
 }
+Result<bool> PLand::removeSubLand(LandData_sptr const& ptr) {
+    if (!ptr->isSubLand()) {
+        return {false, "not a sub land!"};
+    }
+
+    auto parent = ptr->getParentLand();
+    if (!parent) {
+        return {false, "parent land not found!"};
+    }
+
+    std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
+
+    // 移除父领地中的记录
+    std::erase_if(parent->mSubLandIDs, [&](LandID const& id) { return id == ptr->getLandID(); });
+
+    auto result = _removeLand(ptr);
+    if (!result.first) {
+        parent->mSubLandIDs.push_back(ptr->getLandID()); // 恢复父领地的子领地列表
+    }
+
+    return result;
+}
 Result<bool> PLand::removeLandAndSubLands(LandData_sptr const& ptr) {
     if (!ptr->isParentLand() || !ptr->isMixLand()) {
         return {false, "only parent land and mix land can remove sub lands!"};

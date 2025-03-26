@@ -104,6 +104,11 @@ public:
     LDNDAPI Result<bool> removeOrdinaryLand(LandData_sptr const& ptr);
 
     /**
+     * @brief 移除子领地
+     */
+    LDNDAPI Result<bool> removeSubLand(LandData_sptr const& ptr);
+
+    /**
      * @brief 移除领地和其子领地
      */
     LDNDAPI Result<bool> removeLandAndSubLands(LandData_sptr const& ptr);
