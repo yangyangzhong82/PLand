@@ -117,8 +117,9 @@ public:
                                        ImGuiTableFlags_SizingStretchSame | // 列默认使用 _WidthStretch，默认权重均相等
                                        ImGuiTableFlags_ScrollY;            // 启用垂直滚动，以便固定表头
 
-        if (ImGui::BeginTable("player_lands_table", 5, flags)) {
+        if (ImGui::BeginTable("player_lands_table", 6, flags)) {
             ImGui::TableSetupColumn("ID");
+            ImGui::TableSetupColumn("类别");
             ImGui::TableSetupColumn("维度");
             ImGui::TableSetupColumn("坐标");
             ImGui::TableSetupColumn("名称");
@@ -131,16 +132,26 @@ public:
                     continue;
                 }
 
-                ImGui::TableNextRow(); // 开始新行
-                ImGui::TableNextColumn();
+                // 开始新行
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn(); // ID
                 ImGui::Text("%llu", ld->mLandID);
-                ImGui::TableNextColumn();
+                ImGui::TableNextColumn(); // 类别
+                ImGui::Text(
+                    "%s",
+                    ld->isOrdinaryLand() ? "普通领地"
+                    : ld->isParentLand() ? "父领地"
+                    : ld->isMixLand()    ? "混合领地"
+                    : ld->isSubLand()    ? "子领地"
+                                         : "未知"
+                );
+                ImGui::TableNextColumn(); // 维度
                 ImGui::Text("%i", ld->mLandDimid);
-                ImGui::TableNextColumn();
+                ImGui::TableNextColumn(); // 坐标
                 ImGui::Text("%s", ld->mPos.toString().c_str());
-                ImGui::TableNextColumn();
+                ImGui::TableNextColumn(); // 名称
                 ImGui::Text("%s", ld->getLandName().c_str());
-                ImGui::TableNextColumn();
+                ImGui::TableNextColumn(); // 操作
                 if (ImGui::Button(fmt::format("编辑数据##{}", ld->mLandID).c_str())) {
                     handleButtonClicked(Edit, ld);
                 }
