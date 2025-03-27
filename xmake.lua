@@ -22,7 +22,6 @@ add_requires("bsci 0.1.6")
 if has_config("devtool") then
     add_requires("imgui v1.91.6-docking", {configs = { opengl3 = true, glfw = true }})
     add_requires("glew 2.2.0")
-    add_requires("magnum v2020.06", { configs = { opengl=true, plugin_static=true } }) -- 3D 图形引擎
     add_requires("imnodes v0.5") -- ImGui 的节点图插件
 end
 
@@ -94,7 +93,6 @@ target("PLand") -- Change this to your mod name.
         add_packages(
             "imgui",
             "glew",
-            "magnum",
             "imnodes"
         )
         add_includedirs("third-party")
