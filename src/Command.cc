@@ -65,7 +65,7 @@
 
 
 #ifdef LD_DEVTOOL
-#include "devtools/DevTools.h"
+#include "devtools/PLandDevTools.h"
 #endif
 
 
@@ -473,7 +473,9 @@ bool LandCommand::setup() {
     if (Config::cfg.internal.devTools) {
         cmd.overload().text("devtool").execute([](CommandOrigin const& ori, CommandOutput&) {
             if (ori.getOriginType() == CommandOriginType::DedicatedServer) {
-                devtools::show();
+                if (g_devtools) {
+                    g_devtools->show();
+                }
             }
         });
     }
