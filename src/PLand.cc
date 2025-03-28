@@ -398,14 +398,18 @@ Result<bool> PLand::removeLandAndTransferSubLands(LandData_sptr const& ptr) {
     if (!parent) {
         return {false, "parent land not found!"};
     }
+    auto parentID = parent->getLandID();
+    auto subLands = ptr->getSubLands();
 
     std::unique_lock<std::shared_mutex> lock(mMutex);
 
-    auto parentID = parent->getLandID();
-    auto subLands = ptr->getSubLands();
     for (auto& subLand : subLands) {
-        subLand->mParentLandID = parentID;
+        subLand->mParentLandID = parentID;                   // 当前领地的子领地移交给父领地
+        parent->mSubLandIDs.push_back(subLand->getLandID()); // 父领地记录中添加当前领地的子领地
     }
+
+    // 父领地记录中擦粗当前领地
+    std::erase_if(parent->mSubLandIDs, [&](LandID const& id) { return id == ptr->getLandID(); });
 
     auto result = _removeLand(ptr);
     if (!result.first) {
@@ -413,7 +417,9 @@ Result<bool> PLand::removeLandAndTransferSubLands(LandData_sptr const& ptr) {
         auto currentId = ptr->getLandID();
         for (auto& subLand : subLands) {
             subLand->mParentLandID = currentId;
+            std::erase_if(parent->mSubLandIDs, [&](LandID const& id) { return id == subLand->getLandID(); });
         }
+        parent->mSubLandIDs.push_back(currentId); // 恢复父领地的子领地列表
     }
     return result;
 }
