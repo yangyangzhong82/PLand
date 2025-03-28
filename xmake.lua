@@ -22,7 +22,6 @@ add_requires("bsci 0.1.6")
 if has_config("devtool") then
     add_requires("imgui v1.91.6-docking", {configs = { opengl3 = true, glfw = true }})
     add_requires("glew 2.2.0")
-    add_requires("imnodes v0.5") -- ImGui 的节点图插件
 end
 
 if not has_config("vs_runtime") then
@@ -92,8 +91,7 @@ target("PLand") -- Change this to your mod name.
     if has_config("devtool") then
         add_packages(
             "imgui",
-            "glew",
-            "imnodes"
+            "glew"
         )
         add_includedirs("third-party")
         add_files("third-party/ImGuiColorTextEdit/*.cpp")
