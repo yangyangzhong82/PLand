@@ -321,16 +321,15 @@ Result<bool> PLand::removeLandAndSubLands(LandData_sptr const& ptr) {
         return {false, "only parent land and mix land can remove sub lands!"};
     }
 
-    std::unique_lock<std::shared_mutex> lock(mMutex);
-
     auto currentId = ptr->getLandID();
     auto parent    = ptr->getParentLand();
     if (parent) {
         std::erase_if(parent->mSubLandIDs, [&](LandID const& id) { return id == currentId; });
     }
 
-    std::stack<LandData_sptr>  stack;        // 栈
-    std::vector<LandData_sptr> removedLands; // 已移除的领地
+    std::unique_lock<std::shared_mutex> lock(mMutex);
+    std::stack<LandData_sptr>           stack;        // 栈
+    std::vector<LandData_sptr>          removedLands; // 已移除的领地
 
     stack.push(ptr);
 
