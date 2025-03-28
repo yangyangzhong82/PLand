@@ -1,7 +1,7 @@
 {
     "format_version": 2,
     "tooth": "github.com/engsr6982/PLand",
-    "version": "0.6.0",
+    "version": "0.7.0",
     "info": {
         "name": "PLand - 领地系统",
         "description": "基于 LeviLamina 的领地系统",
