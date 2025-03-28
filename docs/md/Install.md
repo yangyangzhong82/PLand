@@ -1,11 +1,11 @@
 # 安装
 
-> 安装分为手动安装和Lip安装  
-> 在大多数情况下，我们建议使用Lip安装
+> 安装分为手动安装和 Lip 安装  
+> 在大多数情况下，我们建议使用 Lip 安装
 
 ## Lip
 
-> 使用以下命令安装PLand
+> 使用以下命令安装 PLand
 
 ```bash
 lip install github.com/engsr6982/PLand
@@ -17,7 +17,7 @@ lip install github.com/engsr6982/PLand
 lip install github.com/engsr6982/PLand@v1.0.0
 ```
 
-> 您可以使用一下命令更新PLand
+> 您可以使用一下命令更新 PLand
 
 ```bash
 lip install --upgrade github.com/engsr6982/PLand
@@ -34,11 +34,12 @@ lip install --upgrade github.com/engsr6982/PLand
 目前 PLand 依赖以下前置库
 
 - LeviLamina
-- iListenAttentively
+- [iListenAttentively](https://github.com/MiracleForest/iListenAttentively-Release)
+- [BedrockServerClientInterface](https://github.com/OEOTYAN/BedrockServerClientInterface)
 
 > 您需要手动下载对应版本的前置组件  
 > 在下载前置组件时，请确保您下载的版本与 PLand 的版本兼容  
-> 如果您不确定，我们建议您使用Lip安装
+> 如果您不确定，我们建议您使用 Lip 安装
 
 !> 本文档默认您已经安装好了前置组件
 
