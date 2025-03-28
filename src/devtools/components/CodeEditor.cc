@@ -2,6 +2,7 @@
 #pragma once
 #include "CodeEditor.h"
 #include "ImGuiColorTextEdit/TextEditor.h"
+#include "fmt/compile.h"
 #include "imgui.h"
 #include <format>
 
@@ -74,7 +75,7 @@ void CodeEditor::_renderMenuBar() {
 
 void CodeEditor::render() {
     if (!ImGui::Begin(
-            std::format("CodeEditor##%d", windowId_).data(),
+            fmt::format("[{}] CodeEditor", windowId_).data(),
             this->getOpenFlag(),
             (ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_MenuBar)
         )) {
@@ -82,7 +83,7 @@ void CodeEditor::render() {
         return;
     }
     _renderMenuBar();
-    editor_.Render("CodeEditor-Impl");
+    editor_.Render(fmt::format("CodeEditor-Impl##{}", windowId_).data());
     ImGui::End();
 }
 

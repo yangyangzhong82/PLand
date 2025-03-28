@@ -9,6 +9,7 @@ namespace land {
 
 
 class CodeEditor : public WindowComponent {
+protected:
     TextEditor editor_;
     int        windowId_;
 

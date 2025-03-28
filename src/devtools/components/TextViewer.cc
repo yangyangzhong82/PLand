@@ -2,6 +2,7 @@
 #pragma once
 #include "TextViewer.h"
 #include "devtools/components/base/WindowComponent.h"
+#include "fmt/color.h"
 #include "imgui.h"
 #include <format>
 #include <string>
@@ -16,7 +17,7 @@ TextViewer::TextViewer(std::string data, int windowId)
 
 void TextViewer::render() {
     if (!ImGui::Begin(
-            std::format("文本查看器##%d", windowId_).c_str(),
+            fmt::format("[{}] 文本查看器", windowId_).c_str(),
             this->getOpenFlag(),
             ImGuiWindowFlags_NoDocking
         )) {
