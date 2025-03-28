@@ -317,7 +317,7 @@ Result<bool> PLand::removeSubLand(LandData_sptr const& ptr) {
     return result;
 }
 Result<bool> PLand::removeLandAndSubLands(LandData_sptr const& ptr) {
-    if (!ptr->isParentLand() || !ptr->isMixLand()) {
+    if (!ptr->isParentLand() && !ptr->isMixLand()) {
         return {false, "only parent land and mix land can remove sub lands!"};
     }
 
@@ -339,7 +339,9 @@ Result<bool> PLand::removeLandAndSubLands(LandData_sptr const& ptr) {
         stack.pop();
 
         if (current->hasSubLand()) {
+            lock.unlock();
             auto subLands = current->getSubLands();
+            lock.lock();
             for (auto& subLand : subLands) {
                 stack.push(subLand);
             }
@@ -368,9 +370,10 @@ Result<bool> PLand::removeLandAndPromoteSubLands(LandData_sptr const& ptr) {
         return {false, "only root land's sub land can be promoted!"};
     }
 
-    std::unique_lock<std::shared_mutex> lock(mMutex);
 
     auto subLands = ptr->getSubLands();
+
+    std::unique_lock<std::shared_mutex> lock(mMutex);
     for (auto& subLand : subLands) {
         static const auto invalidID = LandID(-1); // 无效ID
         subLand->mParentLandID      = invalidID;
