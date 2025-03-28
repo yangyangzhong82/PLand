@@ -1,3 +1,4 @@
+#include "nlohmann/json_fwd.hpp"
 #include <string>
 #ifdef LD_DEVTOOL
 #pragma once
@@ -25,14 +26,42 @@
 
 namespace land {
 
+class LandDataEditor : public CodeEditor {
+    LandData_sptr land_;
+
+public:
+    explicit LandDataEditor(LandData_sptr const& land)
+    : CodeEditor(land->toJSON().dump(4), land->getLandID()),
+      land_(land) {}
+
+    void _renderMenuBarItem() override {
+        CodeEditor::_renderMenuBarItem();
+
+        if (ImGui::BeginMenu("LandData")) {
+            ImGui::Text("点击写入按钮应用到领地数据");
+            if (ImGui::Button("写入")) {
+                auto backup = land_->toJSON();
+                try {
+                    auto json = nlohmann::json::parse(editor_.GetText());
+                    land_->load(json);
+                } catch (...) {
+                    land_->load(backup);
+                    my_mod::MyMod::getInstance().getSelf().getLogger().error("Failed to parse json");
+                }
+            }
+            ImGui::EndMenu();
+        }
+    }
+};
+
 
 class ShowPlayerLandWindow final : public WindowComponent {
     UUIDs                      uuid_;  // 玩家UUID
     std::string                name_;  // 玩家名称
     std::vector<LandData_sptr> lands_; // 玩家领地
 
-    std::unordered_map<LandID, std::unique_ptr<TextViewer>> rawDataWindows_; // 查看领地原始数据窗口
-    std::unordered_map<LandID, std::unique_ptr<CodeEditor>> editWindows_;    // 编辑领地窗口
+    std::unordered_map<LandID, std::unique_ptr<TextViewer>>     rawDataWindows_; // 查看领地原始数据窗口
+    std::unordered_map<LandID, std::unique_ptr<LandDataEditor>> editWindows_;    // 编辑领地窗口
 
     bool showOrdinaryLand_{true}; // 是否显示普通领地
     bool showParentLand_{true};   // 是否显示父领地
@@ -55,7 +84,7 @@ public:
 
     void _handleEdit(LandData_sptr const& land) {
         if (auto iter = editWindows_.find(land->getLandID()); iter == editWindows_.end()) {
-            editWindows_.emplace(land->getLandID(), std::make_unique<CodeEditor>(land->toJSON().dump(4)));
+            editWindows_.emplace(land->getLandID(), std::make_unique<LandDataEditor>(land));
         }
         auto window = editWindows_[land->getLandID()].get();
         window->setOpenFlag(!window->isOpen());
@@ -63,7 +92,10 @@ public:
 
     void _handleShowRawData(LandData_sptr const& land) {
         if (auto iter = rawDataWindows_.find(land->getLandID()); iter == rawDataWindows_.end()) {
-            rawDataWindows_.emplace(land->getLandID(), std::make_unique<TextViewer>(land->toJSON().dump(4)));
+            rawDataWindows_.emplace(
+                land->getLandID(),
+                std::make_unique<TextViewer>(land->toJSON().dump(4), land->getLandID())
+            );
         }
         auto window = rawDataWindows_[land->getLandID()].get();
         window->setOpenFlag(!window->isOpen());
