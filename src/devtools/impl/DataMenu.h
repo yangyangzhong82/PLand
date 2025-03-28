@@ -1,3 +1,4 @@
+#include <string>
 #ifdef LD_DEVTOOL
 #pragma once
 #include "devtools/components/CodeEditor.h"
@@ -26,15 +27,6 @@ namespace land {
 
 
 class ShowPlayerLandWindow final : public WindowComponent {
-    const char* filterOptions_[3]{
-        "无",
-        "名称",
-        "ID",
-    };
-    int         filterType_{0};  // 筛选类型
-    int         idFilterVal_{0}; // 筛选ID
-    std::string nameFilterVal_;  // 筛选名称
-
     UUIDs                      uuid_;  // 玩家UUID
     std::string                name_;  // 玩家名称
     std::vector<LandData_sptr> lands_; // 玩家领地
@@ -42,18 +34,22 @@ class ShowPlayerLandWindow final : public WindowComponent {
     std::unordered_map<LandID, std::unique_ptr<TextViewer>> rawDataWindows_; // 查看领地原始数据窗口
     std::unordered_map<LandID, std::unique_ptr<CodeEditor>> editWindows_;    // 编辑领地窗口
 
+    bool showOrdinaryLand_{true}; // 是否显示普通领地
+    bool showParentLand_{true};   // 是否显示父领地
+    bool showMixLand_{true};      // 是否显示混合领地
+    bool showSubLand_{true};      // 是否显示子领地
+    int  dimensionFilter_{-1};    // 维度过滤
+    int  idFilter_{-1};           // 领地ID过滤
+
 public:
     explicit ShowPlayerLandWindow(UUIDs uuid) : WindowComponent(), uuid_(std::move(uuid)) {
         auto info = ll::service::PlayerInfo::getInstance().fromUuid(uuid_);
         name_     = info.has_value() ? info->name : uuid_;
-        nameFilterVal_.resize(128);
     }
     explicit ShowPlayerLandWindow(UUIDs uuid, std::string name)
     : WindowComponent(),
       uuid_(std::move(uuid)),
-      name_(std::move(name)) {
-        nameFilterVal_.resize(128);
-    }
+      name_(std::move(name)) {}
 
     void updateLands(std::vector<LandData_sptr> lands) { this->lands_ = std::move(lands); }
 
@@ -99,18 +95,34 @@ public:
         }
     }
 
-    void _renderFilter() {
-        ImGui::BeginGroup();
-        ImGui::Combo("过滤方式", &filterType_, filterOptions_, IM_ARRAYSIZE(filterOptions_));
-        if (filterType_ == 1) {
-            ImGui::InputText("名称", nameFilterVal_.data(), nameFilterVal_.size());
-        } else {
-            ImGui::InputInt("ID", &idFilterVal_);
-        }
-        ImGui::EndGroup();
-    }
-
     void _renderLands() {
+        {
+            ImGui::BeginGroup();
+            if (ImGui::Button("重置")) {
+                showOrdinaryLand_ = true;
+                showParentLand_   = true;
+                showMixLand_      = true;
+                showSubLand_      = true;
+                dimensionFilter_  = -1;
+                idFilter_         = -1;
+            }
+            ImGui::SameLine();
+            ImGui::Checkbox("普通领地", &showOrdinaryLand_);
+            ImGui::SameLine();
+            ImGui::Checkbox("父领地", &showParentLand_);
+            ImGui::SameLine();
+            ImGui::Checkbox("混合领地", &showMixLand_);
+            ImGui::SameLine();
+            ImGui::Checkbox("子领地", &showSubLand_);
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(200);
+            ImGui::InputInt("维度过滤", &dimensionFilter_);
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(200);
+            ImGui::InputInt("领地ID过滤", &idFilter_);
+            ImGui::EndGroup();
+        }
+
         static ImGuiTableFlags flags = ImGuiTableFlags_Resizable |         // 列大小调整功能
                                        ImGuiTableFlags_Reorderable |       // 表头行中重新排列列
                                        ImGuiTableFlags_Borders |           // 绘制所有边框
@@ -127,8 +139,12 @@ public:
             ImGui::TableHeadersRow();
 
             for (auto const& ld : lands_) {
-                if ((filterType_ == 1 && ld->getLandName().find(nameFilterVal_) == string::npos)
-                    || (filterType_ == 2 && ld->mLandID != static_cast<LandID>(idFilterVal_))) {
+                if ((!showOrdinaryLand_ && ld->isOrdinaryLand()) || (!showParentLand_ && ld->isParentLand())
+                    || (!showMixLand_ && ld->isMixLand()) || (!showSubLand_ && ld->isSubLand())) {
+                    continue;
+                }
+                if ((dimensionFilter_ != -1 && ld->mLandDimid != dimensionFilter_)
+                    || (idFilter_ != -1 && ld->mLandID != idFilter_)) {
                     continue;
                 }
 
@@ -174,7 +190,6 @@ public:
             return;
         }
 
-        _renderFilter();
         _renderLands();
 
         ImGui::End();
