@@ -80,7 +80,30 @@ public:
       uuid_(std::move(uuid)),
       name_(std::move(name)) {}
 
-    void updateLands(std::vector<LandData_sptr> lands) { this->lands_ = std::move(lands); }
+    void updateLands(std::vector<LandData_sptr> lands) {
+        this->lands_ = std::move(lands);
+
+        std::unordered_set<LandID> ids;
+        for (auto const& ld : lands_) {
+            ids.insert(ld->getLandID());
+        }
+
+        for (auto iter = rawDataWindows_.begin(); iter != rawDataWindows_.end();) {
+            if (ids.find(iter->first) == ids.end()) {
+                iter = rawDataWindows_.erase(iter); // 删除不存在的窗口
+            } else {
+                ++iter;
+            }
+        }
+
+        for (auto iter = editWindows_.begin(); iter != editWindows_.end();) {
+            if (ids.find(iter->first) == ids.end()) {
+                iter = editWindows_.erase(iter); // 删除不存在的窗口
+            } else {
+                ++iter;
+            }
+        }
+    }
 
     void _handleEdit(LandData_sptr const& land) {
         if (auto iter = editWindows_.find(land->getLandID()); iter == editWindows_.end()) {
@@ -253,6 +276,14 @@ public:
             uuids_.reserve(lands.size());
             for (auto const& land : lands) {
                 uuids_.insert(land->getLandOwner());
+            }
+
+            for (auto iter = windows_.begin(); iter != windows_.end();) {
+                if (uuids_.find(iter->first) == uuids_.end()) {
+                    iter = windows_.erase(iter); // 删除不存在的窗口
+                } else {
+                    ++iter;
+                }
             }
         }
     }
