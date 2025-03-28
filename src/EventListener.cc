@@ -13,10 +13,13 @@
 #include "mc\world\level\chunk\SubChunk.h"
 #include "mod/MyMod.h"
 #include "pland/Config.h"
+#include "pland/DrawHandleManager.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
+#include "pland/LandScheduler.h"
+#include "pland/LandSelector.h"
 #include "pland/PLand.h"
-#include "pland/utils/MC.h"
+#include "pland/utils/McUtils.h"
 #include <cstdint>
 #include <unordered_set>
 #include <vector>
@@ -25,11 +28,13 @@
 #include "ll/api/event/entity/ActorHurtEvent.h"
 #include "ll/api/event/player/PlayerAttackEvent.h"
 #include "ll/api/event/player/PlayerDestroyBlockEvent.h"
+#include "ll/api/event/player/PlayerDisconnectEvent.h"
 #include "ll/api/event/player/PlayerInteractBlockEvent.h"
 #include "ll/api/event/player/PlayerJoinEvent.h"
 #include "ll/api/event/player/PlayerPickUpItemEvent.h"
 #include "ll/api/event/player/PlayerPlaceBlockEvent.h"
 #include "ll/api/event/world/FireSpreadEvent.h"
+
 
 #include "ila/event/minecraft/world/ExplosionEvent.h"
 #include "ila/event/minecraft/world/PistonPushEvent.h"
@@ -55,6 +60,12 @@
 inline BlockProperty operator&(BlockProperty a, BlockProperty b) {
     return static_cast<BlockProperty>(static_cast<uint64_t>(a) & static_cast<uint64_t>(b));
 }
+
+#define CANCEL_AND_RETURN_IF(COND)                                                                                     \
+    if (COND) {                                                                                                        \
+        ev.cancel();                                                                                                   \
+        return;                                                                                                        \
+    }
 
 static std::vector<ll::event::ListenerPtr> mListeners;
 
@@ -95,6 +106,20 @@ bool EventListener::setup() {
                 }
             }
         }),
+        bus->emplaceListener<ll::event::PlayerDisconnectEvent>([logger](ll::event::PlayerDisconnectEvent& ev) {
+            auto& player = ev.self();
+            if (player.isSimulatedPlayer()) return;
+            logger->debug("Player {} disconnect, remove all cache");
+
+            auto& uuid    = player.getUuid();
+            auto  uuidStr = uuid.asString();
+
+            GlobalPlayerLocaleCodeCached.erase(uuidStr);
+            LandScheduler::mDimidMap.erase(uuid);
+            LandScheduler::mLandidMap.erase(uuid);
+            SelectorManager::getInstance().cancel(player);
+            DrawHandleManager::getInstance().removeHandle(player);
+        }),
         bus->emplaceListener<ll::event::ActorHurtEvent>([db, logger](ll::event::ActorHurtEvent& ev) {
             if (!Config::cfg.listeners.ActorHurtEvent) return;
 
@@ -120,19 +145,10 @@ bool EventListener::setup() {
 
             if (land) {
                 auto const& tab = land->getLandPermTableConst();
-                if (tab.allowAttackPlayer && self.isPlayer()) return;
-                if (tab.allowAttackAnimal && self.hasCategory(::ActorCategory::Animal)) return;
-                if (tab.allowAttackMonster && self.hasCategory(::ActorCategory::Monster)) return;
+                CANCEL_AND_RETURN_IF(!tab.allowAttackPlayer && self.isPlayer());
+                CANCEL_AND_RETURN_IF(!tab.allowAttackAnimal && self.hasCategory(::ActorCategory::Animal));
+                CANCEL_AND_RETURN_IF(!tab.allowAttackMonster && self.hasCategory(::ActorCategory::Monster));
             }
-
-            if (self.isPlayer()) {
-                auto const pl = self.getWeakEntity().tryUnwrap<Player>();
-                if (pl.has_value()) {
-                    if (PreCheck(land, pl->getUuid().asString())) return;
-                }
-            }
-
-            ev.cancel();
         }),
         bus->emplaceListener<ll::event::PlayerDestroyBlockEvent>([db, logger](ll::event::PlayerDestroyBlockEvent& ev) {
             if (!Config::cfg.listeners.PlayerDestroyBlockEvent) return;
@@ -158,7 +174,7 @@ bool EventListener::setup() {
             if (!Config::cfg.listeners.PlayerPlacingBlockEvent) return;
 
             auto&       player   = ev.self();
-            auto const& blockPos = mc::face2Pos(ev.pos(), ev.face()); // 计算实际放置位置
+            auto const& blockPos = mc_utils::face2Pos(ev.pos(), ev.face()); // 计算实际放置位置
 
             logger->debug("[PlaceingBlock] {}", blockPos.toString());
 
@@ -183,8 +199,8 @@ bool EventListener::setup() {
             auto& item   = ev.item();
             auto  block  = ev.block().has_value() ? &ev.block().get() : nullptr;
 
-            auto const itemTypeName  = item.getTypeName();
-            auto const blockTypeName = block ? block->getTypeName() : "";
+            auto const  itemTypeName  = item.getTypeName();
+            auto const& blockTypeName = block ? block->getTypeName() : "";
 
             logger->debug("[InteractBlock] Pos: {}, item: {}  block: {}", pos.toString(), itemTypeName, blockTypeName);
 
@@ -196,73 +212,67 @@ bool EventListener::setup() {
             auto const& tab = land->getLandPermTableConst();
 
             if (InteractItemHashMap.contains(itemTypeName)) {
-                if ((itemTypeName.ends_with("bucket") && tab.useBucket) ||             // 各种桶
-                    (itemTypeName.ends_with("axe") && tab.allowAxePeeled) ||           // 斧头给木头去皮
-                    (itemTypeName.ends_with("hoe") && tab.useHoe) ||                   // 锄头耕地
-                    (itemTypeName.ends_with("_shovel") && tab.useShovel) ||            // 锹铲除草径
-                    (itemTypeName == "minecraft:skull" && tab.allowPlace) ||           // 放置头颅
-                    (itemTypeName == "minecraft:banner" && tab.allowPlace) ||          // 放置旗帜
-                    (itemTypeName == "minecraft:glow_ink_sac" && tab.allowPlace) ||    // 发光墨囊给木牌上色
-                    (itemTypeName == "minecraft:end_crystal" && tab.allowPlace) ||     // 末地水晶
-                    (itemTypeName == "minecraft:ender_eye" && tab.allowPlace) ||       // 放置末影之眼
-                    (itemTypeName == "minecraft:flint_and_steel" && tab.useFiregen) || // 使用打火石
-                    (itemTypeName == "minecraft:bone_meal" && tab.useBoneMeal) ||      // 使用骨粉
-                    (itemTypeName == "minecraft:minecart" && tab.allowPlace) ||        // 放置矿车
-                    (itemTypeName == "minecraft:armor_stand" && tab.allowPlace)        // 盔甲架
-                ) {
-                    return;
-                }
+                CANCEL_AND_RETURN_IF(
+                    (itemTypeName.ends_with("bucket") && !tab.useBucket) ||             // 各种桶
+                    (itemTypeName.ends_with("axe") && !tab.allowAxePeeled) ||           // 斧头给木头去皮
+                    (itemTypeName.ends_with("hoe") && !tab.useHoe) ||                   // 锄头耕地
+                    (itemTypeName.ends_with("_shovel") && !tab.useShovel) ||            // 锹铲除草径
+                    (itemTypeName == "minecraft:skull" && !tab.allowPlace) ||           // 放置头颅
+                    (itemTypeName == "minecraft:banner" && !tab.allowPlace) ||          // 放置旗帜
+                    (itemTypeName == "minecraft:glow_ink_sac" && !tab.allowPlace) ||    // 发光墨囊给木牌上色
+                    (itemTypeName == "minecraft:end_crystal" && !tab.allowPlace) ||     // 末地水晶
+                    (itemTypeName == "minecraft:ender_eye" && !tab.allowPlace) ||       // 放置末影之眼
+                    (itemTypeName == "minecraft:flint_and_steel" && !tab.useFiregen) || // 使用打火石
+                    (itemTypeName == "minecraft:bone_meal" && !tab.useBoneMeal) ||      // 使用骨粉
+                    (itemTypeName == "minecraft:minecart" && !tab.allowPlace) ||        // 放置矿车
+                    (itemTypeName == "minecraft:armor_stand" && !tab.allowPlace)        // 盔甲架
+                );
             }
             if (InteractItemHashMap.contains(blockTypeName)) {
-                if ( // clang-format off
-                    (blockTypeName.ends_with( "button") && tab.useButton) ||         // 各种按钮
-                    (blockTypeName.ends_with( "_door") && tab.useDoor) ||            // 各种门
-                    (blockTypeName.ends_with( "fence_gate") && tab.useFenceGate) ||  // 各种栏栅门
-                    (blockTypeName.ends_with( "trapdoor") && tab.useTrapdoor) ||     // 各种活板门
-                    (blockTypeName.ends_with( "_sign") && tab.editSign) ||           // 编辑告示牌
-                    (blockTypeName.ends_with("shulker_box") && tab.useShulkerBox) ||  // 潜影盒
-                    (blockTypeName == "minecraft:dragon_egg" && tab.allowAttackDragonEgg) || // 右键龙蛋
-                    (blockTypeName == "minecraft:bed" && tab.useBed) ||                      // 床
-                    ((blockTypeName == "minecraft:chest" || blockTypeName == "minecraft:trapped_chest") && tab.allowOpenChest) || // 箱子&陷阱箱
-                    (blockTypeName == "minecraft:crafting_table" && tab.useCraftingTable) || // 工作台
-                    ((blockTypeName == "minecraft:campfire" || blockTypeName == "minecraft:soul_campfire") && tab.useCampfire) || // 营火（烧烤）
-                    (blockTypeName == "minecraft:composter" && tab.useComposter) || // 堆肥桶（放置肥料）
-                    (blockTypeName == "minecraft:noteblock" && tab.useNoteBlock) || // 音符盒（调音）
-                    (blockTypeName == "minecraft:jukebox" && tab.useJukebox) ||     // 唱片机（放置/取出唱片）
-                    (blockTypeName == "minecraft:bell" && tab.useBell) ||           // 钟（敲钟）
-                    ((blockTypeName == "minecraft:daylight_detector_inverted" || blockTypeName == "minecraft:daylight_detector") && tab.useDaylightDetector) || // 光线传感器（切换日夜模式）
-                    (blockTypeName == "minecraft:lectern" && tab.useLectern) ||                // 讲台
-                    (blockTypeName == "minecraft:cauldron" && tab.useCauldron) ||              // 炼药锅
-                    (blockTypeName == "minecraft:lever" && tab.useLever) ||                    // 拉杆
-                    (blockTypeName == "minecraft:respawn_anchor" && tab.useRespawnAnchor) ||   // 重生锚（充能）
-                    (blockTypeName == "minecraft:flower_pot" && tab.editFlowerPot)            // 花盆
-                ) { // clang-format on
-                    return;
-                }
+                CANCEL_AND_RETURN_IF( // clang-format off
+                    (blockTypeName.ends_with( "button") && !tab.useButton) ||         // 各种按钮
+                    (blockTypeName.ends_with( "_door") && !tab.useDoor) ||            // 各种门
+                    (blockTypeName.ends_with( "fence_gate") && !tab.useFenceGate) ||  // 各种栏栅门
+                    (blockTypeName.ends_with( "trapdoor") && !tab.useTrapdoor) ||     // 各种活板门
+                    (blockTypeName.ends_with( "_sign") && !tab.editSign) ||           // 编辑告示牌
+                    (blockTypeName.ends_with("shulker_box") && !tab.useShulkerBox) ||  // 潜影盒
+                    (blockTypeName == "minecraft:dragon_egg" && !tab.allowAttackDragonEgg) || // 右键龙蛋
+                    (blockTypeName == "minecraft:bed" && !tab.useBed) ||                      // 床
+                    ((blockTypeName == "minecraft:chest" || blockTypeName == "minecraft:trapped_chest") && !tab.allowOpenChest) || // 箱子&陷阱箱
+                    (blockTypeName == "minecraft:crafting_table" && !tab.useCraftingTable) || // 工作台
+                    ((blockTypeName == "minecraft:campfire" || blockTypeName == "minecraft:soul_campfire") && !tab.useCampfire) || // 营火（烧烤）
+                    (blockTypeName == "minecraft:composter" && !tab.useComposter) || // 堆肥桶（放置肥料）
+                    (blockTypeName == "minecraft:noteblock" && !tab.useNoteBlock) || // 音符盒（调音）
+                    (blockTypeName == "minecraft:jukebox" && !tab.useJukebox) ||     // 唱片机（放置/取出唱片）
+                    (blockTypeName == "minecraft:bell" && !tab.useBell) ||           // 钟（敲钟）
+                    ((blockTypeName == "minecraft:daylight_detector_inverted" || blockTypeName == "minecraft:daylight_detector") && !tab.useDaylightDetector) || // 光线传感器（切换日夜模式）
+                    (blockTypeName == "minecraft:lectern" && !tab.useLectern) ||                // 讲台
+                    (blockTypeName == "minecraft:cauldron" && !tab.useCauldron) ||              // 炼药锅
+                    (blockTypeName == "minecraft:lever" && !tab.useLever) ||                    // 拉杆
+                    (blockTypeName == "minecraft:respawn_anchor" && !tab.useRespawnAnchor) ||   // 重生锚（充能）
+                    (blockTypeName == "minecraft:flower_pot" && !tab.editFlowerPot)            // 花盆
+                ); // clang-format on
             }
             if (InteractBlockHashMap.contains(blockTypeName)) {
-                if ((blockTypeName == "minecraft:cartography_table" && tab.useCartographyTable) || // 制图台
-                    (blockTypeName == "minecraft:smithing_table" && tab.useSmithingTable) ||       // 锻造台
-                    (blockTypeName == "minecraft:brewing_stand" && tab.useBrewingStand) ||         // 酿造台
-                    (blockTypeName == "minecraft:anvil" && tab.useAnvil) ||                        // 铁砧
-                    (blockTypeName == "minecraft:grindstone" && tab.useGrindstone) ||              // 磨石
-                    (blockTypeName == "minecraft:enchanting_table" && tab.useEnchantingTable) ||   // 附魔台
-                    (blockTypeName == "minecraft:barrel" && tab.useBarrel) ||                      // 桶
-                    (blockTypeName == "minecraft:beacon" && tab.useBeacon) ||                      // 信标
-                    (blockTypeName == "minecraft:hopper" && tab.useHopper) ||                      // 漏斗
-                    (blockTypeName == "minecraft:dropper" && tab.useDropper) ||                    // 投掷器
-                    (blockTypeName == "minecraft:dispenser" && tab.useDispenser) ||                // 发射器
-                    (blockTypeName == "minecraft:loom" && tab.useLoom) ||                          // 织布机
-                    (blockTypeName == "minecraft:stonecutter_block" && tab.useStonecutter) ||      // 切石机
-                    (blockTypeName.ends_with("blast_furnace") && tab.useBlastFurnace) ||           // 高炉
-                    (blockTypeName.ends_with("furnace") && tab.useFurnace) ||                      // 熔炉
-                    (blockTypeName.ends_with("smoker") && tab.useSmoker)                           // 烟熏炉
-                ) {
-                    return;
-                }
+                CANCEL_AND_RETURN_IF(
+                    (blockTypeName == "minecraft:cartography_table" && !tab.useCartographyTable) || // 制图台
+                    (blockTypeName == "minecraft:smithing_table" && !tab.useSmithingTable) ||       // 锻造台
+                    (blockTypeName == "minecraft:brewing_stand" && !tab.useBrewingStand) ||         // 酿造台
+                    (blockTypeName == "minecraft:anvil" && !tab.useAnvil) ||                        // 铁砧
+                    (blockTypeName == "minecraft:grindstone" && !tab.useGrindstone) ||              // 磨石
+                    (blockTypeName == "minecraft:enchanting_table" && !tab.useEnchantingTable) ||   // 附魔台
+                    (blockTypeName == "minecraft:barrel" && !tab.useBarrel) ||                      // 桶
+                    (blockTypeName == "minecraft:beacon" && !tab.useBeacon) ||                      // 信标
+                    (blockTypeName == "minecraft:hopper" && !tab.useHopper) ||                      // 漏斗
+                    (blockTypeName == "minecraft:dropper" && !tab.useDropper) ||                    // 投掷器
+                    (blockTypeName == "minecraft:dispenser" && !tab.useDispenser) ||                // 发射器
+                    (blockTypeName == "minecraft:loom" && !tab.useLoom) ||                          // 织布机
+                    (blockTypeName == "minecraft:stonecutter_block" && !tab.useStonecutter) ||      // 切石机
+                    (blockTypeName.ends_with("blast_furnace") && !tab.useBlastFurnace) ||           // 高炉
+                    (blockTypeName.ends_with("furnace") && !tab.useFurnace) ||                      // 熔炉
+                    (blockTypeName.ends_with("smoker") && !tab.useSmoker)                           // 烟熏炉
+                );
             }
-
-            ev.cancel();
         }),
         bus->emplaceListener<ll::event::FireSpreadEvent>([db](ll::event::FireSpreadEvent& ev) {
             if (!Config::cfg.listeners.FireSpreadEvent) return;
@@ -326,29 +336,25 @@ bool EventListener::setup() {
             [db, logger](ila::mc::PlayerAttackBlockBeforeEvent& ev) {
                 if (!Config::cfg.listeners.PlayerAttackBlockBeforeEvent) return;
 
-                optional_ref<Player> pl = ev.self();
-                if (!pl.has_value()) return;
+                auto& self = ev.self();
+                auto& pos  = ev.pos();
 
-                Player& player = pl.value();
+                logger->debug("[AttackBlock] {}", pos.toString());
 
-                logger->debug("[AttackBlock] {}", ev.getPos().toString());
+                auto land = db->getLandAt(pos, self.getDimensionId());
+                if (PreCheck(land, self.getUuid().asString())) return; // land not found
 
-                auto land = db->getLandAt(ev.getPos(), player.getDimensionId());
-                if (PreCheck(land, player.getUuid().asString())) {
-                    return;
-                }
-
-                auto const& bl = player.getDimensionBlockSourceConst().getBlock(ev.getPos()).getTypeName();
-                if (land->getLandPermTableConst().allowAttackDragonEgg && bl == "minecraft:dragon_egg") return;
-
-                ev.cancel();
+                auto const& blockTypeName = self.getDimensionBlockSourceConst().getBlock(pos).getTypeName();
+                CANCEL_AND_RETURN_IF(
+                    !land->getLandPermTableConst().allowAttackDragonEgg && blockTypeName == "minecraft:dragon_egg"
+                );
             }
         ),
         bus->emplaceListener<ila::mc::ArmorStandSwapItemBeforeEvent>(
             [db, logger](ila::mc::ArmorStandSwapItemBeforeEvent& ev) {
                 if (!Config::cfg.listeners.ArmorStandSwapItemBeforeEvent) return;
 
-                Player& player = ev.getPlayer();
+                Player& player = ev.player();
 
                 logger->debug("[ArmorStandSwapItem]: executed");
 
@@ -388,7 +394,7 @@ bool EventListener::setup() {
                 return; // 忽略非玩家骑乘事件
             }
 
-            auto const& typeName = ev.getTarget().getTypeName();
+            auto const& typeName = ev.target().getTypeName();
             auto        land     = db->getLandAt(passenger.getPosition(), passenger.getDimensionId());
             if (PreCheck(land)) return; // land not found
             // 特殊处理：
@@ -413,11 +419,11 @@ bool EventListener::setup() {
         bus->emplaceListener<ila::mc::ExplosionBeforeEvent>([db, logger](ila::mc::ExplosionBeforeEvent& ev) {
             if (!Config::cfg.listeners.ExplosionBeforeEvent) return;
 
-            logger->debug("[Explode] Pos: {}", ev.getExplosion().mPos->toString());
+            logger->debug("[Explode] Pos: {}", ev.explosion().mPos->toString());
 
             auto lands = db->getLandAt(
-                BlockPos{ev.getExplosion().mPos},
-                (int)(ev.getExplosion().mRadius + 1.0),
+                BlockPos{ev.explosion().mPos},
+                (int)(ev.explosion().mRadius + 1.0),
                 ev.blockSource().getDimensionId()
             );
             for (auto& p : lands) {
@@ -430,9 +436,9 @@ bool EventListener::setup() {
         bus->emplaceListener<ila::mc::FarmDecayBeforeEvent>([db, logger](ila::mc::FarmDecayBeforeEvent& ev) {
             if (!Config::cfg.listeners.FarmDecayBeforeEvent) return;
 
-            logger->debug("[FarmDecay] Pos: {}", ev.getPos().toString());
+            logger->debug("[FarmDecay] Pos: {}", ev.pos().toString());
 
-            auto land = db->getLandAt(ev.getPos(), ev.blockSource().getDimensionId());
+            auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
             if (PreCheck(land)) return; // land not found
             if (land) {
                 if (land->getLandPermTableConst().allowFarmDecay) return;
@@ -467,8 +473,8 @@ bool EventListener::setup() {
         bus->emplaceListener<ila::mc::PistonPushBeforeEvent>([db, logger](ila::mc::PistonPushBeforeEvent& ev) {
             if (!Config::cfg.listeners.PistonPushBeforeEvent) return;
 
-            auto const& piston = ev.getPistonPos();
-            auto const& push   = ev.getPushPos();
+            auto const& piston = ev.pistonPos();
+            auto const& push   = ev.pushPos();
             auto&       region = ev.blockSource();
 
             logger->debug("[PistonTryPush] piston: {}, push: {}", piston.toString(), push.toString());
@@ -483,9 +489,9 @@ bool EventListener::setup() {
             [db, logger](ila::mc::PlayerOperatedItemFrameBeforeEvent& ev) {
                 if (!Config::cfg.listeners.PlayerOperatedItemFrameBeforeEvent) return;
 
-                logger->debug("[PlayerUseItemFrame] pos: {}", ev.getBlockPos().toString());
+                logger->debug("[PlayerUseItemFrame] pos: {}", ev.blockPos().toString());
 
-                auto land = db->getLandAt(ev.getBlockPos(), ev.self().getDimensionId());
+                auto land = db->getLandAt(ev.blockPos(), ev.self().getDimensionId());
                 if (PreCheck(land, ev.self().getUuid().asString())) return;
 
                 if (land->getLandPermTableConst().useItemFrame) return;
@@ -497,9 +503,9 @@ bool EventListener::setup() {
             [db, logger](ila::mc::ActorTriggerPressurePlateBeforeEvent& ev) {
                 if (!Config::cfg.listeners.ActorTriggerPressurePlateBeforeEvent) return;
 
-                logger->debug("[PressurePlateTrigger] pos: {}", ev.getPos().toString());
+                logger->debug("[PressurePlateTrigger] pos: {}", ev.pos().toString());
 
-                auto land = db->getLandAt(ev.getPos(), ev.self().getDimensionId());
+                auto land = db->getLandAt(ev.pos(), ev.self().getDimensionId());
                 if (land && land->getLandPermTableConst().usePressurePlate) return;
                 if (PreCheck(land)) return; // land not found
 
@@ -536,25 +542,23 @@ bool EventListener::setup() {
 
             if (land) {
                 auto& tab = land->getLandPermTableConst();
-                if (type == "minecraft:fishing_hook" && tab.useFishingHook) return;       // 钓鱼竿
-                if (type == "minecraft:splash_potion" && tab.allowThrowPotion) return;    // 喷溅药水
-                if (type == "minecraft:lingering_potion" && tab.allowThrowPotion) return; // 滞留药水
-                if (type == "minecraft:thrown_trident" && tab.allowThrowTrident) return;  // 三叉戟
-                if (type == "minecraft:arrow" && tab.allowShoot) return;                  // 箭
-                if (type == "minecraft:crossbow" && tab.allowShoot) return;               // 弩射烟花
-                if (type == "minecraft:snowball" && tab.allowThrowSnowball) return;       // 雪球
-                if (type == "minecraft:ender_pearl" && tab.allowThrowEnderPearl) return;  // 末影珍珠
-                if (type == "minecraft:egg" && tab.allowThrowEgg) return;                 // 鸡蛋
+                CANCEL_AND_RETURN_IF(type == "minecraft:fishing_hook" && !tab.useFishingHook);       // 钓鱼竿
+                CANCEL_AND_RETURN_IF(type == "minecraft:splash_potion" && !tab.allowThrowPotion);    // 喷溅药水
+                CANCEL_AND_RETURN_IF(type == "minecraft:lingering_potion" && !tab.allowThrowPotion); // 滞留药水
+                CANCEL_AND_RETURN_IF(type == "minecraft:thrown_trident" && !tab.allowThrowTrident);  // 三叉戟
+                CANCEL_AND_RETURN_IF(type == "minecraft:arrow" && !tab.allowShoot);                  // 箭
+                CANCEL_AND_RETURN_IF(type == "minecraft:crossbow" && !tab.allowShoot);               // 弩射烟花
+                CANCEL_AND_RETURN_IF(type == "minecraft:snowball" && !tab.allowThrowSnowball);       // 雪球
+                CANCEL_AND_RETURN_IF(type == "minecraft:ender_pearl" && !tab.allowThrowEnderPearl);  // 末影珍珠
+                CANCEL_AND_RETURN_IF(type == "minecraft:egg" && !tab.allowThrowEgg);                 // 鸡蛋
             }
-
-            ev.cancel();
         }),
         bus->emplaceListener<ila::mc::RedstoneUpdateBeforeEvent>([db, logger](ila::mc::RedstoneUpdateBeforeEvent& ev) {
             if (!Config::cfg.listeners.RedstoneUpdateBeforeEvent) return;
 
-            // logger->debug("[RedstoneUpdate] Pos: {}", ev.getPos().toString());
+            // logger->debug("[RedstoneUpdate] Pos: {}", ev.Pos().toString());
 
-            auto land = db->getLandAt(ev.getPos(), ev.blockSource().getDimensionId());
+            auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
             if (PreCheck(land)) return; // land not found
             if (land) {
                 if (land->getLandPermTableConst().allowRedstoneUpdate) return;
@@ -566,7 +570,7 @@ bool EventListener::setup() {
             if (!Config::cfg.listeners.WitherDestroyBeforeEvent) return;
 
             logger->debug("[WitherDestroyBlock] executed");
-            auto& aabb = ev.getBox();
+            auto& aabb = ev.box();
 
             auto lands = db->getLandAt(aabb.min, aabb.max, ev.blockSource().getDimensionId());
             for (auto const& p : lands) {
@@ -579,9 +583,9 @@ bool EventListener::setup() {
         bus->emplaceListener<ila::mc::MossGrowthBeforeEvent>([db, logger](ila::mc::MossGrowthBeforeEvent& ev) {
             if (!Config::cfg.listeners.MossGrowthBeforeEvent) return;
 
-            // logger->debug("[MossSpread] {}", ev.getPos().toString());
+            // logger->debug("[MossSpread] {}", ev.Pos().toString());
 
-            auto const& pos = ev.getPos();
+            auto const& pos = ev.pos();
 
             auto land = db->getLandAt(pos, ev.blockSource().getDimensionId());
             if (!land || land->getLandPermTableConst().useBoneMeal) {
@@ -600,8 +604,8 @@ bool EventListener::setup() {
         bus->emplaceListener<ila::mc::LiquidTryFlowBeforeEvent>([db, logger](ila::mc::LiquidTryFlowBeforeEvent& ev) {
             if (!Config::cfg.listeners.LiquidTryFlowBeforeEvent) return;
 
-            auto& sou = ev.getPos();
-            // auto& from = ev.getFlowFromPos();
+            auto& sou = ev.pos();
+            // auto& from = ev.FlowFromPos();
             // logger->debug("[LiquidFlow] {} -> {}", sou.toString(), from.toString());
 
             auto land = db->getLandAt(sou, ev.blockSource().getDimensionId());
@@ -613,7 +617,7 @@ bool EventListener::setup() {
                                                                     logger](ila::mc::SculkBlockGrowthBeforeEvent& ev) {
             if (!Config::cfg.listeners.SculkBlockGrowthBeforeEvent) return;
 
-            auto& pos = ev.getPos();
+            auto& pos = ev.pos();
             logger->debug("[SculkBlockGrowth] {}", pos.toString());
 
             auto land = db->getLandAt(pos, ev.blockSource().getDimensionId());
@@ -626,10 +630,10 @@ bool EventListener::setup() {
         bus->emplaceListener<ila::mc::SculkSpreadBeforeEvent>([db, logger](ila::mc::SculkSpreadBeforeEvent& ev) {
             if (!Config::cfg.listeners.SculkSpreadBeforeEvent) return;
 
-            // logger->debug("[SculkSpread] {} -> {}", ev.getSelfPos().toString(), ev.getTargetPos().toString());
+            // logger->debug("[SculkSpread] {} -> {}", ev.SelfPos().toString(), ev.TargetPos().toString());
 
-            auto sou = db->getLandAt(ev.getSelfPos(), ev.blockSource().getDimensionId());
-            auto tar = db->getLandAt(ev.getTargetPos(), ev.blockSource().getDimensionId());
+            auto sou = db->getLandAt(ev.selfPos(), ev.blockSource().getDimensionId());
+            auto tar = db->getLandAt(ev.targetPos(), ev.blockSource().getDimensionId());
 
             if (!sou && !tar) return; // 领地外蔓延
             if (sou && tar) return;   // 领地内蔓延
@@ -642,7 +646,7 @@ bool EventListener::setup() {
             if (!Config::cfg.listeners.PlayerEditSignBeforeEvent) return;
 
             auto& player = ev.self();
-            auto& pos    = ev.getPos();
+            auto& pos    = ev.pos();
 
             logger->debug("[PlayerEditSign] {} -> {}", player.getRealName(), pos.toString());
 
@@ -659,8 +663,8 @@ bool EventListener::setup() {
             [db, logger](ila::mc::SculkCatalystAbsorbExperienceBeforeEvent& ev) {
                 if (!Config::cfg.listeners.SculkCatalystAbsorbExperienceBeforeEvent) return;
 
-                // auto& actor  = ev.getDiedActor();
-                auto& actor  = ev.getActor();
+                // auto& actor  = ev.DiedActor();
+                auto& actor  = ev.actor();
                 auto& region = actor.getDimensionBlockSource();
                 auto  pos    = actor.getBlockPosCurrentlyStandingOn(&actor);
                 logger->debug("[SculkCatalystAbsorbExperience] Pos: {}", pos.toString());

@@ -24,7 +24,15 @@
     "discountRate": 1.0, // 折扣率(0.0~1.0，1.0为原价，0.9为打9折)
 
     "setupDrawCommand": true, // 是否注册领地范围绘制指令
-    "drawRange": 64, // 绘制查询领地范围 （以玩家为中心，此值不宜过大，过大可能导致性能问题）
+    "drawRange": 64, // 绘制查询领地范围
+
+    "subLand": {
+      "enabled": true, // 是否启用子领地
+      "maxNested": 5, // 最大嵌套层数(默认5，最大16)
+      "minSpacing": 8, // 子领地之间的最小间距
+      "maxSubLand": 6, // 每个领地的最大子领地数量
+      "calculate": "(square * 8 + height * 20)" // 价格公式
+    },
 
     "tip": {
       "enterTip": true, // 是否启用进入领地提示
@@ -52,8 +60,6 @@
     }
   },
   "selector": {
-    "drawParticle": true, // 是否启用绘制粒子
-    "particle": "minecraft:villager_happy", // 粒子类型
     "tool": "minecraft:stick" // 选择工具
   },
   "listeners": {

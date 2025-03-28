@@ -7,23 +7,20 @@
 #include "ll/api/utils/SystemUtils.h"
 
 #include "ll/api/io/LogLevel.h"
-#include "pland/Calculate.h"
 #include "pland/Command.h"
 #include "pland/Config.h"
 #include "pland/EventListener.h"
 #include "pland/Global.h"
-#include "pland/LandDraw.h"
 #include "pland/LandScheduler.h"
 #include "pland/LandSelector.h"
 #include "pland/PLand.h"
-#include "pland/Particle.h"
 
 #ifdef LD_TEST
 #include "LandEventTest.h"
 #endif
 
 #ifdef LD_DEVTOOL
-#include "devtools/DevTools.h"
+#include "devtools/PLandDevTools.h"
 #endif
 
 namespace my_mod {
@@ -44,7 +41,10 @@ bool MyMod::load() {
     logger.info(R"(                                     )");
     logger.info("Loading...");
 
-    auto un_used = ll::i18n::getInstance().load(getSelf().getLangDir());
+    if (auto res = ll::i18n::getInstance().load(getSelf().getLangDir()); !res) {
+        logger.error("Load language file failed, plugin will use default language.");
+        res.error().log(logger);
+    }
 
     land::Config::tryLoad();
     logger.setLevel(land::Config::cfg.logLevel); // set console log level
@@ -60,19 +60,17 @@ bool MyMod::load() {
 }
 
 bool MyMod::enable() {
-
     land::LandCommand::setup();
-    land::LandSelector::getInstance().init();
     land::LandScheduler::setup();
     land::EventListener::setup();
-    land::LandDraw::setup();
 
 #ifdef LD_TEST
     test::SetupEventListener();
 #endif
 
 #ifdef LD_DEVTOOL
-    if (land::Config::cfg.internal.devTools) land::devtools::init();
+    if (land::Config::cfg.internal.devTools && !land::g_devtools)
+        land::g_devtools = std::make_unique<land::PLandDevTools>();
 #endif
 
     return true;
@@ -80,7 +78,7 @@ bool MyMod::enable() {
 
 bool MyMod::disable() {
 #ifdef LD_DEVTOOL
-    if (land::Config::cfg.internal.devTools) land::devtools::destroy();
+    if (land::Config::cfg.internal.devTools && land::g_devtools) land::g_devtools.reset();
 #endif
 
     auto& logger = getSelf().getLogger();
@@ -94,10 +92,9 @@ bool MyMod::disable() {
     land::GlobalRepeatCoroTaskRunning = false;
 
     logger.debug("cleaning up...");
-    land::LandSelector::getInstance().uninit();
+    land::SelectorManager::getInstance().cleanup();
     land::LandScheduler::release();
     land::EventListener::release();
-    land::LandDraw::release();
 
     return true;
 }
