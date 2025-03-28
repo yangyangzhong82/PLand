@@ -68,10 +68,6 @@ void LandManageGui::impl(Player& player, LandID id) {
         subContent
     ));
 
-    bool const isSubLand      = land->isSubLand();
-    bool const isParentLand   = land->isParentLand();
-    bool const isMixLand      = isSubLand && isParentLand;
-    bool const isOrdinaryLand = land->isOrdinaryLand();
 
     fm.appendButton("编辑权限"_trf(player), "textures/ui/sidebar_icons/promotag", [land](Player& pl) {
         EditLandPermGui::impl(pl, land);
@@ -90,17 +86,15 @@ void LandManageGui::impl(Player& player, LandID id) {
         EditLandOwnerGui::impl(pl, land);
     });
 
-    if (isOrdinaryLand) {
+    if (land->isOrdinaryLand()) {
         fm.appendButton("重新选区"_trf(player), "textures/ui/anvil_icon", [land](Player& pl) {
             ReSelectLandGui::impl(pl, land);
         });
     }
 
-    if ((isOrdinaryLand || isSubLand || isParentLand) && !isMixLand) {
-        fm.appendButton("删除领地"_trf(player), "textures/ui/icon_trash", [land](Player& pl) {
-            DeleteLandGui::impl(pl, land);
-        });
-    }
+    fm.appendButton("删除领地"_trf(player), "textures/ui/icon_trash", [land](Player& pl) {
+        DeleteLandGui::impl(pl, land);
+    });
 
     fm.sendTo(player);
 }
