@@ -248,7 +248,7 @@ void EditLandMemberGui::impl(Player& player, LandData_sptr ptr) {
 }
 void EditLandMemberGui::AddMemberGui::impl(Player& player, LandData_sptr ptr) {
     ChoosePlayerUtilGui::impl<EditLandMemberGui>(player, [ptr](Player& self, Player& target) {
-        if (self.getUuid() == target.getUuid()) {
+        if (self.getUuid() == target.getUuid() && !PLand::getInstance().isOperator(self.getUuid().asString())) {
             mc_utils::sendText(self, "不能添加自己为领地成员哦!"_trf(self));
             return;
         }
