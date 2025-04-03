@@ -402,8 +402,9 @@ static auto const This = [](CommandOrigin const& ori, CommandOutput& out) {
         return;
     }
 
-    if (!land->isLandOwner(player.getUuid().asString())) {
-        mc_utils::sendText<mc_utils::LogLevel::Info>(player, "当前位置不是你的领地"_trf(player));
+    auto uuidStr = player.getUuid().asString();
+    if (!land->isLandOwner(uuidStr) && !PLand::getInstance().isOperator(uuidStr)) {
+        mc_utils::sendText<mc_utils::LogLevel::Info>(player, "当前位置不是你的领地，或者你不是管理员"_trf(player));
         return;
     }
 

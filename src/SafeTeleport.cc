@@ -12,6 +12,7 @@
 #include "mod/MyMod.h"
 #include "pland/Config.h"
 #include "pland/Global.h"
+#include "pland/PLand.h" 
 #include "pland/utils/McUtils.h"
 #include <algorithm>
 #include <concurrentqueue.h>
@@ -291,7 +292,7 @@ public:
 
 
 void SafeTeleport::teleportTo(Player& player, Vec3 const& pos, int dimid) {
-    if (!Config::cfg.land.landTp) {
+    if (!Config::cfg.land.landTp && !PLand::getInstance().isOperator(player.getUuid().asString())) {
         mc_utils::sendText<mc_utils::LogLevel::Info>(player, "此功能已被管理员关闭"_trf(player));
         return;
     }
