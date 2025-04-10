@@ -99,9 +99,12 @@ void Selector::fixAABBMinMax() {
 
 void Selector::drawAABB() {
     if (auto aabb = getAABB(); aabb && !mIsDrawedAABB) {
-        mIsDrawedAABB = true;
-        mDrawedAABBGeoId =
-            DrawHandleManager::getInstance().getOrCreateHandle(*mPlayer)->draw(aabb.value(), mDimensionId);
+        mIsDrawedAABB    = true;
+        mDrawedAABBGeoId = DrawHandleManager::getInstance().getOrCreateHandle(*mPlayer)->draw(
+            aabb.value(),
+            mDimensionId,
+            mce::Color::WHITE()
+        );
     }
 }
 

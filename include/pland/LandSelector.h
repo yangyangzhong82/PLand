@@ -1,9 +1,9 @@
 #pragma once
-#include "bsci/GeometryGroup.h"
 #include "mc/deps/core/utility/typeid_t.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
+#include "pland/DrawHandleManager.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
 #include "pland/LandPos.h"
@@ -36,8 +36,8 @@ protected:
     std::optional<BlockPos> mPointA; // 第一个点
     std::optional<BlockPos> mPointB; // 第二个点
 
-    bool                       mIsDrawedAABB{false}; // 是否已经绘制了选区
-    bsci::GeometryGroup::GeoId mDrawedAABBGeoId;     // 绘制的GeoId
+    bool                     mIsDrawedAABB{false}; // 是否已经绘制了选区
+    DrawHandle::UniqueDrawId mDrawedAABBGeoId;     // 绘制的GeoId
 
 public:
     Selector(Selector&)             = delete;
@@ -121,7 +121,7 @@ public:
 class LandReSelector final : public Selector {
     LandData_wptr mLandData;
 
-    std::optional<bsci::GeometryGroup::GeoId> mOldBoxGeoId;
+    DrawHandle::UniqueDrawId mOldBoxGeoId;
 
 public:
     LDNDAPI explicit LandReSelector(Player& player, LandData_sptr const& data);
@@ -132,8 +132,8 @@ public:
 };
 
 class SubLandSelector final : public Selector {
-    LandData_wptr                             mParentLandData;
-    std::optional<bsci::GeometryGroup::GeoId> mParentRangeBoxGeoId;
+    LandData_wptr            mParentLandData;
+    DrawHandle::UniqueDrawId mParentRangeBoxGeoId;
 
 public:
     LDNDAPI explicit SubLandSelector(Player& player, LandData_sptr const& data);

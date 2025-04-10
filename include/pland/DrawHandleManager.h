@@ -1,52 +1,74 @@
 #pragma once
 #include "Global.h"
+#include "ll/api/base/StdInt.h"
 #include "mc/world/actor/player/Player.h"
 #include "pland/LandData.h"
 #include "pland/LandPos.h"
-#include <bsci/GeometryGroup.h>
 #include <memory>
 #include <unordered_map>
-#include <unordered_set>
 
 
 namespace land {
 
 
+/**
+ * @brief 绘制管理器
+ * 对 bsci::GeometryGroup 的 wrapper
+ */
 class DrawHandle {
-private:
-    std::unique_ptr<bsci::GeometryGroup>                                             mGeometryGroup;
-    std::unordered_map<LandID, std::pair<LandData_wptr, bsci::GeometryGroup::GeoId>> mLandGeoMap;
-
-    friend class DrawHandleManager;
-
 public:
+    // Disallow copy and move
     DrawHandle(const DrawHandle&)            = delete;
     DrawHandle& operator=(const DrawHandle&) = delete;
     DrawHandle(DrawHandle&&)                 = delete;
     DrawHandle& operator=(DrawHandle&&)      = delete;
+    explicit DrawHandle()                    = default;
+    virtual ~DrawHandle()                    = default;
 
-    explicit DrawHandle();
-    virtual ~DrawHandle() = default;
+    struct DrawId {
+        LDAPI virtual ~DrawId() = default;
+
+        LDNDAPI virtual uint64 getValue() const                      = 0; // bsci::GeometryGroup::GeoId::value
+        LDNDAPI virtual bool   operator==(DrawId const& other) const = 0;
+        LDNDAPI virtual        operator bool() const                 = 0;
+
+        template <typename T>
+        [[nodiscard]] T* cast() {
+            return static_cast<T*>(this);
+        }
+    };
+    using UniqueDrawId = std::unique_ptr<DrawId>;
 
 public:
     /**
      * @brief 绘制一个临时的区域
      */
-    LDAPI bsci::GeometryGroup::GeoId
-          draw(LandPos const& pos, DimensionType dim, const mce::Color& color = mce::Color::WHITE());
+    LDNDAPI virtual UniqueDrawId draw(LandPos const& pos, DimensionType dim, const mce::Color& color) = 0;
 
     /**
      * @brief 绘制领地范围
      */
-    LDAPI void draw(LandData_sptr const& land, const mce::Color& color = mce::Color::WHITE());
+    LDAPI virtual void draw(LandData_sptr const& land, const mce::Color& color) = 0;
 
-    LDAPI void remove(LandID landID);
+    /**
+     * @brief 移除一个领地的绘制
+     */
+    LDAPI virtual void remove(LandID landID) = 0;
 
-    LDAPI void remove(bsci::GeometryGroup::GeoId geoid);
+    /**
+     * @brief 移除一个临时的区域
+     */
+    LDAPI virtual void remove(UniqueDrawId const& drawId) = 0;
 
-    LDAPI void removeLands(); // 移除所有领地的绘制
+    /**
+     * @brief 移除所有临时的区域
+     */
+    LDAPI virtual void removeLands() = 0;
 
-    LDAPI void reinit(); // 重置所有绘制
+    /**
+     * @brief 重置所有绘制
+     */
+    LDAPI virtual void reinit() = 0;
 };
 
 

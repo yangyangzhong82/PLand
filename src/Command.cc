@@ -4,6 +4,7 @@
 #include "ll/api/form/CustomForm.h"
 #include "ll/api/service/Bedrock.h"
 #include "magic_enum.hpp"
+#include "mc/deps/core/math/Color.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/core/utility/optional_ref.h"
 #include "mc/nbt/CompoundTag.h"
@@ -284,14 +285,14 @@ static auto const Draw = [](CommandOrigin const& ori, CommandOutput& out, DrawPa
             mc_utils::sendText<mc_utils::LogLevel::Error>(out, "您当前不在领地内"_trf(player));
             return;
         }
-        handle->draw(land);
+        handle->draw(land, mce::Color::GREEN());
         mc_utils::sendText(out, "已绘制领地"_trf(player));
         break;
     }
 
     case DrawType::NearLand: {
         auto lands = db.getLandAt(player.getPosition(), Config::cfg.land.drawRange, player.getDimensionId().id);
-        for (auto& land : lands) handle->draw(land);
+        for (auto& land : lands) handle->draw(land, mce::Color::WHITE());
         mc_utils::sendText(out, "已绘制附近 {} 个领地"_trf(player, lands.size()));
         break;
     }
