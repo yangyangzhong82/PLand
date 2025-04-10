@@ -6,6 +6,7 @@
 #include "ll/api/form/SimpleForm.h"
 #include "mc/world/actor/player/Player.h"
 #include "pland/Config.h"
+#include "pland/DrawHandleManager.h" 
 #include "pland/EconomySystem.h"
 #include "pland/GUI.h"
 #include "pland/Global.h"
@@ -190,8 +191,10 @@ void LandManageGui::DeleteLandGui::recursionCalculationRefoundPrice(int& refundP
         }                                                                                                              \
         auto result = FN(ptr);                                                                                         \
         if (result.first) {                                                                                            \
-            PlayerDeleteLandAfterEvent ev(pl, ptr->getLandID());                                                       \
-            ll::event::EventBus::getInstance().publish(ev);                                                            \
+            auto handle = DrawHandleManager::getInstance().getOrCreateHandle(pl);                                      \
+            handle->remove(ptr->getLandID());                                                                                                 \
+            PlayerDeleteLandAfterEvent evAfter(pl, ptr->getLandID());                                  \
+            ll::event::EventBus::getInstance().publish(evAfter);                                        \
             mc_utils::sendText(pl, "删除领地成功!"_trf(pl));                                                           \
         } else {                                                                                                       \
             economy.reduce(pl, price);                                                                                 \
@@ -225,14 +228,17 @@ void LandManageGui::DeleteLandGui::_handleRemoveLandAndSubLandsCallback(Player& 
         return;
     }
 
+    auto landId = ptr->getLandID(); // Store ID before potential invalidation
     auto result = PLand::getInstance().removeLandAndSubLands(ptr);
     if (result.first) {
-        PlayerDeleteLandAfterEvent ev(pl, ptr->getLandID());
-        ll::event::EventBus::getInstance().publish(ev);
+        auto handle = DrawHandleManager::getInstance().getOrCreateHandle(pl);
+        handle->remove(landId); 
+        PlayerDeleteLandAfterEvent evAfter(pl, landId); 
+        ll::event::EventBus::getInstance().publish(evAfter); 
         mc_utils::sendText(pl, "删除领地成功!"_trf(pl));
 
     } else {
-        economy.reduce(pl, refundPrice); // rollback
+        economy.reduce(pl, refundPrice); 
         mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.second));
     }
 }
@@ -248,10 +254,13 @@ void LandManageGui::DeleteLandGui::_handleRemoveLandAndSubLandsCallback(Player& 
         mc_utils::sendText(pl, "经济系统异常，操作失败"_trf(pl));                                                      \
         return;                                                                                                        \
     }                                                                                                                  \
+    auto landId = ptr->getLandID();                                       \
     auto result = fn(ptr);                                                                                             \
-    if (result.first) {                                                                                                \
-        PlayerDeleteLandAfterEvent ev(pl, ptr->getLandID());                                                           \
-        ll::event::EventBus::getInstance().publish(ev);                                                                \
+    if (result.first) {                                                                                               \
+        auto handle = DrawHandleManager::getInstance().getOrCreateHandle(pl);                                          \
+        handle->remove(landId);                                                                                                        \
+        PlayerDeleteLandAfterEvent evAfter(pl, landId);                                \
+        ll::event::EventBus::getInstance().publish(evAfter);                                           \
         mc_utils::sendText(pl, "删除领地成功!"_trf(pl));                                                               \
     } else {                                                                                                           \
         economy.reduce(pl, refundPrice);                                                                               \
