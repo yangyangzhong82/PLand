@@ -67,6 +67,12 @@ inline BlockProperty operator&(BlockProperty a, BlockProperty b) {
         return;                                                                                                        \
     }
 
+#define CHECK_EVENT_AND_REGISTER_LISTENER(EXPRESSION, LISTENER)                                                        \
+    if (EXPRESSION) {                                                                                                  \
+        mListeners.push_back(LISTENER);                                                                                \
+    }
+
+
 static std::vector<ll::event::ListenerPtr> mListeners;
 
 namespace land {
@@ -87,7 +93,6 @@ bool EventListener::setup() {
     auto* logger = &my_mod::MyMod::getInstance().getSelf().getLogger();
 
     mListeners = {
-        // LL
         bus->emplaceListener<ll::event::PlayerJoinEvent>([db, logger](ll::event::PlayerJoinEvent& ev) {
             if (ev.self().isSimulatedPlayer()) return;
             if (!db->hasPlayerSettings(ev.self().getUuid().asString())) {
@@ -120,9 +125,12 @@ bool EventListener::setup() {
             SelectorManager::getInstance().cancel(player);
             DrawHandleManager::getInstance().removeHandle(player);
         }),
-        bus->emplaceListener<ll::event::ActorHurtEvent>([db, logger](ll::event::ActorHurtEvent& ev) {
-            if (!Config::cfg.listeners.ActorHurtEvent) return;
+    };
 
+    // LL
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.ActorHurtEvent,
+        bus->emplaceListener<ll::event::ActorHurtEvent>([db, logger](ll::event::ActorHurtEvent& ev) {
             auto& self   = ev.self();
             auto& source = ev.source();
             logger->debug(
@@ -149,10 +157,12 @@ bool EventListener::setup() {
                 CANCEL_AND_RETURN_IF(!tab.allowAttackAnimal && self.hasCategory(::ActorCategory::Animal));
                 CANCEL_AND_RETURN_IF(!tab.allowAttackMonster && self.hasCategory(::ActorCategory::Monster));
             }
-        }),
-        bus->emplaceListener<ll::event::PlayerDestroyBlockEvent>([db, logger](ll::event::PlayerDestroyBlockEvent& ev) {
-            if (!Config::cfg.listeners.PlayerDestroyBlockEvent) return;
+        })
+    )
 
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.PlayerDestroyBlockEvent,
+        bus->emplaceListener<ll::event::PlayerDestroyBlockEvent>([db, logger](ll::event::PlayerDestroyBlockEvent& ev) {
             auto& player   = ev.self();
             auto& blockPos = ev.pos();
 
@@ -169,10 +179,12 @@ bool EventListener::setup() {
             }
 
             ev.cancel();
-        }),
-        bus->emplaceListener<ll::event::PlayerPlacingBlockEvent>([db, logger](ll::event::PlayerPlacingBlockEvent& ev) {
-            if (!Config::cfg.listeners.PlayerPlacingBlockEvent) return;
+        })
+    )
 
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.PlayerPlacingBlockEvent,
+        bus->emplaceListener<ll::event::PlayerPlacingBlockEvent>([db, logger](ll::event::PlayerPlacingBlockEvent& ev) {
             auto&       player   = ev.self();
             auto const& blockPos = mc_utils::face2Pos(ev.pos(), ev.face()); // 计算实际放置位置
 
@@ -189,11 +201,13 @@ bool EventListener::setup() {
             }
 
             ev.cancel();
-        }),
+        })
+    )
+
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.PlayerInteractBlockEvent,
         bus->emplaceListener<ll::event::PlayerInteractBlockEvent>([db,
                                                                    logger](ll::event::PlayerInteractBlockEvent& ev) {
-            if (!Config::cfg.listeners.PlayerInteractBlockEvent) return;
-
             auto& player = ev.self();
             auto& pos    = ev.blockPos();
             auto& item   = ev.item();
@@ -273,10 +287,12 @@ bool EventListener::setup() {
                     (blockTypeName.ends_with("smoker") && !tab.useSmoker)                           // 烟熏炉
                 );
             }
-        }),
-        bus->emplaceListener<ll::event::FireSpreadEvent>([db](ll::event::FireSpreadEvent& ev) {
-            if (!Config::cfg.listeners.FireSpreadEvent) return;
+        })
+    )
 
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.FireSpreadEvent,
+        bus->emplaceListener<ll::event::FireSpreadEvent>([db](ll::event::FireSpreadEvent& ev) {
             auto& pos = ev.pos();
 
             auto land = db->getLandAt(pos, ev.blockSource().getDimensionId());
@@ -289,10 +305,12 @@ bool EventListener::setup() {
             }
 
             ev.cancel();
-        }),
-        bus->emplaceListener<ll::event::PlayerAttackEvent>([db, logger](ll::event::PlayerAttackEvent& ev) {
-            if (!Config::cfg.listeners.PlayerAttackEvent) return;
+        })
+    )
 
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.PlayerAttackEvent,
+        bus->emplaceListener<ll::event::PlayerAttackEvent>([db, logger](ll::event::PlayerAttackEvent& ev) {
             auto& player = ev.self();
             auto& mob    = ev.target();
             auto& pos    = mob.getPosition();
@@ -313,10 +331,12 @@ bool EventListener::setup() {
             if (tab.allowAttackMonster && mob.hasCategory(::ActorCategory::Monster)) return; // 怪物
 
             ev.cancel();
-        }),
-        bus->emplaceListener<ll::event::PlayerPickUpItemEvent>([db, logger](ll::event::PlayerPickUpItemEvent& ev) {
-            if (!Config::cfg.listeners.PlayerPickUpItemEvent) return;
+        })
+    )
 
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.PlayerPickUpItemEvent,
+        bus->emplaceListener<ll::event::PlayerPickUpItemEvent>([db, logger](ll::event::PlayerPickUpItemEvent& ev) {
             auto& player = ev.self();
             auto& pos    = ev.itemActor().getPosition();
 
@@ -330,12 +350,38 @@ bool EventListener::setup() {
             if (land->getLandPermTableConst().allowPickupItem) return;
 
             ev.cancel();
-        }),
-        // ila
+        })
+    )
+
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.SpawnedMobEvent,
+        bus->emplaceListener<ll::event::SpawnedMobEvent>([db, logger](ll::event::SpawnedMobEvent& ev) {
+            auto mob = ev.mob();
+            if (!mob.has_value()) {
+                return;
+            }
+
+            auto& pos = mob->getPosition();
+
+            logger->debug("[SpawnedMob] {}", pos.toString());
+
+            auto land = db->getLandAt(pos, mob->getDimensionId());
+            if (PreCheck(land)) {
+                return;
+            }
+
+            if ((mob->hasCategory(::ActorCategory::Animal) && !land->getLandPermTableConst().allowAnimalSpawn)
+                || (mob->hasCategory(::ActorCategory::Monster) && !land->getLandPermTableConst().allowMonsterSpawn)) {
+                mob->despawn();
+            }
+        })
+    )
+
+    // ila
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.PlayerAttackBlockBeforeEvent,
         bus->emplaceListener<ila::mc::PlayerAttackBlockBeforeEvent>(
             [db, logger](ila::mc::PlayerAttackBlockBeforeEvent& ev) {
-                if (!Config::cfg.listeners.PlayerAttackBlockBeforeEvent) return;
-
                 auto& self = ev.self();
                 auto& pos  = ev.pos();
 
@@ -349,11 +395,13 @@ bool EventListener::setup() {
                     !land->getLandPermTableConst().allowAttackDragonEgg && blockTypeName == "minecraft:dragon_egg"
                 );
             }
-        ),
+        )
+    );
+
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.ArmorStandSwapItemBeforeEvent,
         bus->emplaceListener<ila::mc::ArmorStandSwapItemBeforeEvent>(
             [db, logger](ila::mc::ArmorStandSwapItemBeforeEvent& ev) {
-                if (!Config::cfg.listeners.ArmorStandSwapItemBeforeEvent) return;
-
                 Player& player = ev.player();
 
                 logger->debug("[ArmorStandSwapItem]: executed");
@@ -367,10 +415,12 @@ bool EventListener::setup() {
 
                 ev.cancel();
             }
-        ),
-        bus->emplaceListener<ila::mc::PlayerDropItemBeforeEvent>([db, logger](ila::mc::PlayerDropItemBeforeEvent& ev) {
-            if (!Config::cfg.listeners.PlayerDropItemBeforeEvent) return;
+        )
+    )
 
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.PlayerDropItemBeforeEvent,
+        bus->emplaceListener<ila::mc::PlayerDropItemBeforeEvent>([db, logger](ila::mc::PlayerDropItemBeforeEvent& ev) {
             Player& player = ev.self();
 
             logger->debug("[PlayerDropItem]: executed");
@@ -383,10 +433,12 @@ bool EventListener::setup() {
             if (land->getLandPermTableConst().allowDropItem) return;
 
             ev.cancel();
-        }),
-        bus->emplaceListener<ila::mc::ActorRideBeforeEvent>([db, logger](ila::mc::ActorRideBeforeEvent& ev) {
-            if (!Config::cfg.listeners.ActorRideBeforeEvent) return;
+        })
+    )
 
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.ActorRideBeforeEvent,
+        bus->emplaceListener<ila::mc::ActorRideBeforeEvent>([db, logger](ila::mc::ActorRideBeforeEvent& ev) {
             logger->debug("[ActorRide]: executed");
             Actor& passenger = ev.self();
 
@@ -415,10 +467,12 @@ bool EventListener::setup() {
             }
 
             ev.cancel();
-        }),
-        bus->emplaceListener<ila::mc::ExplosionBeforeEvent>([db, logger](ila::mc::ExplosionBeforeEvent& ev) {
-            if (!Config::cfg.listeners.ExplosionBeforeEvent) return;
+        })
+    )
 
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.ExplosionBeforeEvent,
+        bus->emplaceListener<ila::mc::ExplosionBeforeEvent>([db, logger](ila::mc::ExplosionBeforeEvent& ev) {
             logger->debug("[Explode] Pos: {}", ev.explosion().mPos->toString());
 
             auto lands = db->getLandAt(
@@ -432,10 +486,12 @@ bool EventListener::setup() {
                     break;
                 }
             }
-        }),
-        bus->emplaceListener<ila::mc::FarmDecayBeforeEvent>([db, logger](ila::mc::FarmDecayBeforeEvent& ev) {
-            if (!Config::cfg.listeners.FarmDecayBeforeEvent) return;
+        })
+    )
 
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.FarmDecayBeforeEvent,
+        bus->emplaceListener<ila::mc::FarmDecayBeforeEvent>([db, logger](ila::mc::FarmDecayBeforeEvent& ev) {
             logger->debug("[FarmDecay] Pos: {}", ev.pos().toString());
 
             auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
@@ -445,10 +501,12 @@ bool EventListener::setup() {
             }
 
             ev.cancel();
-        }),
-        bus->emplaceListener<ila::mc::MobHurtEffectBeforeEvent>([db, logger](ila::mc::MobHurtEffectBeforeEvent& ev) {
-            if (!Config::cfg.listeners.MobHurtEffectBeforeEvent) return;
+        })
+    )
 
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.MobHurtEffectBeforeEvent,
+        bus->emplaceListener<ila::mc::MobHurtEffectBeforeEvent>([db, logger](ila::mc::MobHurtEffectBeforeEvent& ev) {
             logger->debug("[MobHurtEffect] mob: {}", ev.self().getTypeName());
             auto& self = ev.self();
 
@@ -469,10 +527,12 @@ bool EventListener::setup() {
             }
 
             ev.cancel();
-        }),
-        bus->emplaceListener<ila::mc::PistonPushBeforeEvent>([db, logger](ila::mc::PistonPushBeforeEvent& ev) {
-            if (!Config::cfg.listeners.PistonPushBeforeEvent) return;
+        })
+    )
 
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.PistonPushBeforeEvent,
+        bus->emplaceListener<ila::mc::PistonPushBeforeEvent>([db, logger](ila::mc::PistonPushBeforeEvent& ev) {
             auto const& piston = ev.pistonPos();
             auto const& push   = ev.pushPos();
             auto&       region = ev.blockSource();
@@ -484,11 +544,13 @@ bool EventListener::setup() {
             if (land && !land->getLandPermTableConst().allowPistonPush && land != land2) {
                 ev.cancel();
             }
-        }),
+        })
+    )
+
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.PlayerOperatedItemFrameBeforeEvent,
         bus->emplaceListener<ila::mc::PlayerOperatedItemFrameBeforeEvent>(
             [db, logger](ila::mc::PlayerOperatedItemFrameBeforeEvent& ev) {
-                if (!Config::cfg.listeners.PlayerOperatedItemFrameBeforeEvent) return;
-
                 logger->debug("[PlayerUseItemFrame] pos: {}", ev.blockPos().toString());
 
                 auto land = db->getLandAt(ev.blockPos(), ev.self().getDimensionId());
@@ -498,11 +560,13 @@ bool EventListener::setup() {
 
                 ev.cancel();
             }
-        ),
+        )
+    )
+
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.ActorTriggerPressurePlateBeforeEvent,
         bus->emplaceListener<ila::mc::ActorTriggerPressurePlateBeforeEvent>(
             [db, logger](ila::mc::ActorTriggerPressurePlateBeforeEvent& ev) {
-                if (!Config::cfg.listeners.ActorTriggerPressurePlateBeforeEvent) return;
-
                 logger->debug("[PressurePlateTrigger] pos: {}", ev.pos().toString());
 
                 auto land = db->getLandAt(ev.pos(), ev.self().getDimensionId());
@@ -519,11 +583,13 @@ bool EventListener::setup() {
 
                 ev.cancel();
             }
-        ),
+        )
+    )
+
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.ProjectileCreateBeforeEvent,
         bus->emplaceListener<ila::mc::ProjectileCreateBeforeEvent>([db,
                                                                     logger](ila::mc::ProjectileCreateBeforeEvent& ev) {
-            if (!Config::cfg.listeners.ProjectileCreateBeforeEvent) return;
-
             Actor& self = ev.self();
             auto&  type = ev.self().getTypeName();
 
@@ -552,10 +618,12 @@ bool EventListener::setup() {
                 CANCEL_AND_RETURN_IF(type == "minecraft:ender_pearl" && !tab.allowThrowEnderPearl);  // 末影珍珠
                 CANCEL_AND_RETURN_IF(type == "minecraft:egg" && !tab.allowThrowEgg);                 // 鸡蛋
             }
-        }),
-        bus->emplaceListener<ila::mc::RedstoneUpdateBeforeEvent>([db, logger](ila::mc::RedstoneUpdateBeforeEvent& ev) {
-            if (!Config::cfg.listeners.RedstoneUpdateBeforeEvent) return;
+        })
+    )
 
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.RedstoneUpdateBeforeEvent,
+        bus->emplaceListener<ila::mc::RedstoneUpdateBeforeEvent>([db, logger](ila::mc::RedstoneUpdateBeforeEvent& ev) {
             // logger->debug("[RedstoneUpdate] Pos: {}", ev.Pos().toString());
 
             auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
@@ -565,10 +633,12 @@ bool EventListener::setup() {
             }
 
             ev.cancel();
-        }),
-        bus->emplaceListener<ila::mc::WitherDestroyBeforeEvent>([db, logger](ila::mc::WitherDestroyBeforeEvent& ev) {
-            if (!Config::cfg.listeners.WitherDestroyBeforeEvent) return;
+        })
+    )
 
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.WitherDestroyBeforeEvent,
+        bus->emplaceListener<ila::mc::WitherDestroyBeforeEvent>([db, logger](ila::mc::WitherDestroyBeforeEvent& ev) {
             logger->debug("[WitherDestroyBlock] executed");
             auto& aabb = ev.box();
 
@@ -579,10 +649,12 @@ bool EventListener::setup() {
                     break;
                 }
             }
-        }),
-        bus->emplaceListener<ila::mc::MossGrowthBeforeEvent>([db, logger](ila::mc::MossGrowthBeforeEvent& ev) {
-            if (!Config::cfg.listeners.MossGrowthBeforeEvent) return;
+        })
+    )
 
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.MossGrowthBeforeEvent,
+        bus->emplaceListener<ila::mc::MossGrowthBeforeEvent>([db, logger](ila::mc::MossGrowthBeforeEvent& ev) {
             // logger->debug("[MossSpread] {}", ev.Pos().toString());
 
             auto const& pos = ev.pos();
@@ -600,10 +672,12 @@ bool EventListener::setup() {
             }
 
             ev.cancel();
-        }),
-        bus->emplaceListener<ila::mc::LiquidTryFlowBeforeEvent>([db, logger](ila::mc::LiquidTryFlowBeforeEvent& ev) {
-            if (!Config::cfg.listeners.LiquidTryFlowBeforeEvent) return;
+        })
+    )
 
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.LiquidTryFlowBeforeEvent,
+        bus->emplaceListener<ila::mc::LiquidTryFlowBeforeEvent>([db, logger](ila::mc::LiquidTryFlowBeforeEvent& ev) {
             auto& sou = ev.pos();
             // auto& from = ev.FlowFromPos();
             // logger->debug("[LiquidFlow] {} -> {}", sou.toString(), from.toString());
@@ -612,11 +686,13 @@ bool EventListener::setup() {
             if (land && !land->getLandPermTableConst().allowLiquidFlow) {
                 ev.cancel();
             }
-        }),
+        })
+    )
+
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.SculkBlockGrowthBeforeEvent,
         bus->emplaceListener<ila::mc::SculkBlockGrowthBeforeEvent>([db,
                                                                     logger](ila::mc::SculkBlockGrowthBeforeEvent& ev) {
-            if (!Config::cfg.listeners.SculkBlockGrowthBeforeEvent) return;
-
             auto& pos = ev.pos();
             logger->debug("[SculkBlockGrowth] {}", pos.toString());
 
@@ -626,10 +702,12 @@ bool EventListener::setup() {
                     ev.cancel();
                 }
             }
-        }),
-        bus->emplaceListener<ila::mc::SculkSpreadBeforeEvent>([db, logger](ila::mc::SculkSpreadBeforeEvent& ev) {
-            if (!Config::cfg.listeners.SculkSpreadBeforeEvent) return;
+        })
+    )
 
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.SculkSpreadBeforeEvent,
+        bus->emplaceListener<ila::mc::SculkSpreadBeforeEvent>([db, logger](ila::mc::SculkSpreadBeforeEvent& ev) {
             // logger->debug("[SculkSpread] {} -> {}", ev.SelfPos().toString(), ev.TargetPos().toString());
 
             auto sou = db->getLandAt(ev.selfPos(), ev.blockSource().getDimensionId());
@@ -641,10 +719,12 @@ bool EventListener::setup() {
             if (!sou && tar) {
                 ev.cancel(); // 外蔓延到领地内
             }
-        }),
-        bus->emplaceListener<ila::mc::PlayerEditSignBeforeEvent>([db, logger](ila::mc::PlayerEditSignBeforeEvent& ev) {
-            if (!Config::cfg.listeners.PlayerEditSignBeforeEvent) return;
+        })
+    )
 
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.PlayerEditSignBeforeEvent,
+        bus->emplaceListener<ila::mc::PlayerEditSignBeforeEvent>([db, logger](ila::mc::PlayerEditSignBeforeEvent& ev) {
             auto& player = ev.self();
             auto& pos    = ev.pos();
 
@@ -658,11 +738,13 @@ bool EventListener::setup() {
             if (land && !land->getLandPermTableConst().editSign) {
                 ev.cancel();
             }
-        }),
+        })
+    )
+
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.SculkCatalystAbsorbExperienceBeforeEvent,
         bus->emplaceListener<ila::mc::SculkCatalystAbsorbExperienceBeforeEvent>(
             [db, logger](ila::mc::SculkCatalystAbsorbExperienceBeforeEvent& ev) {
-                if (!Config::cfg.listeners.SculkCatalystAbsorbExperienceBeforeEvent) return;
-
                 // auto& actor  = ev.DiedActor();
                 auto& actor  = ev.actor();
                 auto& region = actor.getDimensionBlockSource();
@@ -676,33 +758,14 @@ bool EventListener::setup() {
                 if (!cur && lds.empty()) return;
                 ev.cancel();
             }
-        ),
-        bus->emplaceListener<ll::event::SpawnedMobEvent>([db, logger](ll::event::SpawnedMobEvent& ev) {
-            if (!Config::cfg.listeners.SpawnedMobEvent) return;
+        )
+    )
 
-            auto mob = ev.mob();
-            if (!mob.has_value()) {
-                return;
-            }
-
-            auto& pos = mob->getPosition();
-
-            logger->debug("[SpawnedMob] {}", pos.toString());
-
-            auto land = db->getLandAt(pos, mob->getDimensionId());
-            if (PreCheck(land)) {
-                return;
-            }
-
-            if ((mob->hasCategory(::ActorCategory::Animal) && !land->getLandPermTableConst().allowAnimalSpawn)
-                || (mob->hasCategory(::ActorCategory::Monster) && !land->getLandPermTableConst().allowMonsterSpawn)) {
-                mob->despawn();
-            }
-        })
-    };
 
     return true;
 }
+#undef CHECK_EVENT_AND_REGISTER_LISTENER
+#undef CANCEL_AND_RETURN_IF
 
 
 bool EventListener::release() {
