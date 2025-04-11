@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.1] - 2025-04-11
+
+### Changed
+
+- 修改 `allowAttackXXXX` i18n 翻译文本 [#29]
+- 更新依赖版本 ilistenattentively v0.4.1
+
+### Fixed
+
+- 修复领地管理员管理玩家领地无法添加自己为领地成员 @yangyangzhong82
+- 修复关闭领地传送后管理员无法使用领地传送 [#26] @yangyangzhong82
+- 修复管理员无法使用 `/pland this` 命令管理玩家领地 [#28] @yangyangzhong82
+- 修复 PLand-SDK 依赖问题 [#32] @engsr6982
+- 修复使用 `pland draw` 命令渲染领地时，领地删除未移除渲染 [#31] @yangyangzhong82
+
 ## [0.7.0] - 2025-03-28
 
 ### Added

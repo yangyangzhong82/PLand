@@ -16,7 +16,7 @@ end
 add_requires("levibuildscript")
 add_requires("exprtk 0.0.3")
 add_requires("legacymoney 0.9.0-rc.1")
-add_requires("ilistenattentively 0.4.0")
+add_requires("ilistenattentively 0.4.1")
 add_requires("bsci 0.1.6")
 
 if has_config("devtool") then
