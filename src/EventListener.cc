@@ -370,8 +370,10 @@ bool EventListener::setup() {
                 return;
             }
 
-            if ((mob->hasCategory(::ActorCategory::Animal) && !land->getLandPermTableConst().allowAnimalSpawn)
-                || (mob->hasCategory(::ActorCategory::Monster) && !land->getLandPermTableConst().allowMonsterSpawn)) {
+            if (((mob->hasCategory(::ActorCategory::Animal) || mob->hasFamily("animal"))
+                 && !land->getLandPermTableConst().allowAnimalSpawn)
+                || ((mob->hasCategory(::ActorCategory::Monster) || mob->hasFamily("monster"))
+                    && !land->getLandPermTableConst().allowMonsterSpawn)) {
                 mob->despawn();
             }
         })
