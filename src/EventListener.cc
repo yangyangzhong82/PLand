@@ -327,8 +327,14 @@ bool EventListener::setup() {
             if (et == "minecraft:ender_crystal" && tab.allowAttackEnderCrystal) return;      // 末影水晶
             if (et == "minecraft:armor_stand" && tab.allowDestroyArmorStand) return;         // 盔甲架
             if (tab.allowAttackPlayer && mob.isPlayer()) return;                             // 玩家
-            if (tab.allowAttackAnimal && mob.hasCategory(::ActorCategory::Animal)) return;   // 动物
-            if (tab.allowAttackMonster && mob.hasCategory(::ActorCategory::Monster)) return; // 怪物
+
+            bool isMonster = mob.hasCategory(::ActorCategory::Monster) || mob.hasFamily("monster");
+
+            if (isMonster) {
+                if (tab.allowAttackMonster) return;
+            } else {
+                if (tab.allowAttackAnimal) return;
+            }
 
             ev.cancel();
         })
@@ -370,11 +376,17 @@ bool EventListener::setup() {
                 return;
             }
 
-            if (((mob->hasCategory(::ActorCategory::Animal) || mob->hasFamily("animal"))
-                 && !land->getLandPermTableConst().allowAnimalSpawn)
-                || ((mob->hasCategory(::ActorCategory::Monster) || mob->hasFamily("monster"))
-                    && !land->getLandPermTableConst().allowMonsterSpawn)) {
-                mob->despawn();
+            auto const& tab = land->getLandPermTableConst();
+            bool isMonster = mob->hasCategory(::ActorCategory::Monster) || mob->hasFamily("monster");
+
+            if (isMonster) {
+                if (!tab.allowMonsterSpawn) {
+                    mob->despawn();
+                }
+            } else {
+                if (!tab.allowAnimalSpawn) {
+                    mob->despawn();
+                }
             }
         })
     )
