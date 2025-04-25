@@ -23,6 +23,8 @@
 #include <cstdint>
 #include <unordered_set>
 #include <vector>
+#include <functional> 
+#include <string_view> 
 
 
 #include "ll/api/event/entity/ActorHurtEvent.h"
@@ -85,6 +87,72 @@ inline bool PreCheck(LandData_sptr const& ptr, UUIDs const& uuid = "", bool igno
     }
     return false;
 }
+
+// --- 权限检查辅助查找表 ---
+
+// PlayerInteractBlockEvent 中特定物品交互的权限映射表
+static const std::unordered_map<std::string_view, bool LandPermTable::*> itemSpecificPermissionMap = {
+    {"minecraft:skull",           &LandPermTable::allowPlace},           // 放置头颅
+    {"minecraft:banner",          &LandPermTable::allowPlace},           // 放置旗帜
+    {"minecraft:glow_ink_sac",    &LandPermTable::allowPlace},           // 荧光墨囊给告示牌上色
+    {"minecraft:end_crystal",     &LandPermTable::allowPlace},           // 放置末地水晶
+    {"minecraft:ender_eye",       &LandPermTable::allowPlace},           // 放置末影之眼
+    {"minecraft:flint_and_steel", &LandPermTable::useFiregen},           // 使用打火石
+    {"minecraft:bone_meal",       &LandPermTable::useBoneMeal},          // 使用骨粉
+    {"minecraft:minecart",        &LandPermTable::allowPlace},           // 放置矿车
+    {"minecraft:armor_stand",     &LandPermTable::allowPlace}            // 放置盔甲架
+};
+
+// PlayerInteractBlockEvent 中特定方块交互的权限映射表 (当物品名称也可能是方块名称时，且检查逻辑特殊)
+static const std::unordered_map<std::string_view, bool LandPermTable::*> blockSpecificPermissionMap = {
+    {"minecraft:dragon_egg",    &LandPermTable::allowAttackDragonEgg}, // 攻击龙蛋
+    {"minecraft:bed",           &LandPermTable::useBed},               // 使用床
+    {"minecraft:chest",         &LandPermTable::allowOpenChest},       // 打开箱子
+    {"minecraft:trapped_chest", &LandPermTable::allowOpenChest},       // 打开陷阱箱
+    {"minecraft:campfire",      &LandPermTable::useCampfire},          // 使用营火 
+    {"minecraft:soul_campfire", &LandPermTable::useCampfire},          // 使用灵魂营火
+    {"minecraft:composter",     &LandPermTable::useComposter},         // 使用堆肥桶
+    {"minecraft:noteblock",     &LandPermTable::useNoteBlock},         // 使用音符盒
+    {"minecraft:jukebox",       &LandPermTable::useJukebox},           // 使用唱片机
+    {"minecraft:bell",          &LandPermTable::useBell},              // 使用钟
+    {"minecraft:daylight_detector_inverted", &LandPermTable::useDaylightDetector}, // 使用阳光探测器 (反向)
+    {"minecraft:daylight_detector", &LandPermTable::useDaylightDetector},          // 使用阳光探测器 
+    {"minecraft:lectern",       &LandPermTable::useLectern},           // 使用讲台
+    {"minecraft:cauldron",      &LandPermTable::useCauldron},          // 使用炼药锅
+    {"minecraft:respawn_anchor",&LandPermTable::useRespawnAnchor},    // 使用重生锚
+    {"minecraft:flower_pot",    &LandPermTable::editFlowerPot}         // 编辑花盆
+};
+
+// PlayerInteractBlockEvent 中功能性方块交互的权限映射表 (对应 InteractBlockHashMap)
+static const std::unordered_map<std::string_view, bool LandPermTable::*> blockFunctionalPermissionMap = {
+    {"minecraft:cartography_table", &LandPermTable::useCartographyTable}, // 制图台
+    {"minecraft:smithing_table",    &LandPermTable::useSmithingTable},    // 锻造台
+    {"minecraft:brewing_stand",     &LandPermTable::useBrewingStand},     // 酿造台
+    {"minecraft:anvil",             &LandPermTable::useAnvil},            // 铁砧
+    {"minecraft:grindstone",        &LandPermTable::useGrindstone},       // 砂轮
+    {"minecraft:enchanting_table",  &LandPermTable::useEnchantingTable},  // 附魔台
+    {"minecraft:barrel",            &LandPermTable::useBarrel},           // 木桶
+    {"minecraft:beacon",            &LandPermTable::useBeacon},           // 信标
+    {"minecraft:hopper",            &LandPermTable::useHopper},           // 漏斗
+    {"minecraft:dropper",           &LandPermTable::useDropper},          // 投掷器
+    {"minecraft:dispenser",         &LandPermTable::useDispenser},        // 发射器
+    {"minecraft:loom",              &LandPermTable::useLoom},             // 织布机
+    {"minecraft:stonecutter_block", &LandPermTable::useStonecutter}       // 切石机
+    // 熔炉相关的方块由下面的 ends_with 处理
+};
+
+// ProjectileCreateBeforeEvent 中抛射物创建的权限映射表
+static const std::unordered_map<std::string_view, bool LandPermTable::*> projectilePermissionMap = {
+    {"minecraft:fishing_hook",     &LandPermTable::useFishingHook},       // 鱼钩
+    {"minecraft:splash_potion",    &LandPermTable::allowThrowPotion},    // 喷溅药水
+    {"minecraft:lingering_potion", &LandPermTable::allowThrowPotion},    // 滞留药水
+    {"minecraft:thrown_trident",   &LandPermTable::allowThrowTrident},  // 三叉戟
+    {"minecraft:arrow",            &LandPermTable::allowShoot},          // 箭
+    {"minecraft:crossbow",         &LandPermTable::allowShoot},          // 弩 (假设发射箭或烟花需要 allowShoot 权限)
+    {"minecraft:snowball",         &LandPermTable::allowThrowSnowball},  // 雪球
+    {"minecraft:ender_pearl",      &LandPermTable::allowThrowEnderPearl}, // 末影珍珠
+    {"minecraft:egg",              &LandPermTable::allowThrowEgg}         // 鸡蛋
+};
 
 
 bool EventListener::setup() {
@@ -225,67 +293,66 @@ bool EventListener::setup() {
 
             auto const& tab = land->getLandPermTableConst();
 
+            // --- 物品交互检查 (仅当物品在 InteractItemHashMap 中时进行) ---
             if (InteractItemHashMap.contains(itemTypeName)) {
-                CANCEL_AND_RETURN_IF(
-                    (itemTypeName.ends_with("bucket") && !tab.useBucket) ||             // 各种桶
-                    (itemTypeName.ends_with("axe") && !tab.allowAxePeeled) ||           // 斧头给木头去皮
-                    (itemTypeName.ends_with("hoe") && !tab.useHoe) ||                   // 锄头耕地
-                    (itemTypeName.ends_with("_shovel") && !tab.useShovel) ||            // 锹铲除草径
-                    (itemTypeName == "minecraft:skull" && !tab.allowPlace) ||           // 放置头颅
-                    (itemTypeName == "minecraft:banner" && !tab.allowPlace) ||          // 放置旗帜
-                    (itemTypeName == "minecraft:glow_ink_sac" && !tab.allowPlace) ||    // 发光墨囊给木牌上色
-                    (itemTypeName == "minecraft:end_crystal" && !tab.allowPlace) ||     // 末地水晶
-                    (itemTypeName == "minecraft:ender_eye" && !tab.allowPlace) ||       // 放置末影之眼
-                    (itemTypeName == "minecraft:flint_and_steel" && !tab.useFiregen) || // 使用打火石
-                    (itemTypeName == "minecraft:bone_meal" && !tab.useBoneMeal) ||      // 使用骨粉
-                    (itemTypeName == "minecraft:minecart" && !tab.allowPlace) ||        // 放置矿车
-                    (itemTypeName == "minecraft:armor_stand" && !tab.allowPlace)        // 盔甲架
-                );
+                bool itemCancel = false;
+                // 通用物品类型检查 
+                if ((itemTypeName.ends_with("bucket") && !tab.useBucket) ||           // 桶类
+                    (itemTypeName.ends_with("axe") && !tab.allowAxePeeled) ||         // 斧头去皮
+                    (itemTypeName.ends_with("hoe") && !tab.useHoe) ||                 // 锄头耕地
+                    (itemTypeName.ends_with("_shovel") && !tab.useShovel)) {          // 锹铲除草径
+                    itemCancel = true;
+                } else {
+                    // 特定物品类型检查 (使用映射表)
+                    auto it = itemSpecificPermissionMap.find(itemTypeName);
+                    if (it != itemSpecificPermissionMap.end() && !(tab.*(it->second))) {
+                        itemCancel = true;
+                    }
+                }
+                CANCEL_AND_RETURN_IF(itemCancel); // 如果物品检查失败，则取消事件并返回
             }
-            if (InteractItemHashMap.contains(blockTypeName)) {
-                CANCEL_AND_RETURN_IF( // clang-format off
-                    (blockTypeName.ends_with( "button") && !tab.useButton) ||         // 各种按钮
-                    (blockTypeName.ends_with( "_door") && !tab.useDoor) ||            // 各种门
-                    (blockTypeName.ends_with( "fence_gate") && !tab.useFenceGate) ||  // 各种栏栅门
-                    (blockTypeName.ends_with( "trapdoor") && !tab.useTrapdoor) ||     // 各种活板门
-                    (blockTypeName.ends_with( "_sign") && !tab.editSign) ||           // 编辑告示牌
-                    (blockTypeName.ends_with("shulker_box") && !tab.useShulkerBox) ||  // 潜影盒
-                    (blockTypeName == "minecraft:dragon_egg" && !tab.allowAttackDragonEgg) || // 右键龙蛋
-                    (blockTypeName == "minecraft:bed" && !tab.useBed) ||                      // 床
-                    ((blockTypeName == "minecraft:chest" || blockTypeName == "minecraft:trapped_chest") && !tab.allowOpenChest) || // 箱子&陷阱箱
-                    (blockTypeName == "minecraft:crafting_table" && !tab.useCraftingTable) || // 工作台
-                    ((blockTypeName == "minecraft:campfire" || blockTypeName == "minecraft:soul_campfire") && !tab.useCampfire) || // 营火（烧烤）
-                    (blockTypeName == "minecraft:composter" && !tab.useComposter) || // 堆肥桶（放置肥料）
-                    (blockTypeName == "minecraft:noteblock" && !tab.useNoteBlock) || // 音符盒（调音）
-                    (blockTypeName == "minecraft:jukebox" && !tab.useJukebox) ||     // 唱片机（放置/取出唱片）
-                    (blockTypeName == "minecraft:bell" && !tab.useBell) ||           // 钟（敲钟）
-                    ((blockTypeName == "minecraft:daylight_detector_inverted" || blockTypeName == "minecraft:daylight_detector") && !tab.useDaylightDetector) || // 光线传感器（切换日夜模式）
-                    (blockTypeName == "minecraft:lectern" && !tab.useLectern) ||                // 讲台
-                    (blockTypeName == "minecraft:cauldron" && !tab.useCauldron) ||              // 炼药锅
-                    (blockTypeName == "minecraft:lever" && !tab.useLever) ||                    // 拉杆
-                    (blockTypeName == "minecraft:respawn_anchor" && !tab.useRespawnAnchor) ||   // 重生锚（充能）
-                    (blockTypeName == "minecraft:flower_pot" && !tab.editFlowerPot)            // 花盆
-                ); // clang-format on
-            }
-            if (InteractBlockHashMap.contains(blockTypeName)) {
-                CANCEL_AND_RETURN_IF(
-                    (blockTypeName == "minecraft:cartography_table" && !tab.useCartographyTable) || // 制图台
-                    (blockTypeName == "minecraft:smithing_table" && !tab.useSmithingTable) ||       // 锻造台
-                    (blockTypeName == "minecraft:brewing_stand" && !tab.useBrewingStand) ||         // 酿造台
-                    (blockTypeName == "minecraft:anvil" && !tab.useAnvil) ||                        // 铁砧
-                    (blockTypeName == "minecraft:grindstone" && !tab.useGrindstone) ||              // 磨石
-                    (blockTypeName == "minecraft:enchanting_table" && !tab.useEnchantingTable) ||   // 附魔台
-                    (blockTypeName == "minecraft:barrel" && !tab.useBarrel) ||                      // 桶
-                    (blockTypeName == "minecraft:beacon" && !tab.useBeacon) ||                      // 信标
-                    (blockTypeName == "minecraft:hopper" && !tab.useHopper) ||                      // 漏斗
-                    (blockTypeName == "minecraft:dropper" && !tab.useDropper) ||                    // 投掷器
-                    (blockTypeName == "minecraft:dispenser" && !tab.useDispenser) ||                // 发射器
-                    (blockTypeName == "minecraft:loom" && !tab.useLoom) ||                          // 织布机
-                    (blockTypeName == "minecraft:stonecutter_block" && !tab.useStonecutter) ||      // 切石机
-                    (blockTypeName.ends_with("blast_furnace") && !tab.useBlastFurnace) ||           // 高炉
-                    (blockTypeName.ends_with("furnace") && !tab.useFurnace) ||                      // 熔炉
-                    (blockTypeName.ends_with("smoker") && !tab.useSmoker)                           // 烟熏炉
-                );
+
+            // --- 方块交互检查 (仅当方块存在且其类型在 InteractItemHashMap 或 InteractBlockHashMap 中时进行) ---
+            if (block && (InteractItemHashMap.contains(blockTypeName) || InteractBlockHashMap.contains(blockTypeName))) {
+                auto const& legacyBlock = block->getLegacyBlock();
+                bool        blockCancel = false;
+
+                // 检查 1: 基于方块属性或特定类型 (如果方块类型在 InteractItemHashMap 中)
+                if (InteractItemHashMap.contains(blockTypeName)) {
+                    if ((legacyBlock.isButtonBlock() && !tab.useButton) ||           // 按钮
+                        (legacyBlock.isDoorBlock() && !tab.useDoor) ||               // 门
+                        (legacyBlock.isFenceGateBlock() && !tab.useFenceGate) ||     // 栅栏门
+                        (legacyBlock.mIsTrapdoor && !tab.useTrapdoor) ||             // 活板门
+                        (blockTypeName.ends_with("_sign") && !tab.editSign) ||       // 告示牌编辑
+                        (blockTypeName.ends_with("shulker_box") && !tab.useShulkerBox) || // 潜影盒
+                        (legacyBlock.isCraftingBlock() && !tab.useCraftingTable) ||  // 工作台
+                        (legacyBlock.isLeverBlock() && !tab.useLever)) {             // 拉杆
+                        blockCancel = true;
+                    } else {
+                        // 特定方块检查 (使用 blockSpecificPermissionMap)
+                        auto it = blockSpecificPermissionMap.find(blockTypeName);
+                        if (it != blockSpecificPermissionMap.end() && !(tab.*(it->second))) {
+                            blockCancel = true;
+                        }
+                    }
+                }
+
+                // 检查 2: 基于功能性方块类型 (如果方块类型在 InteractBlockHashMap 中)
+                if (InteractBlockHashMap.contains(blockTypeName)) {
+                     if ((blockTypeName.ends_with("blast_furnace") && !tab.useBlastFurnace) || // 高炉
+                        (blockTypeName.ends_with("furnace") && !tab.useFurnace) ||           // 熔炉
+                        (blockTypeName.ends_with("smoker") && !tab.useSmoker)) {              // 烟熏炉
+                        blockCancel = true;
+                    } else {
+                        // 特定功能性方块检查 (使用 blockFunctionalPermissionMap)
+                        auto it = blockFunctionalPermissionMap.find(blockTypeName);
+                        if (it != blockFunctionalPermissionMap.end() && !(tab.*(it->second))) {
+                            blockCancel = true;
+                        }
+                    }
+                }
+
+                CANCEL_AND_RETURN_IF(blockCancel); // 如果任何方块检查失败，则取消事件并返回
             }
         })
     )
@@ -621,16 +688,11 @@ bool EventListener::setup() {
             }
 
             if (land) {
-                auto& tab = land->getLandPermTableConst();
-                CANCEL_AND_RETURN_IF(type == "minecraft:fishing_hook" && !tab.useFishingHook);       // 钓鱼竿
-                CANCEL_AND_RETURN_IF(type == "minecraft:splash_potion" && !tab.allowThrowPotion);    // 喷溅药水
-                CANCEL_AND_RETURN_IF(type == "minecraft:lingering_potion" && !tab.allowThrowPotion); // 滞留药水
-                CANCEL_AND_RETURN_IF(type == "minecraft:thrown_trident" && !tab.allowThrowTrident);  // 三叉戟
-                CANCEL_AND_RETURN_IF(type == "minecraft:arrow" && !tab.allowShoot);                  // 箭
-                CANCEL_AND_RETURN_IF(type == "minecraft:crossbow" && !tab.allowShoot);               // 弩射烟花
-                CANCEL_AND_RETURN_IF(type == "minecraft:snowball" && !tab.allowThrowSnowball);       // 雪球
-                CANCEL_AND_RETURN_IF(type == "minecraft:ender_pearl" && !tab.allowThrowEnderPearl);  // 末影珍珠
-                CANCEL_AND_RETURN_IF(type == "minecraft:egg" && !tab.allowThrowEgg);                 // 鸡蛋
+                auto const& tab = land->getLandPermTableConst();
+                auto it = projectilePermissionMap.find(type); 
+                if (it != projectilePermissionMap.end()) {
+                    CANCEL_AND_RETURN_IF(!(tab.*(it->second))); 
+                }
             }
         })
     )
@@ -898,7 +960,7 @@ std::unordered_set<string> EventListener::InteractItemHashMap = {
     "minecraft:mangrove_fence_gate", // 红树木栅栏门
     "minecraft:cherry_fence_gate",   // 樱树木栅栏门
     "minecraft:bamboo_fence_gate",   // 竹栅栏门
-
+/*
     "minecraft:wooden_door",   // 橡木门
     "minecraft:spruce_door",   // 云杉木门
     "minecraft:birch_door",    // 白桦木门
@@ -910,7 +972,7 @@ std::unordered_set<string> EventListener::InteractItemHashMap = {
     "minecraft:mangrove_door", // 红树木门
     "minecraft:cherry_door",   // 樱树木门
     "minecraft:bamboo_door",   // 竹门
-
+*/
     "minecraft:wooden_axe",       // 木斧
     "minecraft:stone_axe",        // 石斧
     "minecraft:iron_axe",         // 铁斧
