@@ -113,9 +113,12 @@ void BuyLandGui::impl(Player& player, Selector* selector) {
             }
 
             auto& db = PLand::getInstance();
-            if ((int)db.getLands(pl.getUuid().asString()).size() >= Config::cfg.land.maxLand) {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您已经达到最大领地数量"_trf(pl));
-                return;
+            // 检查领地数量是否达到上限，管理员跳过检查
+            if (!db.isOperator(pl.getUuid().asString())) {
+                if ((int)db.getLands(pl.getUuid().asString()).size() >= Config::cfg.land.maxLand) {
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您已经达到最大领地数量"_trf(pl));
+                    return;
+                }
             }
 
             // 检查领地范围是否合法，管理员跳过检查
@@ -385,9 +388,12 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
             }
 
             auto& db = PLand::getInstance();
-            if ((int)db.getLands(pl.getUuid().asString()).size() >= Config::cfg.land.maxLand) {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您已经达到最大领地数量"_trf(pl));
-                return;
+            // 检查领地数量是否达到上限，管理员跳过检查
+            if (!db.isOperator(pl.getUuid().asString())) {
+                if ((int)db.getLands(pl.getUuid().asString()).size() >= Config::cfg.land.maxLand) {
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您已经达到最大领地数量"_trf(pl));
+                    return;
+                }
             }
 
             // 检查领地范围是否合法，管理员跳过检查
