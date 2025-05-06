@@ -174,23 +174,17 @@ bool EventListener::setup() {
 
     mListeners = {
         bus->emplaceListener<ll::event::PlayerJoinEvent>([db, logger](ll::event::PlayerJoinEvent& ev) {
-            logger->debug("PlayerJoinEvent: Player {} joining.", ev.self().getRealName());
-            if (ev.self().isSimulatedPlayer()) {
-                logger->debug("PlayerJoinEvent: Simulated player, skipping.");
-                return;
-            }
+            if (ev.self().isSimulatedPlayer()) return;
             if (!db->hasPlayerSettings(ev.self().getUuid().asString())) {
-                logger->debug("PlayerJoinEvent: New player, creating settings for {}.", ev.self().getRealName());
                 db->setPlayerSettings(ev.self().getUuid().asString(), PlayerSettings{}); // 新玩家
             }
 
             auto lands = db->getLands(ev.self().getXuid()); // xuid 查询
             if (!lands.empty()) {
-                logger->info("PlayerJoinEvent: Found lands for player {} by XUID, attempting to update owner data.", ev.self().getRealName());
+                logger->info("Update land owner data from xuid to uuid for player {}", ev.self().getRealName());
                 auto uuid = ev.self().getUuid().asString();
                 for (auto& land : lands) {
                     if (land->mIsConvertedLand && land->mOwnerDataIsXUID) {
-                        logger->debug("PlayerJoinEvent: Updating land {} owner from XUID to UUID {}.", land->mID, uuid);
                         land->mLandOwner       = uuid; // xuid -> uuid
                         land->mOwnerDataIsXUID = false;
                     }
@@ -199,11 +193,8 @@ bool EventListener::setup() {
         }),
         bus->emplaceListener<ll::event::PlayerDisconnectEvent>([logger](ll::event::PlayerDisconnectEvent& ev) {
             auto& player = ev.self();
-            if (player.isSimulatedPlayer()) {
-                logger->debug("PlayerDisconnectEvent: Simulated player {} disconnecting, skipping.", player.getRealName());
-                return;
-            }
-            logger->debug("PlayerDisconnectEvent: Player {} disconnect, remove all cache.", player.getRealName());
+            if (player.isSimulatedPlayer()) return;
+            logger->debug("Player {} disconnect, remove all cache");
 
             auto& uuid    = player.getUuid();
             auto  uuidStr = uuid.asString();
@@ -223,50 +214,28 @@ bool EventListener::setup() {
             auto& self   = ev.self();
             auto& source = ev.source();
             logger->debug(
-                "ActorHurtEvent: Mob: {} ({}), ActorDamageCause: {}, SourceEntityType: {}",
+                "[ActorHurt] Mob: {}, ActorDamageCause: {}, ActorType: {}",
                 self.getTypeName(),
-                self.getUniqueID().toString(),
                 static_cast<int>(source.mCause),
                 static_cast<int>(source.getEntityType())
             );
 
             auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
-            if (PreCheck(land)) {
-                logger->debug("ActorHurtEvent: No land or pre-check passed (operator/owner/member). Actor: {}", self.getTypeName());
-                return;
-            }
-            logger->debug("ActorHurtEvent: Actor {} in land {}. Checking permissions.", self.getTypeName(), land->mID);
+            if (PreCheck(land)) return; // land not found
 
             if (source.getEntityType() == ActorType::Player
                 && source.mCause == SharedTypes::Legacy::ActorDamageCause::EntityAttack) {
-                logger->debug("ActorHurtEvent: Damage source is Player attacking.");
+                // 玩家攻击 [ActorHurt] Mob: ikun, ActorDamageCause: 2, ActorType: 319
                 if (auto souPlayer = self.getLevel().getPlayer(source.getEntityUniqueID()); souPlayer) {
-                    if (PreCheck(land, souPlayer->getUuid().asString())) {
-                        logger->debug("ActorHurtEvent: Attacking player {} is operator/owner/member. Allowed.", souPlayer->getRealName());
-                        return;
-                    }
-                    logger->debug("ActorHurtEvent: Attacking player {} is Guest. Proceeding with permission check.", souPlayer->getRealName());
+                    if (PreCheck(land, souPlayer->getUuid().asString())) return;
                 }
             }
 
             if (land) {
                 auto const& tab = land->getLandPermTableConst();
-                if (!tab.allowAttackPlayer && self.isPlayer()) {
-                    logger->debug("ActorHurtEvent: Player {} hurt, but allowAttackPlayer is false. Cancelling.", self.getTypeName());
-                    ev.cancel();
-                    return;
-                }
-                if (!tab.allowAttackAnimal && self.hasCategory(::ActorCategory::Animal)) {
-                    logger->debug("ActorHurtEvent: Animal {} hurt, but allowAttackAnimal is false. Cancelling.", self.getTypeName());
-                    ev.cancel();
-                    return;
-                }
-                if (!tab.allowAttackMonster && self.hasCategory(::ActorCategory::Monster)) {
-                    logger->debug("ActorHurtEvent: Monster {} hurt, but allowAttackMonster is false. Cancelling.", self.getTypeName());
-                    ev.cancel();
-                    return;
-                }
-                logger->debug("ActorHurtEvent: All attack checks passed for actor {}.", self.getTypeName());
+                CANCEL_AND_RETURN_IF(!tab.allowAttackPlayer && self.isPlayer());
+                CANCEL_AND_RETURN_IF(!tab.allowAttackAnimal && self.hasCategory(::ActorCategory::Animal));
+                CANCEL_AND_RETURN_IF(!tab.allowAttackMonster && self.hasCategory(::ActorCategory::Monster));
             }
         })
     )
@@ -277,22 +246,18 @@ bool EventListener::setup() {
             auto& player   = ev.self();
             auto& blockPos = ev.pos();
 
-            logger->debug("PlayerDestroyBlockEvent: Player {} destroying block at {}.", player.getRealName(), blockPos.toString());
+            logger->debug("[DestroyBlock] {}", blockPos.toString());
 
             auto land = db->getLandAt(blockPos, player.getDimensionId());
             if (PreCheck(land, player.getUuid().asString())) {
-                logger->debug("PlayerDestroyBlockEvent: No land or pre-check passed for player {}.", player.getRealName());
                 return;
             }
-            logger->debug("PlayerDestroyBlockEvent: Player {} destroying block in land {}. Checking permissions.", player.getRealName(), land->mID);
 
             auto& tab = land->getLandPermTableConst();
             if (tab.allowDestroy) {
-                logger->debug("PlayerDestroyBlockEvent: allowDestroy is true. Allowed.");
                 return;
             }
 
-            logger->debug("PlayerDestroyBlockEvent: allowDestroy is false. Cancelling.");
             ev.cancel();
         })
     )
@@ -303,22 +268,18 @@ bool EventListener::setup() {
             auto&       player   = ev.self();
             auto const& blockPos = mc_utils::face2Pos(ev.pos(), ev.face()); // 计算实际放置位置
 
-            logger->debug("PlayerPlacingBlockEvent: Player {} placing block at {}.", player.getRealName(), blockPos.toString());
+            logger->debug("[PlaceingBlock] {}", blockPos.toString());
 
             auto land = db->getLandAt(blockPos, player.getDimensionId());
             if (PreCheck(land, player.getUuid().asString())) {
-                logger->debug("PlayerPlacingBlockEvent: No land or pre-check passed for player {}.", player.getRealName());
                 return;
             }
-            logger->debug("PlayerPlacingBlockEvent: Player {} placing block in land {}. Checking permissions.", player.getRealName(), land->mID);
 
             auto& tab = land->getLandPermTableConst();
             if (tab.allowPlace) {
-                logger->debug("PlayerPlacingBlockEvent: allowPlace is true. Allowed.");
                 return;
             }
 
-            logger->debug("PlayerPlacingBlockEvent: allowPlace is false. Cancelling.");
             ev.cancel();
         })
     )
@@ -339,8 +300,7 @@ bool EventListener::setup() {
             auto const& blockTypeName      = block ? block->getTypeName() : "";
 
             logger->debug(
-                "PlayerInteractBlockEvent: Player {} interacting at Pos: {}, item: {} (Item*: {}), block: {}",
-                player.getRealName(),
+                "[InteractBlock] Pos: {}, item: {} (Item*: {}), block: {}",
                 pos.toString(),
                 itemTypeNameForMap,
                 (void*)actualItem, // 记录 Item 指针以供调试
@@ -349,72 +309,105 @@ bool EventListener::setup() {
 
             auto land = db->getLandAt(pos, player.getDimensionId());
             if (PreCheck(land, player.getUuid().asString())) {
-                logger->debug("PlayerInteractBlockEvent: No land or pre-check passed for player {}.", player.getRealName());
                 return;
             }
-            logger->debug("PlayerInteractBlockEvent: Player {} interacting in land {}. Checking permissions.", player.getRealName(), land->mID);
 
             auto const& tab = land->getLandPermTableConst();
 
             // --- 物品交互检查 ---
-            logger->debug("PlayerInteractBlockEvent: --- Item Interaction Check ---");
+            // 根据请求，已移除 InteractItemHashMap.contains() 检查。
             bool itemCancel = false;
 
-            if (actualItem) {
-                logger->debug("PlayerInteractBlockEvent: actualItem exists ({}). Checking vftable and specific map.", itemTypeNameForMap);
-                void** itemVftable = *reinterpret_cast<void** const*>(actualItem);
+            if (actualItem) { // 仅当拥有有效的 Item 指针时才执行检查
+                void** itemVftable = *reinterpret_cast<void** const*>(actualItem); // 获取物品的虚函数表
 
-                if ((itemVftable == BucketItem::$vftable() && !tab.useBucket)) {
-                    logger->debug("PlayerInteractBlockEvent: Item is BucketItem, useBucket is {}. Cancel: {}", tab.useBucket, !tab.useBucket);
-                    itemCancel = !tab.useBucket;
-                } else if ((itemVftable == HatchetItem::$vftable() && !tab.allowAxePeeled)) {
-                    logger->debug("PlayerInteractBlockEvent: Item is HatchetItem, allowAxePeeled is {}. Cancel: {}", tab.allowAxePeeled, !tab.allowAxePeeled);
-                    itemCancel = !tab.allowAxePeeled;
-                } else if ((itemVftable == HoeItem::$vftable() && !tab.useHoe)) {
-                    logger->debug("PlayerInteractBlockEvent: Item is HoeItem, useHoe is {}. Cancel: {}", tab.useHoe, !tab.useHoe);
-                    itemCancel = !tab.useHoe;
-                } else if ((itemVftable == ShovelItem::$vftable() && !tab.useShovel)) {
-                    logger->debug("PlayerInteractBlockEvent: Item is ShovelItem, useShovel is {}. Cancel: {}", tab.useShovel, !tab.useShovel);
-                    itemCancel = !tab.useShovel;
-                }
-                
-                if (!itemCancel) { // Only check specific map if not already cancelled by tool/bucket check
+                // 检查1: 桶和工具 (基于vtable)
+                if ((itemVftable == BucketItem::$vftable() && !tab.useBucket) ||         // 桶类 (BucketItem)
+                    (itemVftable == HatchetItem::$vftable() && !tab.allowAxePeeled) ||  // 斧头 (HatchetItem)
+                    (itemVftable == HoeItem::$vftable() && !tab.useHoe) ||              // 锄头 (HoeItem)
+                    (itemVftable == ShovelItem::$vftable() && !tab.useShovel)) {        // 锹 (ShovelItem)
+                    itemCancel = true;
+                } else {
                     auto it = itemSpecificPermissionMap.find(itemTypeNameForMap);
-                    if (it != itemSpecificPermissionMap.end()) {
-                        bool perm = tab.*(it->second);
-                        logger->debug("PlayerInteractBlockEvent: Item {} found in itemSpecificPermissionMap. Permission required: {}, Has: {}. Cancel: {}", itemTypeNameForMap, it->first, perm, !perm);
-                        if (!perm) itemCancel = true;
-                    } else {
-                        logger->debug("PlayerInteractBlockEvent: Item {} not in itemSpecificPermissionMap.", itemTypeNameForMap);
+                    if (it != itemSpecificPermissionMap.end() && !(tab.*(it->second))) {
+                        itemCancel = true;
                     }
                 }
             } else {
-                logger->debug("PlayerInteractBlockEvent: actualItem is null. Checking itemSpecificPermissionMap for item type name '{}'.", itemTypeNameForMap);
                 auto it = itemSpecificPermissionMap.find(itemTypeNameForMap);
-                if (it != itemSpecificPermissionMap.end()) {
-                     bool perm = tab.*(it->second);
-                    logger->debug("PlayerInteractBlockEvent: Item type name {} found in itemSpecificPermissionMap. Permission required: {}, Has: {}. Cancel: {}", itemTypeNameForMap, it->first, perm, !perm);
-                    if (!perm) itemCancel = true;
-                } else {
-                     logger->debug("PlayerInteractBlockEvent: Item type name {} not in itemSpecificPermissionMap.", itemTypeNameForMap);
+                if (it != itemSpecificPermissionMap.end() && !(tab.*(it->second))) {
+                    itemCancel = true;
                 }
             }
+            CANCEL_AND_RETURN_IF(itemCancel); 
 
-            if (itemCancel) {
-                logger->debug("PlayerInteractBlockEvent: Item interaction check failed. Cancelling event.");
-                ev.cancel();
-                return;
-            }
-            logger->debug("PlayerInteractBlockEvent: Item interaction check passed.");
-
-            // --- 方块交互检查 ---
-            logger->debug("PlayerInteractBlockEvent: --- Block Interaction Check ---");
-            if (block) {
-                logger->debug("PlayerInteractBlockEvent: Block exists ({}).", blockTypeName);
+           
+            if (block) { // 确保方块存在
                 auto const& legacyBlock = block->getLegacyBlock();
                 bool        blockCancel = false;
 
                 auto blockIt = blockSpecificPermissionMap.find(blockTypeName);
+                if (blockIt != blockSpecificPermissionMap.end() && !(tab.*(blockIt->second))) {
+                    blockCancel = true;
+                }
+                CANCEL_AND_RETURN_IF(blockCancel);
+
+                void**      instanceVftable = *reinterpret_cast<void** const*>(&legacyBlock);
+
+                if ((legacyBlock.isButtonBlock() && !tab.useButton) ||           // 按钮
+                    (legacyBlock.isDoorBlock() && !tab.useDoor) ||               // 门
+                    (legacyBlock.isFenceGateBlock() && !tab.useFenceGate) ||     // 栅栏门
+                    (legacyBlock.mIsTrapdoor && !tab.useTrapdoor) ||             // 活板门
+                    ((instanceVftable == SignBlock::$vftable() || instanceVftable == HangingSignBlock::$vftable()) && !tab.editSign) || // 告示牌编辑 (vftable check)
+                    (instanceVftable == ShulkerBoxBlock::$vftable() && !tab.useShulkerBox) || // 潜影盒 
+                    (legacyBlock.isCraftingBlock() && !tab.useCraftingTable) ||  // 工作台
+                    (legacyBlock.isLeverBlock() && !tab.useLever)||
+                    (instanceVftable == BlastFurnaceBlock::$vftable() && !tab.useBlastFurnace) || // 高炉 
+                    (instanceVftable == FurnaceBlock::$vftable() && !tab.useFurnace) ||           // 熔炉
+                    (instanceVftable == SmokerBlock::$vftable() && !tab.useSmoker)) {             // 拉杆
+                    blockCancel = true;
+                }
+                if((instanceVftable == BlastFurnaceBlock::$vftable() && !tab.useBlastFurnace) || // 高炉 
+                    (instanceVftable == FurnaceBlock::$vftable() && !tab.useFurnace) ||           // 熔炉
+                    (instanceVftable == SmokerBlock::$vftable() && !tab.useSmoker)) {
+                    bool BA = instanceVftable == BlastFurnaceBlock::$vftable(); // 高炉
+                    bool FA = instanceVftable == FurnaceBlock::$vftable(); // 熔炉
+                    bool SA = instanceVftable == SmokerBlock::$vftable(); 
+                    logger->info("A {}, B{} C{} D {}E {}F {}",tab.useSmoker,tab.useFurnace,tab.useSmoker,BA,FA,SA),          
+                    blockCancel = true;
+                }
+                
+                CANCEL_AND_RETURN_IF(blockCancel); 
+                blockCancel = false; 
+            }
+        })
+    )
+
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.FireSpreadEvent,
+        bus->emplaceListener<ll::event::FireSpreadEvent>([db](ll::event::FireSpreadEvent& ev) {
+            auto& pos = ev.pos();
+
+            auto land = db->getLandAt(pos, ev.blockSource().getDimensionId());
+            if (PreCheck(land)) {
+                return;
+            }
+
+            if (land->getLandPermTableConst().allowFireSpread) {
+                return;
+            }
+
+            ev.cancel();
+        })
+    )
+
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.PlayerAttackEvent,
+        bus->emplaceListener<ll::event::PlayerAttackEvent>([db, logger](ll::event::PlayerAttackEvent& ev) {
+            auto& player = ev.self();
+            auto& mob    = ev.target();
+            auto& pos    = mob.getPosition();
+
             logger->debug("[AttackEntity] Entity: {}, Pos: {}", mob.getTypeName(), pos.toString());
 
             auto land = db->getLandAt(pos, player.getDimensionId());
