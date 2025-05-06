@@ -113,31 +113,38 @@ void BuyLandGui::impl(Player& player, Selector* selector) {
             }
 
             auto& db = PLand::getInstance();
-            if ((int)db.getLands(pl.getUuid().asString()).size() >= Config::cfg.land.maxLand) {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您已经达到最大领地数量"_trf(pl));
-                return;
+            // 检查领地数量是否达到上限，管理员跳过检查
+            if (!db.isOperator(pl.getUuid().asString())) {
+                if ((int)db.getLands(pl.getUuid().asString()).size() >= Config::cfg.land.maxLand) {
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您已经达到最大领地数量"_trf(pl));
+                    return;
+                }
             }
 
-            auto const& squareRange = Config::cfg.land.bought.squareRange;
-            if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
-                (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
-                (is3D && (height < squareRange.minHeight || height > mc_utils::GetDimensionMaxHeight(pl.getDimension()))
-                ) // 高度必须大于最小值 && 小于世界高度 && 3D
-            ) {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(
-                    pl,
-                    "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}, 当前长宽高: {}x{}x{}"_trf(
+            // 检查领地范围是否合法，管理员跳过检查
+            if (!db.isOperator(pl.getUuid().asString())) {
+                auto const& squareRange = Config::cfg.land.bought.squareRange;
+                if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
+                    (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
+                    (is3D && (height < squareRange.minHeight || height > mc_utils::GetDimensionMaxHeight(pl.getDimension()))
+                    ) // 高度必须大于最小值 && 小于世界高度 && 3D
+                ) {
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(
                         pl,
-                        squareRange.min,
-                        squareRange.max,
-                        squareRange.minHeight,
-                        length,
-                        width,
-                        height
-                    )
-                );
-                return;
+                        "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}, 当前长宽高: {}x{}x{}"_trf(
+                            pl,
+                            squareRange.min,
+                            squareRange.max,
+                            squareRange.minHeight,
+                            length,
+                            width,
+                            height
+                        )
+                    );
+                    return;
+                }
             }
+
 
             auto lands = db.getLandAt(aabb->mMin_A, aabb->mMax_B, selector->getDimensionId());
             if (!lands.empty()) {
@@ -244,26 +251,28 @@ void BuyLandGui::impl(Player& player, LandReSelector* reSelector) {
                 return; // 预检查经济
             }
 
-
-            auto const& squareRange = Config::cfg.land.bought.squareRange;
-            if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
-                (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
-                (is3D && (height < squareRange.minHeight || height > mc_utils::GetDimensionMaxHeight(pl.getDimension()))
-                ) // 高度必须大于最小值 && 小于世界高度 && 3D
-            ) {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(
-                    pl,
-                    "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}"_trf(
+            auto& db = PLand::getInstance();
+            // 检查领地范围是否合法，管理员跳过检查
+            if (!db.isOperator(pl.getUuid().asString())) {
+                auto const& squareRange = Config::cfg.land.bought.squareRange;
+                if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
+                    (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
+                    (is3D && (height < squareRange.minHeight || height > mc_utils::GetDimensionMaxHeight(pl.getDimension()))
+                    ) // 高度必须大于最小值 && 小于世界高度 && 3D
+                ) {
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(
                         pl,
-                        squareRange.min,
-                        squareRange.max,
-                        squareRange.minHeight
-                    )
-                );
-                return;
+                        "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}"_trf(
+                            pl,
+                            squareRange.min,
+                            squareRange.max,
+                            squareRange.minHeight
+                        )
+                    );
+                    return;
+                }
             }
 
-            auto& db    = PLand::getInstance();
             auto  lands = db.getLandAt(aabb->mMin_A, aabb->mMax_B, landPtr->getLandDimid());
             if (!lands.empty()) {
                 for (auto& land : lands) {
@@ -379,30 +388,36 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
             }
 
             auto& db = PLand::getInstance();
-            if ((int)db.getLands(pl.getUuid().asString()).size() >= Config::cfg.land.maxLand) {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您已经达到最大领地数量"_trf(pl));
-                return;
+            // 检查领地数量是否达到上限，管理员跳过检查
+            if (!db.isOperator(pl.getUuid().asString())) {
+                if ((int)db.getLands(pl.getUuid().asString()).size() >= Config::cfg.land.maxLand) {
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您已经达到最大领地数量"_trf(pl));
+                    return;
+                }
             }
 
-            auto const& squareRange = Config::cfg.land.bought.squareRange;
-            if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
-                (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
-                (is3D && (height < squareRange.minHeight || height > mc_utils::GetDimensionMaxHeight(pl.getDimension()))
-                ) // 高度必须大于最小值 && 小于世界高度 && 3D
-            ) {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(
-                    pl,
-                    "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}, 当前长宽高: {}x{}x{}"_trf(
+            // 检查领地范围是否合法，管理员跳过检查
+            if (!db.isOperator(pl.getUuid().asString())) {
+                auto const& squareRange = Config::cfg.land.bought.squareRange;
+                if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
+                    (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
+                    (is3D && (height < squareRange.minHeight || height > mc_utils::GetDimensionMaxHeight(pl.getDimension()))
+                    ) // 高度必须大于最小值 && 小于世界高度 && 3D
+                ) {
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(
                         pl,
-                        squareRange.min,
-                        squareRange.max,
-                        squareRange.minHeight,
-                        length,
-                        width,
-                        height
-                    )
-                );
-                return;
+                        "领地范围不合法, 可用范围: 长宽: {}~{} 最小高度: {}, 当前长宽高: {}x{}x{}"_trf(
+                            pl,
+                            squareRange.min,
+                            squareRange.max,
+                            squareRange.minHeight,
+                            length,
+                            width,
+                            height
+                        )
+                    );
+                    return;
+                }
             }
 
             // 碰撞检查，防止领地重叠
