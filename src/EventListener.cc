@@ -6,7 +6,19 @@
 #include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/world/level/BlockPos.h"
+#include "mc/world/level/block/BlockLegacy.h" 
 #include "mc/world/level/block/BlockProperty.h"
+#include "mc/world/item/Item.h" 
+#include "mc/world/item/BucketItem.h"  
+#include "mc/world/item/HatchetItem.h" 
+#include "mc/world/item/HoeItem.h"     
+#include "mc/world/item/ShovelItem.h" 
+#include "mc/world/level/block/SignBlock.h"
+#include "mc/world/level/block/HangingSignBlock.h"
+#include "mc/world/level/block/ShulkerBoxBlock.h"
+#include "mc/world/level/block/FurnaceBlock.h"
+#include "mc/world/level/block/BlastFurnaceBlock.h"
+#include "mc/world/level/block/SmokerBlock.h"
 #include "mc/world/level/block/components/BlockComponentDirectData.h"
 #include "mc/world/level/chunk/SubChunk.h"
 #include "mc/world/phys/AABB.h"
@@ -162,17 +174,23 @@ bool EventListener::setup() {
 
     mListeners = {
         bus->emplaceListener<ll::event::PlayerJoinEvent>([db, logger](ll::event::PlayerJoinEvent& ev) {
-            if (ev.self().isSimulatedPlayer()) return;
+            logger->debug("PlayerJoinEvent: Player {} joining.", ev.self().getRealName());
+            if (ev.self().isSimulatedPlayer()) {
+                logger->debug("PlayerJoinEvent: Simulated player, skipping.");
+                return;
+            }
             if (!db->hasPlayerSettings(ev.self().getUuid().asString())) {
+                logger->debug("PlayerJoinEvent: New player, creating settings for {}.", ev.self().getRealName());
                 db->setPlayerSettings(ev.self().getUuid().asString(), PlayerSettings{}); // 新玩家
             }
 
             auto lands = db->getLands(ev.self().getXuid()); // xuid 查询
             if (!lands.empty()) {
-                logger->info("Update land owner data from xuid to uuid for player {}", ev.self().getRealName());
+                logger->info("PlayerJoinEvent: Found lands for player {} by XUID, attempting to update owner data.", ev.self().getRealName());
                 auto uuid = ev.self().getUuid().asString();
                 for (auto& land : lands) {
                     if (land->mIsConvertedLand && land->mOwnerDataIsXUID) {
+                        logger->debug("PlayerJoinEvent: Updating land {} owner from XUID to UUID {}.", land->mID, uuid);
                         land->mLandOwner       = uuid; // xuid -> uuid
                         land->mOwnerDataIsXUID = false;
                     }
@@ -181,8 +199,11 @@ bool EventListener::setup() {
         }),
         bus->emplaceListener<ll::event::PlayerDisconnectEvent>([logger](ll::event::PlayerDisconnectEvent& ev) {
             auto& player = ev.self();
-            if (player.isSimulatedPlayer()) return;
-            logger->debug("Player {} disconnect, remove all cache");
+            if (player.isSimulatedPlayer()) {
+                logger->debug("PlayerDisconnectEvent: Simulated player {} disconnecting, skipping.", player.getRealName());
+                return;
+            }
+            logger->debug("PlayerDisconnectEvent: Player {} disconnect, remove all cache.", player.getRealName());
 
             auto& uuid    = player.getUuid();
             auto  uuidStr = uuid.asString();
@@ -202,28 +223,50 @@ bool EventListener::setup() {
             auto& self   = ev.self();
             auto& source = ev.source();
             logger->debug(
-                "[ActorHurt] Mob: {}, ActorDamageCause: {}, ActorType: {}",
+                "ActorHurtEvent: Mob: {} ({}), ActorDamageCause: {}, SourceEntityType: {}",
                 self.getTypeName(),
+                self.getUniqueID().toString(),
                 static_cast<int>(source.mCause),
                 static_cast<int>(source.getEntityType())
             );
 
             auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
-            if (PreCheck(land)) return; // land not found
+            if (PreCheck(land)) {
+                logger->debug("ActorHurtEvent: No land or pre-check passed (operator/owner/member). Actor: {}", self.getTypeName());
+                return;
+            }
+            logger->debug("ActorHurtEvent: Actor {} in land {}. Checking permissions.", self.getTypeName(), land->mID);
 
             if (source.getEntityType() == ActorType::Player
                 && source.mCause == SharedTypes::Legacy::ActorDamageCause::EntityAttack) {
-                // 玩家攻击 [ActorHurt] Mob: ikun, ActorDamageCause: 2, ActorType: 319
+                logger->debug("ActorHurtEvent: Damage source is Player attacking.");
                 if (auto souPlayer = self.getLevel().getPlayer(source.getEntityUniqueID()); souPlayer) {
-                    if (PreCheck(land, souPlayer->getUuid().asString())) return;
+                    if (PreCheck(land, souPlayer->getUuid().asString())) {
+                        logger->debug("ActorHurtEvent: Attacking player {} is operator/owner/member. Allowed.", souPlayer->getRealName());
+                        return;
+                    }
+                    logger->debug("ActorHurtEvent: Attacking player {} is Guest. Proceeding with permission check.", souPlayer->getRealName());
                 }
             }
 
             if (land) {
                 auto const& tab = land->getLandPermTableConst();
-                CANCEL_AND_RETURN_IF(!tab.allowAttackPlayer && self.isPlayer());
-                CANCEL_AND_RETURN_IF(!tab.allowAttackAnimal && self.hasCategory(::ActorCategory::Animal));
-                CANCEL_AND_RETURN_IF(!tab.allowAttackMonster && self.hasCategory(::ActorCategory::Monster));
+                if (!tab.allowAttackPlayer && self.isPlayer()) {
+                    logger->debug("ActorHurtEvent: Player {} hurt, but allowAttackPlayer is false. Cancelling.", self.getTypeName());
+                    ev.cancel();
+                    return;
+                }
+                if (!tab.allowAttackAnimal && self.hasCategory(::ActorCategory::Animal)) {
+                    logger->debug("ActorHurtEvent: Animal {} hurt, but allowAttackAnimal is false. Cancelling.", self.getTypeName());
+                    ev.cancel();
+                    return;
+                }
+                if (!tab.allowAttackMonster && self.hasCategory(::ActorCategory::Monster)) {
+                    logger->debug("ActorHurtEvent: Monster {} hurt, but allowAttackMonster is false. Cancelling.", self.getTypeName());
+                    ev.cancel();
+                    return;
+                }
+                logger->debug("ActorHurtEvent: All attack checks passed for actor {}.", self.getTypeName());
             }
         })
     )
@@ -234,18 +277,22 @@ bool EventListener::setup() {
             auto& player   = ev.self();
             auto& blockPos = ev.pos();
 
-            logger->debug("[DestroyBlock] {}", blockPos.toString());
+            logger->debug("PlayerDestroyBlockEvent: Player {} destroying block at {}.", player.getRealName(), blockPos.toString());
 
             auto land = db->getLandAt(blockPos, player.getDimensionId());
             if (PreCheck(land, player.getUuid().asString())) {
+                logger->debug("PlayerDestroyBlockEvent: No land or pre-check passed for player {}.", player.getRealName());
                 return;
             }
+            logger->debug("PlayerDestroyBlockEvent: Player {} destroying block in land {}. Checking permissions.", player.getRealName(), land->mID);
 
             auto& tab = land->getLandPermTableConst();
             if (tab.allowDestroy) {
+                logger->debug("PlayerDestroyBlockEvent: allowDestroy is true. Allowed.");
                 return;
             }
 
+            logger->debug("PlayerDestroyBlockEvent: allowDestroy is false. Cancelling.");
             ev.cancel();
         })
     )
@@ -256,18 +303,22 @@ bool EventListener::setup() {
             auto&       player   = ev.self();
             auto const& blockPos = mc_utils::face2Pos(ev.pos(), ev.face()); // 计算实际放置位置
 
-            logger->debug("[PlaceingBlock] {}", blockPos.toString());
+            logger->debug("PlayerPlacingBlockEvent: Player {} placing block at {}.", player.getRealName(), blockPos.toString());
 
             auto land = db->getLandAt(blockPos, player.getDimensionId());
             if (PreCheck(land, player.getUuid().asString())) {
+                logger->debug("PlayerPlacingBlockEvent: No land or pre-check passed for player {}.", player.getRealName());
                 return;
             }
+            logger->debug("PlayerPlacingBlockEvent: Player {} placing block in land {}. Checking permissions.", player.getRealName(), land->mID);
 
             auto& tab = land->getLandPermTableConst();
             if (tab.allowPlace) {
+                logger->debug("PlayerPlacingBlockEvent: allowPlace is true. Allowed.");
                 return;
             }
 
+            logger->debug("PlayerPlacingBlockEvent: allowPlace is false. Cancelling.");
             ev.cancel();
         })
     )
@@ -276,112 +327,94 @@ bool EventListener::setup() {
         Config::cfg.listeners.PlayerInteractBlockEvent,
         bus->emplaceListener<ll::event::PlayerInteractBlockEvent>([db,
                                                                    logger](ll::event::PlayerInteractBlockEvent& ev) {
-            auto& player = ev.self();
-            auto& pos    = ev.blockPos();
-            auto& item   = ev.item();
-            auto  block  = ev.block().has_value() ? &ev.block().get() : nullptr;
+            auto& player    = ev.self();
+            auto& pos       = ev.blockPos();
+            auto& itemStack = ev.item(); // 为了清晰，从 'item' 重命名为 'itemStack'
+            auto  block     = ev.block().has_value() ? &ev.block().get() : nullptr;
 
-            auto const  itemTypeName  = item.getTypeName();
-            auto const& blockTypeName = block ? block->getTypeName() : "";
+            // 从 ItemStack 获取 Item 对象
+            const Item* actualItem = itemStack.getItem(); // 假设 itemStack.getItem() 存在并返回 const Item*
 
-            logger->debug("[InteractBlock] Pos: {}, item: {}  block: {}", pos.toString(), itemTypeName, blockTypeName);
+            auto const  itemTypeNameForMap = itemStack.getTypeName(); // 用于 itemSpecificPermissionMap 的键
+            auto const& blockTypeName      = block ? block->getTypeName() : "";
+
+            logger->debug(
+                "PlayerInteractBlockEvent: Player {} interacting at Pos: {}, item: {} (Item*: {}), block: {}",
+                player.getRealName(),
+                pos.toString(),
+                itemTypeNameForMap,
+                (void*)actualItem, // 记录 Item 指针以供调试
+                blockTypeName
+            );
 
             auto land = db->getLandAt(pos, player.getDimensionId());
             if (PreCheck(land, player.getUuid().asString())) {
+                logger->debug("PlayerInteractBlockEvent: No land or pre-check passed for player {}.", player.getRealName());
                 return;
             }
+            logger->debug("PlayerInteractBlockEvent: Player {} interacting in land {}. Checking permissions.", player.getRealName(), land->mID);
 
             auto const& tab = land->getLandPermTableConst();
 
-            // --- 物品交互检查 (仅当物品在 InteractItemHashMap 中时进行) ---
-            if (InteractItemHashMap.contains(itemTypeName)) {
-                bool itemCancel = false;
-                // 通用物品类型检查 
-                if ((itemTypeName.ends_with("bucket") && !tab.useBucket) ||           // 桶类
-                    (itemTypeName.ends_with("axe") && !tab.allowAxePeeled) ||         // 斧头去皮
-                    (itemTypeName.ends_with("hoe") && !tab.useHoe) ||                 // 锄头耕地
-                    (itemTypeName.ends_with("_shovel") && !tab.useShovel)) {          // 锹铲除草径
-                    itemCancel = true;
-                } else {
-                    // 特定物品类型检查 (使用映射表)
-                    auto it = itemSpecificPermissionMap.find(itemTypeName);
-                    if (it != itemSpecificPermissionMap.end() && !(tab.*(it->second))) {
-                        itemCancel = true;
+            // --- 物品交互检查 ---
+            logger->debug("PlayerInteractBlockEvent: --- Item Interaction Check ---");
+            bool itemCancel = false;
+
+            if (actualItem) {
+                logger->debug("PlayerInteractBlockEvent: actualItem exists ({}). Checking vftable and specific map.", itemTypeNameForMap);
+                void** itemVftable = *reinterpret_cast<void** const*>(actualItem);
+
+                if ((itemVftable == BucketItem::$vftable() && !tab.useBucket)) {
+                    logger->debug("PlayerInteractBlockEvent: Item is BucketItem, useBucket is {}. Cancel: {}", tab.useBucket, !tab.useBucket);
+                    itemCancel = !tab.useBucket;
+                } else if ((itemVftable == HatchetItem::$vftable() && !tab.allowAxePeeled)) {
+                    logger->debug("PlayerInteractBlockEvent: Item is HatchetItem, allowAxePeeled is {}. Cancel: {}", tab.allowAxePeeled, !tab.allowAxePeeled);
+                    itemCancel = !tab.allowAxePeeled;
+                } else if ((itemVftable == HoeItem::$vftable() && !tab.useHoe)) {
+                    logger->debug("PlayerInteractBlockEvent: Item is HoeItem, useHoe is {}. Cancel: {}", tab.useHoe, !tab.useHoe);
+                    itemCancel = !tab.useHoe;
+                } else if ((itemVftable == ShovelItem::$vftable() && !tab.useShovel)) {
+                    logger->debug("PlayerInteractBlockEvent: Item is ShovelItem, useShovel is {}. Cancel: {}", tab.useShovel, !tab.useShovel);
+                    itemCancel = !tab.useShovel;
+                }
+                
+                if (!itemCancel) { // Only check specific map if not already cancelled by tool/bucket check
+                    auto it = itemSpecificPermissionMap.find(itemTypeNameForMap);
+                    if (it != itemSpecificPermissionMap.end()) {
+                        bool perm = tab.*(it->second);
+                        logger->debug("PlayerInteractBlockEvent: Item {} found in itemSpecificPermissionMap. Permission required: {}, Has: {}. Cancel: {}", itemTypeNameForMap, it->first, perm, !perm);
+                        if (!perm) itemCancel = true;
+                    } else {
+                        logger->debug("PlayerInteractBlockEvent: Item {} not in itemSpecificPermissionMap.", itemTypeNameForMap);
                     }
                 }
-                CANCEL_AND_RETURN_IF(itemCancel); // 如果物品检查失败，则取消事件并返回
+            } else {
+                logger->debug("PlayerInteractBlockEvent: actualItem is null. Checking itemSpecificPermissionMap for item type name '{}'.", itemTypeNameForMap);
+                auto it = itemSpecificPermissionMap.find(itemTypeNameForMap);
+                if (it != itemSpecificPermissionMap.end()) {
+                     bool perm = tab.*(it->second);
+                    logger->debug("PlayerInteractBlockEvent: Item type name {} found in itemSpecificPermissionMap. Permission required: {}, Has: {}. Cancel: {}", itemTypeNameForMap, it->first, perm, !perm);
+                    if (!perm) itemCancel = true;
+                } else {
+                     logger->debug("PlayerInteractBlockEvent: Item type name {} not in itemSpecificPermissionMap.", itemTypeNameForMap);
+                }
             }
 
-            // --- 方块交互检查 (仅当方块存在且其类型在 InteractItemHashMap 或 InteractBlockHashMap 中时进行) ---
-            if (block && (InteractItemHashMap.contains(blockTypeName) || InteractBlockHashMap.contains(blockTypeName))) {
+            if (itemCancel) {
+                logger->debug("PlayerInteractBlockEvent: Item interaction check failed. Cancelling event.");
+                ev.cancel();
+                return;
+            }
+            logger->debug("PlayerInteractBlockEvent: Item interaction check passed.");
+
+            // --- 方块交互检查 ---
+            logger->debug("PlayerInteractBlockEvent: --- Block Interaction Check ---");
+            if (block) {
+                logger->debug("PlayerInteractBlockEvent: Block exists ({}).", blockTypeName);
                 auto const& legacyBlock = block->getLegacyBlock();
                 bool        blockCancel = false;
 
-                // 检查 1: 基于方块属性或特定类型 (如果方块类型在 InteractItemHashMap 中)
-                if (InteractItemHashMap.contains(blockTypeName)) {
-                    if ((legacyBlock.isButtonBlock() && !tab.useButton) ||           // 按钮
-                        (legacyBlock.isDoorBlock() && !tab.useDoor) ||               // 门
-                        (legacyBlock.isFenceGateBlock() && !tab.useFenceGate) ||     // 栅栏门
-                        (legacyBlock.mIsTrapdoor && !tab.useTrapdoor) ||             // 活板门
-                        (blockTypeName.ends_with("_sign") && !tab.editSign) ||       // 告示牌编辑
-                        (blockTypeName.ends_with("shulker_box") && !tab.useShulkerBox) || // 潜影盒
-                        (legacyBlock.isCraftingBlock() && !tab.useCraftingTable) ||  // 工作台
-                        (legacyBlock.isLeverBlock() && !tab.useLever)) {             // 拉杆
-                        blockCancel = true;
-                    } else {
-                        // 特定方块检查 (使用 blockSpecificPermissionMap)
-                        auto it = blockSpecificPermissionMap.find(blockTypeName);
-                        if (it != blockSpecificPermissionMap.end() && !(tab.*(it->second))) {
-                            blockCancel = true;
-                        }
-                    }
-                }
-
-                // 检查 2: 基于功能性方块类型 (如果方块类型在 InteractBlockHashMap 中)
-                if (InteractBlockHashMap.contains(blockTypeName)) {
-                     if ((blockTypeName.ends_with("blast_furnace") && !tab.useBlastFurnace) || // 高炉
-                        (blockTypeName.ends_with("furnace") && !tab.useFurnace) ||           // 熔炉
-                        (blockTypeName.ends_with("smoker") && !tab.useSmoker)) {              // 烟熏炉
-                        blockCancel = true;
-                    } else {
-                        // 特定功能性方块检查 (使用 blockFunctionalPermissionMap)
-                        auto it = blockFunctionalPermissionMap.find(blockTypeName);
-                        if (it != blockFunctionalPermissionMap.end() && !(tab.*(it->second))) {
-                            blockCancel = true;
-                        }
-                    }
-                }
-
-                CANCEL_AND_RETURN_IF(blockCancel); // 如果任何方块检查失败，则取消事件并返回
-            }
-        })
-    )
-
-    CHECK_EVENT_AND_REGISTER_LISTENER(
-        Config::cfg.listeners.FireSpreadEvent,
-        bus->emplaceListener<ll::event::FireSpreadEvent>([db](ll::event::FireSpreadEvent& ev) {
-            auto& pos = ev.pos();
-
-            auto land = db->getLandAt(pos, ev.blockSource().getDimensionId());
-            if (PreCheck(land)) {
-                return;
-            }
-
-            if (land->getLandPermTableConst().allowFireSpread) {
-                return;
-            }
-
-            ev.cancel();
-        })
-    )
-
-    CHECK_EVENT_AND_REGISTER_LISTENER(
-        Config::cfg.listeners.PlayerAttackEvent,
-        bus->emplaceListener<ll::event::PlayerAttackEvent>([db, logger](ll::event::PlayerAttackEvent& ev) {
-            auto& player = ev.self();
-            auto& mob    = ev.target();
-            auto& pos    = mob.getPosition();
-
+                auto blockIt = blockSpecificPermissionMap.find(blockTypeName);
             logger->debug("[AttackEntity] Entity: {}, Pos: {}", mob.getTypeName(), pos.toString());
 
             auto land = db->getLandAt(pos, player.getDimensionId());
@@ -855,187 +888,6 @@ bool EventListener::release() {
 }
 
 
-// static
-std::unordered_set<string> EventListener::InteractItemHashMap = {
-    "minecraft:bed",                        // 床
-    "minecraft:chest",                      // 箱子
-    "minecraft:trapped_chest",              // 陷阱箱
-    "minecraft:crafting_table",             // 制作台
-    "minecraft:campfire",                   // 营火
-    "minecraft:soul_campfire",              // 灵魂营火
-    "minecraft:composter",                  // 垃圾箱
-    "minecraft:noteblock",                  // 音符盒
-    "minecraft:jukebox",                    // 唱片机
-    "minecraft:bell",                       // 钟
-    "minecraft:daylight_detector",          // 阳光探测器
-    "minecraft:daylight_detector_inverted", // 阳光探测器(夜晚)
-    "minecraft:lectern",                    // 讲台
-    "minecraft:cauldron",                   // 炼药锅
-    "minecraft:lever",                      // 拉杆
-    "minecraft:dragon_egg",                 // 龙蛋
-    "minecraft:flower_pot",                 // 花盆
-    "minecraft:respawn_anchor",             // 重生锚
-    "minecraft:glow_ink_sac",               // 荧光墨囊
-    "minecraft:end_crystal",                // 末地水晶
-    "minecraft:ender_eye",                  // 末影之眼
-    "minecraft:flint_and_steel",            // 打火石
-    "minecraft:skull",                      // 头颅
-    "minecraft:banner",                     // 旗帜
-    "minecraft:bone_meal",                  // 骨粉
-    "minecraft:minecart",                   // 矿车
-    "minecraft:armor_stand",                // 盔甲架
-
-    "minecraft:axolotl_bucket",       // 美西螈桶
-    "minecraft:powder_snow_bucket",   // 细雪桶
-    "minecraft:pufferfish_bucket",    // 河豚桶
-    "minecraft:tropical_fish_bucket", // 热带鱼桶
-    "minecraft:salmon_bucket",        // 桶装鲑鱼
-    "minecraft:cod_bucket",           // 鳕鱼桶
-    "minecraft:water_bucket",         // 水桶
-    "minecraft:cod_bucket",           // 鳕鱼桶
-    "minecraft:lava_bucket",          // 熔岩桶
-    "minecraft:bucket",               // 桶
-
-    "minecraft:shulker_box",            // 潜影盒
-    "minecraft:undyed_shulker_box",     // 未染色的潜影盒
-    "minecraft:white_shulker_box",      // 白色潜影盒
-    "minecraft:orange_shulker_box",     // 橙色潜影盒
-    "minecraft:magenta_shulker_box",    // 品红色潜影盒
-    "minecraft:light_blue_shulker_box", // 浅蓝色潜影盒
-    "minecraft:yellow_shulker_box",     // 黄色潜影盒
-    "minecraft:lime_shulker_box",       // 黄绿色潜影盒
-    "minecraft:pink_shulker_box",       // 粉红色潜影盒
-    "minecraft:gray_shulker_box",       // 灰色潜影盒
-    "minecraft:light_gray_shulker_box", // 浅灰色潜影盒
-    "minecraft:cyan_shulker_box",       // 青色潜影盒
-    "minecraft:purple_shulker_box",     // 紫色潜影盒
-    "minecraft:blue_shulker_box",       // 蓝色潜影盒
-    "minecraft:brown_shulker_box",      // 棕色潜影盒
-    "minecraft:green_shulker_box",      // 绿色潜影盒
-    "minecraft:red_shulker_box",        // 红色潜影盒
-    "minecraft:black_shulker_box",      // 黑色潜影盒
-
-    "minecraft:stone_button",               // 石头按钮
-    "minecraft:wooden_button",              // 木头按钮
-    "minecraft:spruce_button",              // 云杉木按钮
-    "minecraft:birch_button",               // 白桦木按钮
-    "minecraft:jungle_button",              // 丛林木按钮
-    "minecraft:acacia_button",              // 金合欢木按钮
-    "minecraft:dark_oak_button",            // 深色橡木按钮
-    "minecraft:crimson_button",             // 绯红木按钮
-    "minecraft:warped_button",              // 诡异木按钮
-    "minecraft:polished_blackstone_button", // 磨制黑石按钮
-    "minecraft:mangrove_button",            // 红树木按钮
-    "minecraft:cherry_button",              // 樱花木按钮
-    "minecraft:bamboo_button",              // 竹按钮
-
-    "minecraft:trapdoor",                        // 活板门
-    "minecraft:spruce_trapdoor",                 // 云杉木活板门
-    "minecraft:birch_trapdoor",                  // 白桦木活板门
-    "minecraft:jungle_trapdoor",                 // 丛林木活板门
-    "minecraft:acacia_trapdoor",                 // 金合欢木活板门
-    "minecraft:dark_oak_trapdoor",               // 深色橡木活板门
-    "minecraft:crimson_trapdoor",                // 绯红木活板门
-    "minecraft:warped_trapdoor",                 // 诡异木活板门
-    "minecraft:copper_trapdoor",                 // 铜活板门
-    "minecraft:exposed_copper_trapdoor",         // 斑驳的铜活板门
-    "minecraft:weathered_copper_trapdoor",       // 锈蚀的铜活板门
-    "minecraft:oxidized_copper_trapdoor",        // 氧化的铜活板门
-    "minecraft:waxed_copper_trapdoor",           // 涂蜡的铜活板门
-    "minecraft:waxed_exposed_copper_trapdoor",   // 涂蜡的斑驳的铜活板门
-    "minecraft:waxed_weathered_copper_trapdoor", // 涂蜡的锈蚀的铜活板门
-    "minecraft:waxed_oxidized_copper_trapdoor",  // 涂蜡的氧化的铜活板门
-    "minecraft:mangrove_trapdoor",               // 红树木活板门
-    "minecraft:cherry_trapdoor",                 // 樱树木活板门
-    "minecraft:bamboo_trapdoor",                 // 竹活板门
-
-    "minecraft:fence_gate",          // 栅栏门
-    "minecraft:spruce_fence_gate",   // 云杉木栅栏门
-    "minecraft:birch_fence_gate",    // 白桦木栅栏门
-    "minecraft:jungle_fence_gate",   // 丛林木栅栏门
-    "minecraft:acacia_fence_gate",   // 金合欢木栅栏门
-    "minecraft:dark_oak_fence_gate", // 深色橡木栅栏门
-    "minecraft:crimson_fence_gate",  // 绯红木栅栏门
-    "minecraft:warped_fence_gate",   // 诡异木栅栏门
-    "minecraft:mangrove_fence_gate", // 红树木栅栏门
-    "minecraft:cherry_fence_gate",   // 樱树木栅栏门
-    "minecraft:bamboo_fence_gate",   // 竹栅栏门
-/*
-    "minecraft:wooden_door",   // 橡木门
-    "minecraft:spruce_door",   // 云杉木门
-    "minecraft:birch_door",    // 白桦木门
-    "minecraft:jungle_door",   // 丛林木门
-    "minecraft:acacia_door",   // 金合欢木门
-    "minecraft:dark_oak_door", // 深色橡木门
-    "minecraft:crimson_door",  // 绯红木门
-    "minecraft:warped_door",   // 诡异木门
-    "minecraft:mangrove_door", // 红树木门
-    "minecraft:cherry_door",   // 樱树木门
-    "minecraft:bamboo_door",   // 竹门
-*/
-    "minecraft:wooden_axe",       // 木斧
-    "minecraft:stone_axe",        // 石斧
-    "minecraft:iron_axe",         // 铁斧
-    "minecraft:golden_axe",       // 金斧
-    "minecraft:diamond_axe",      // 钻石斧
-    "minecraft:netherite_axe",    // 下界合金斧
-    "minecraft:wooden_hoe",       // 木锄
-    "minecraft:stone_hoe",        // 石锄
-    "minecraft:iron_hoe",         // 铁锄
-    "minecraft:diamond_hoe",      // 钻石锄
-    "minecraft:golden_hoe",       // 金锄
-    "minecraft:netherite_hoe",    // 下界合金锄
-    "minecraft:wooden_shovel",    // 木铲
-    "minecraft:stone_shovel",     // 石铲
-    "minecraft:iron_shovel",      // 铁铲
-    "minecraft:diamond_shovel",   // 钻石铲
-    "minecraft:golden_shovel",    // 金铲
-    "minecraft:netherite_shovel", // 下界合金铲
-
-    "minecraft:standing_sign",          // 站立的告示牌
-    "minecraft:spruce_standing_sign",   // 站立的云杉木告示牌
-    "minecraft:birch_standing_sign",    // 站立的白桦木告示牌
-    "minecraft:jungle_standing_sign",   // 站立的丛林木告示牌
-    "minecraft:acacia_standing_sign",   // 站立的金合欢木告示牌
-    "minecraft:darkoak_standing_sign",  // 站立的深色橡木告示牌
-    "minecraft:mangrove_standing_sign", // 站立的红树木告示牌
-    "minecraft:cherry_standing_sign",   // 站立的樱树木告示牌
-    "minecraft:bamboo_standing_sign",   // 站立的竹子告示牌
-    "minecraft:crimson_standing_sign",  // 站立的绯红木告示牌
-    "minecraft:warped_standing_sign",   // 站立的诡异木告示牌
-    "minecraft:wall_sign",              // 墙上的告示牌
-    "minecraft:spruce_wall_sign",       // 墙上的云杉木告示牌
-    "minecraft:birch_wall_sign",        // 墙上的白桦木告示牌
-    "minecraft:jungle_wall_sign",       // 墙上的丛林木告示牌
-    "minecraft:acacia_wall_sign",       // 墙上的金合欢木告示牌
-    "minecraft:darkoak_wall_sign",      // 墙上的深色橡木告示牌
-    "minecraft:mangrove_wall_sign",     // 墙上的红树木告示牌
-    "minecraft:cherry_wall_sign",       // 墙上的樱树木告示牌
-    "minecraft:bamboo_wall_sign",       // 墙上的竹子告示牌
-    "minecraft:crimson_wall_sign",      // 墙上的绯红木告示牌
-    "minecraft:warped_wall_sign"        // 墙上的诡异木告示牌
-};
-std::unordered_set<string> EventListener::InteractBlockHashMap = {
-    "minecraft:cartography_table", // 制图台
-    "minecraft:smithing_table",    // 锻造台
-    "minecraft:furnace",           // 熔炉
-    "minecraft:blast_furnace",     // 高炉
-    "minecraft:smoker",            // 烟熏炉
-    "minecraft:brewing_stand",     // 酿造台
-    "minecraft:anvil",             // 铁砧
-    "minecraft:grindstone",        // 砂轮
-    "minecraft:enchanting_table",  // 附魔台
-    "minecraft:barrel",            // 木桶
-    "minecraft:beacon",            // 信标
-    "minecraft:hopper",            // 漏斗
-    "minecraft:dropper",           // 投掷器
-    "minecraft:dispenser",         // 发射器
-    "minecraft:loom",              // 织布机
-    "minecraft:stonecutter_block", // 切石机
-    "minecraft:lit_furnace",       // 燃烧中的熔炉
-    "minecraft:lit_blast_furnace", // 燃烧中的高炉
-    "minecraft:lit_smoker"         // 燃烧中的烟熏炉
-};
 
 
 } // namespace land
