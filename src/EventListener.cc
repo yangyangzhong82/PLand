@@ -100,9 +100,6 @@ inline bool PreCheck(LandData_sptr const& ptr, UUIDs const& uuid = "", bool igno
     return false;
 }
 
-// --- 权限检查辅助查找表 ---
-
-// PlayerInteractBlockEvent 中特定物品交互的权限映射表
 static const std::unordered_map<std::string_view, bool LandPermTable::*> itemSpecificPermissionMap = {
     {"minecraft:skull",           &LandPermTable::allowPlace},           // 放置头颅
     {"minecraft:banner",          &LandPermTable::allowPlace},           // 放置旗帜
@@ -115,7 +112,7 @@ static const std::unordered_map<std::string_view, bool LandPermTable::*> itemSpe
     {"minecraft:armor_stand",     &LandPermTable::allowPlace}            // 放置盔甲架
 };
 
-// PlayerInteractBlockEvent 中特定方块交互的权限映射表 (当物品名称也可能是方块名称时，且检查逻辑特殊)
+
 static const std::unordered_map<std::string_view, bool LandPermTable::*> blockSpecificPermissionMap = {
     {"minecraft:dragon_egg",    &LandPermTable::allowAttackDragonEgg}, // 攻击龙蛋
     {"minecraft:bed",           &LandPermTable::useBed},               // 使用床
@@ -135,7 +132,6 @@ static const std::unordered_map<std::string_view, bool LandPermTable::*> blockSp
     {"minecraft:flower_pot",    &LandPermTable::editFlowerPot}         // 编辑花盆
 };
 
-// PlayerInteractBlockEvent 中功能性方块交互的权限映射表 (对应 InteractBlockHashMap)
 static const std::unordered_map<std::string_view, bool LandPermTable::*> blockFunctionalPermissionMap = {
     {"minecraft:cartography_table", &LandPermTable::useCartographyTable}, // 制图台
     {"minecraft:smithing_table",    &LandPermTable::useSmithingTable},    // 锻造台
@@ -150,10 +146,8 @@ static const std::unordered_map<std::string_view, bool LandPermTable::*> blockFu
     {"minecraft:dispenser",         &LandPermTable::useDispenser},        // 发射器
     {"minecraft:loom",              &LandPermTable::useLoom},             // 织布机
     {"minecraft:stonecutter_block", &LandPermTable::useStonecutter}       // 切石机
-    // 熔炉相关的方块由下面的 ends_with 处理
 };
 
-// ProjectileCreateBeforeEvent 中抛射物创建的权限映射表
 static const std::unordered_map<std::string_view, bool LandPermTable::*> projectilePermissionMap = {
     {"minecraft:fishing_hook",     &LandPermTable::useFishingHook},       // 鱼钩
     {"minecraft:splash_potion",    &LandPermTable::allowThrowPotion},    // 喷溅药水
