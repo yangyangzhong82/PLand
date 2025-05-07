@@ -9,7 +9,7 @@ add_repositories("OTOTYAN https://github.com/OEOTYAN/xmake-repo.git")
 -- add_requires("levilamina develop") to use develop version
 -- please note that you should add bdslibrary yourself if using dev version
 if is_config("target_type", "server") then
-    add_requires("levilamina 1.1.0", {configs = {target_type = "server"}})
+    add_requires("levilamina main", {configs = {target_type = "server"}})
 else
     add_requires("levilamina 1.0.1", {configs = {target_type = "client"}})
 end
