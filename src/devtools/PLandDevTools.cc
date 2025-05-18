@@ -2,6 +2,7 @@
 #include "PLandDevTools.h"
 #include "devtools/impl/DataMenu.h"
 #include "devtools/impl/HelpMenu.h"
+#include "devtools/impl/LandViewer.h"
 #include "fmt/format.h"
 #include "imgui.h"
 #include "mod/MyMod.h"
@@ -16,6 +17,7 @@ PLandDevTools::PLandDevTools() : renderThreadRunning_(true) {
 
     this->menus_.push_back(std::make_unique<DataMenu>());
     this->menus_.push_back(std::make_unique<HelpMenu>());
+    this->menus_.push_back(std::make_unique<LandViewerMenu>());
 }
 
 PLandDevTools::~PLandDevTools() {
