@@ -88,8 +88,8 @@ target("PLand") -- Change this to your mod name.
             "imgui",
             "glew"
         )
-        add_includedirs("third-party", "devtool")
-        add_files("third-party/ImGuiColorTextEdit/*.cpp", "devtool/**.cc")
+        add_includedirs("devtool")
+        add_files("devtool/**.cc", "devtool/**.cpp")
         add_defines("LD_DEVTOOL")
     end
 
