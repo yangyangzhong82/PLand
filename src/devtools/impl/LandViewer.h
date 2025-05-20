@@ -7,31 +7,34 @@
 
 namespace land {
 
-class LandViewerWindow final : public Canvas {
+class LandViewerWindow final : public WindowComponent {
+    std::unique_ptr<Canvas> canvas_;
+    int                     dimid_;
+
 public:
-    explicit LandViewerWindow() : Canvas() {
-        // 设置画布配置
-        setAllowDragging(true);
-        setShowGrid(true);
-        setShowMousePosition(true);
+    explicit LandViewerWindow() {
+        canvas_ = std::make_unique<Canvas>();
 
-        // TODO: 添加领地可视化功能
-        // 添加测试图形，测试4个象限
-        setShapeUserData(addLine({10, 10}, {60, 60}), "象限#1 测试线段");
-        setShapeUserData(addRectangle({70, 70}, {170, 170}), "象限#1 测试矩形");
-        setShapeUserData(addCircle({180, 180}, 50.0f), "象限#1 测试圆形");
+        canvas_->setAllowDragging(true);
+        canvas_->setShowGrid(true);
+        canvas_->setShowMousePosition(true);
+    }
 
-        setShapeUserData(addLine({-10, 10}, {-60, 60}), "象限#2 测试线段");
-        setShapeUserData(addRectangle({-70, 70}, {-170, 170}), "象限#2 测试矩形");
-        setShapeUserData(addCircle({-180, 180}, 50.0f), "象限#2 测试圆形");
+    void render() override {
+        if (!ImGui::Begin("领地可视化", getOpenFlag())) {
+            ImGui::End();
+            return;
+        }
 
-        setShapeUserData(addLine({-10, -10}, {-60, -60}), "象限#3 测试线段");
-        setShapeUserData(addRectangle({-70, -70}, {-170, -170}), "象限#3 测试矩形");
-        setShapeUserData(addCircle({-180, -180}, 50.0f), "象限#3 测试圆形");
+        if (ImGui::Button("重置")) {}
+        ImGui::SameLine();
+        ImGui::InputInt("维度", &dimid_);
+        // ImGui::SameLine();
 
-        setShapeUserData(addLine({10, -10}, {60, -60}), "象限#4 测试线段");
-        setShapeUserData(addRectangle({70, -70}, {170, -170}), "象限#4 测试矩形");
-        setShapeUserData(addCircle({180, -180}, 50.0f), "象限#4 测试圆形");
+
+        canvas_->render();
+
+        ImGui::End();
     }
 };
 

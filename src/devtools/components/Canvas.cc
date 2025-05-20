@@ -147,7 +147,7 @@ void Canvas::Circle::draw(ImDrawList* drawList) const {
 }
 
 // Canvas
-Canvas::Canvas() : WindowComponent() {}
+Canvas::Canvas() {}
 
 Canvas::Vec2 Canvas::screenToCanvas(const Vec2& point) const {
     return {(point.x - origin.x - offset.x) / scale, -((point.y - origin.y - offset.y) / scale)};
@@ -272,8 +272,13 @@ void Canvas::checkShapeHover() {
 ImVec2 Canvas::canvasToScreenImVec2(const Vec2& point) const { return canvasToScreen(point).toImVec2(); }
 
 void Canvas::render() {
-    if (!ImGui::Begin("Canvas", getOpenFlag(), ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse)) {
-        ImGui::End();
+    if (!ImGui::BeginChild(
+            "Canvas",
+            {0, 0},
+            ImGuiChildFlags_Borders,
+            ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse
+        )) {
+        ImGui::EndChild();
         return;
     }
 
@@ -441,7 +446,7 @@ void Canvas::render() {
     ImGui::SetCursorScreenPos(canvasPos);
     ImGui::InvisibleButton("canvas", canvasSize, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight);
 
-    ImGui::End();
+    ImGui::EndChild();
 }
 
 int Canvas::addLine(const Vec2& start, const Vec2& end, float thickness, ImColor color) {

@@ -1,17 +1,15 @@
-#ifdef LD_DEVTOOL
 #pragma once
-#include "devtools/components/base/WindowComponent.h"
+#ifdef LD_DEVTOOL
 #include "imgui.h"
 #include <functional>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 
 namespace land {
 
-class Canvas : public WindowComponent {
+class Canvas {
 public:
     struct Vec2 {
         float x, y;
@@ -143,10 +141,9 @@ private:
 
 public:
     Canvas();
-    ~Canvas() override = default;
 
     // 渲染函数
-    void render() override;
+    void render();
 
     // 形状绘制函数
     int addLine(const Vec2& start, const Vec2& end, float thickness = 1.0f, ImColor color = ImColor(255, 255, 255));
