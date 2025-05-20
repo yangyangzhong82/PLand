@@ -43,6 +43,7 @@ option_end()
 target("PLand") -- Change this to your mod name.
     add_rules("@levibuildscript/linkrule")
     add_rules("@levibuildscript/modpacker")
+    add_rules("plugin.compile_commands.autoupdate")
     add_cxflags(
         "/EHa",
         "/utf-8",
@@ -54,7 +55,7 @@ target("PLand") -- Change this to your mod name.
         "/w44738",
         "/w45204"
     )
-    add_defines("NOMINMAX", "UNICODE", "LDAPI_EXPORT")
+    add_defines("NOMINMAX", "UNICODE", "LDAPI_EXPORT", "_HAS_CXX23=1")
     add_files("src/**.cpp", "src/**.cc")
     add_includedirs("src", "include")
     add_packages(
@@ -88,7 +89,7 @@ target("PLand") -- Change this to your mod name.
             "imgui",
             "glew"
         )
-        add_includedirs("devtool")
+        add_includedirs("devtool", "devtool/deps")
         add_files("devtool/**.cc", "devtool/**.cpp")
         add_defines("LD_DEVTOOL")
     end

@@ -1,13 +1,11 @@
 #pragma once
-#ifdef LD_DEVTOOL
 #include "imgui.h"
 #include <functional>
 #include <memory>
 #include <string>
 #include <vector>
 
-
-namespace land {
+namespace devtool {
 
 class Canvas {
 public:
@@ -191,6 +189,4 @@ public:
     void  resetView();
 };
 
-} // namespace land
-
-#endif
+} // namespace devtool

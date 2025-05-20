@@ -20,7 +20,7 @@
 #endif
 
 #ifdef LD_DEVTOOL
-#include "devtools/PLandDevTools.h"
+#include "DevToolAppManager.h"
 #endif
 
 namespace my_mod {
@@ -69,8 +69,7 @@ bool MyMod::enable() {
 #endif
 
 #ifdef LD_DEVTOOL
-    if (land::Config::cfg.internal.devTools && !land::g_devtools)
-        land::g_devtools = std::make_unique<land::PLandDevTools>();
+    if (land::Config::cfg.internal.devTools) devtool::DevToolAppManager::getInstance().initApp();
 #endif
 
     return true;
@@ -78,7 +77,7 @@ bool MyMod::enable() {
 
 bool MyMod::disable() {
 #ifdef LD_DEVTOOL
-    if (land::Config::cfg.internal.devTools && land::g_devtools) land::g_devtools.reset();
+    if (land::Config::cfg.internal.devTools) devtool::DevToolAppManager::getInstance().destroyApp();
 #endif
 
     auto& logger = getSelf().getLogger();

@@ -1,19 +1,16 @@
-#ifdef LD_DEVTOOL
-#pragma once
 #include "TextViewer.h"
-#include "devtools/components/base/WindowComponent.h"
 #include "fmt/color.h"
 #include "imgui.h"
 #include <format>
 #include <string>
 
 
-namespace land {
+namespace devtool {
 
-TextViewer::TextViewer(std::string data, int windowId)
-: WindowComponent(),
-  data_(std::move(data)),
-  windowId_(windowId) {}
+TextViewer::TextViewer(std::string data) : data_(std::move(data)) {
+    static int NEXT_WINDOW_ID = 0;
+    this->windowId_           = NEXT_WINDOW_ID++;
+}
 
 void TextViewer::render() {
     if (!ImGui::Begin(
@@ -36,7 +33,4 @@ void TextViewer::render() {
 }
 
 
-} // namespace land
-
-
-#endif
+} // namespace devtool

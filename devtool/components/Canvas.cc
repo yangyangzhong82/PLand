@@ -1,10 +1,9 @@
-#ifdef LD_DEVTOOL
 #include "Canvas.h"
 #include "imgui.h"
 #include "imgui_internal.h"
 #include <cmath>
 
-namespace land {
+namespace devtool {
 
 // Line
 bool Canvas::Line::isHovered(const Vec2& pos) const {
@@ -496,6 +495,4 @@ void Canvas::resetView() {
     scale  = 1.0f;
 }
 
-} // namespace land
-
-#endif
+} // namespace devtool
