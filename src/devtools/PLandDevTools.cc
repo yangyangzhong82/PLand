@@ -110,6 +110,10 @@ void PLandDevTools::_init() {
     // 初始化ImGui与GLFW的绑定
     ImGui_ImplGlfw_InitForOpenGL(this->window_, true); // ImGui <> GLFW
     ImGui_ImplOpenGL3_Init(glslVersion);               // ImGui <> OpenGL
+
+#ifdef DEBUG
+    this->show();
+#endif
 }
 
 void PLandDevTools::_updateScale() {
@@ -122,11 +126,13 @@ void PLandDevTools::_updateScale() {
 
         auto fontPath = my_mod::MyMod::getInstance().getSelf().getDataDir() / "fonts" / "font.ttf";
         if (!std::filesystem::exists(fontPath)) {
-            this->warning(fmt::format(
-                "由于字体文件 ( {} ) 不存在\n这可能导致部分模块字体显示异常\n\n建议下载 maple-font 字体的 "
-                "Normal-Ligature CN 版本\n将 \"MapleMonoNormal-CN-Regular.ttf\" 重命名为 font.ttf 放置在上述路径下",
-                fontPath.string()
-            ));
+            this->warning(
+                fmt::format(
+                    "由于字体文件 ( {} ) 不存在\n这可能导致部分模块字体显示异常\n\n建议下载 maple-font 字体的 "
+                    "Normal-Ligature CN 版本\n将 \"MapleMonoNormal-CN-Regular.ttf\" 重命名为 font.ttf 放置在上述路径下",
+                    fontPath.string()
+                )
+            );
             fontPath = "C:/Windows/Fonts/msyh.ttc";
         }
 
@@ -167,23 +173,18 @@ void PLandDevTools::warning(std::string msg) { this->warnings_.emplace(std::move
 
 void PLandDevTools::_renderWarnings() {
     if (!this->warnings_.empty()) {
-        if (!ImGui::Begin("Warning")) {
-            ImGui::End();
-            return;
-        }
         ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 40, 40, 255));
         for (auto& warning : this->warnings_) {
             ImGui::TextUnformatted(warning.data());
         }
         ImGui::PopStyleColor();
-        ImGui::End();
     }
 }
 
 void PLandDevTools::render() {
     if (!this->isInited_) {
-        this->_init();
         this->isInited_ = true;
+        this->_init();
     }
 
     while (/* !glfwWindowShouldClose(this->window_) && */ this->renderThreadRunning_) {
