@@ -75,6 +75,8 @@ public:
             } settings;
 
             struct {
+                bool place_minecart;
+                bool place_boat;
                 bool use_dispenser;
                 bool use_door;
                 bool allow_dropitem;

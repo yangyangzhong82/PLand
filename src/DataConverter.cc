@@ -161,6 +161,8 @@ LandData_sptr iLandConverter::convert(RawData::iLandData const& raw, string cons
         tab.useFiregen          = p.use_firegen;
         tab.useCampfire         = p.use_campfire;
         tab.useBarrel           = p.use_barrel;
+        tab.placeBoat           = p.place_boat;
+        tab.placeMinecart       = p.place_minecart;
         tab.useFurnace          = p.use_furnace;
         tab.useStonecutter      = p.use_stonecutter;
         tab.allowThrowPotion    = p.allow_throw_potion;

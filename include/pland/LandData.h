@@ -51,6 +51,8 @@ struct LandPermTable {
     bool useBlastFurnace{false};     // 使用高炉
     bool useBrewingStand{false};     // 使用酿造台
     bool useCampfire{false};         // 使用营火
+    bool placeBoat{false};           // 放置船
+    bool placeMinecart{false};       // 放置矿车
     bool useFiregen{false};          // 使用打火石
     bool useCartographyTable{false}; // 使用制图台
     bool useComposter{false};        // 使用堆肥桶
