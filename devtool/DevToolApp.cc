@@ -55,7 +55,7 @@ void DevToolApp::render() {
 
         // 渲染组件
         renderErrors();
-        renderMenuBar();
+        renderMainMenuBar();
         postTick();
 
         // 渲染帧
@@ -191,7 +191,7 @@ void DevToolApp::renderErrors() const {
     }
 }
 
-void DevToolApp::renderMenuBar() const {
+void DevToolApp::renderMainMenuBar() const {
     auto                  dockspaceId = ImGui::DockSpaceOverViewport();
     static std::once_flag firstTime;
     std::call_once(firstTime, [&] {
@@ -202,10 +202,50 @@ void DevToolApp::renderMenuBar() const {
     });
 
     if (ImGui::BeginMainMenuBar()) {
+        renderAppOptionsMenu();
         for (auto& menu : menus_) {
             menu->render();
         }
+        renderFramerateInfo();
         ImGui::EndMainMenuBar();
+    }
+}
+
+void DevToolApp::renderFramerateInfo() const {
+    auto const& frame = ImGui::GetIO().Framerate;
+    auto        text  = fmt::format("{:.1f}ms/frame ({:.1f} FPS)", 1000.0f / frame, frame);
+
+    auto windowWidth = ImGui::GetWindowSize().x;
+    auto textWidth   = ImGui::CalcTextSize(text.c_str()).x;
+    ImGui::SetCursorPosX(windowWidth - textWidth);
+    ImGui::Text(text.c_str());
+}
+
+void DevToolApp::renderAppOptionsMenu() const {
+    if (ImGui::BeginMenu("选项")) {
+        {
+            static int styleIndex = -1;
+            ImGui::SetNextItemWidth(100);
+            if (ImGui::Combo("主题", &styleIndex, "Light\0Dark\0Classic\0")) {
+                switch (styleIndex) {
+                case 0:
+                    ImGui::StyleColorsLight();
+                    break;
+                case 1:
+                    ImGui::StyleColorsDark();
+                    break;
+                case 2:
+                    ImGui::StyleColorsClassic();
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+        if (ImGui::Button("关闭(隐藏)")) {
+            hide();
+        }
+        ImGui::EndMenu();
     }
 }
 

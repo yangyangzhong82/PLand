@@ -31,9 +31,11 @@ public:
     }
 
 private:
-    void render();
-    void renderErrors() const;
-    void renderMenuBar() const;
+    void render();                     // 核心渲染 (renderErrors、renderMainMenuBar、postTick)
+    void renderErrors() const;         // 渲染错误信息
+    void renderMainMenuBar() const;    // 渲染主菜单栏 (renderAppOptionsMenu、renderFramerateInfo)
+    void renderFramerateInfo() const;  // 渲染帧率信息
+    void renderAppOptionsMenu() const; // 渲染应用选项菜单
     void postTick() const;
 
     void checkAndUpdateScale();

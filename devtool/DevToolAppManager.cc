@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 #include "impl/helper/HelperMenu.h"
+#include "impl/viewer/DataMenu.h"
 
 namespace devtool {
 
@@ -13,7 +14,9 @@ DevToolAppManager& DevToolAppManager::getInstance() {
 }
 
 DevToolApp* DevToolAppManager::getOrCreateApp() {
-    initApp();
+    if (!app_) {
+        initApp();
+    }
     return app_.get();
 }
 
@@ -24,6 +27,7 @@ void DevToolAppManager::initApp() {
     app_ = std::make_unique<DevToolApp>();
 
     // 注册菜单
+    app_->registerMenu<DataMenu>();
     app_->registerMenu<HelperMenu>();
 }
 
