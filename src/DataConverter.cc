@@ -203,6 +203,7 @@ LandData_sptr iLandConverter::convert(RawData::iLandData const& raw, string cons
         tab.useCartographyTable = p.use_cartography_table;
         tab.useBell             = p.use_bell;
         tab.allowAttackAnimal   = p.allow_attack_animal;
+        tab.allowInteractEntity  = p.allow_interact_entity;
     }
 
     return ptr;

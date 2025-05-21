@@ -62,6 +62,7 @@
 
 
 #include "ila/event/minecraft/world/ExplosionEvent.h"
+#include "ila/event/minecraft/world/actor/player/PlayerInteractEntityEvent.h"
 #include "ila/event/minecraft/world/PistonPushEvent.h"
 #include "ila/event/minecraft/world/RedstoneUpdateEvent.h"
 #include "ila/event/minecraft/world/SculkBlockGrowthEvent.h"
@@ -381,6 +382,22 @@ bool EventListener::setup() {
         })
     )
 
+        CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.PlayerInteractEntityBeforeEvent,
+        bus->emplaceListener<ila::mc::PlayerInteractEntityBeforeEvent>(
+            [db, logger](ila::mc::PlayerInteractEntityBeforeEvent& ev) {
+                logger->debug("[交互实体] name: {}", ev.self().getRealName());
+               auto& entity = ev.target();
+                auto land = db->getLandAt(entity.getPosition(), ev.self().getDimensionId());
+                if (PreCheck(land, ev.self().getUuid().asString())) return;
+
+                if (land->getLandPermTableConst().allowInteractEntity) return;
+
+                ev.cancel();
+            }
+        )
+    )
+
     CHECK_EVENT_AND_REGISTER_LISTENER(
         Config::cfg.listeners.FireSpreadEvent,
         bus->emplaceListener<ll::event::FireSpreadEvent>([db](ll::event::FireSpreadEvent& ev) {
@@ -667,6 +684,7 @@ bool EventListener::setup() {
             }
         )
     )
+
 
     CHECK_EVENT_AND_REGISTER_LISTENER(
         Config::cfg.listeners.ActorTriggerPressurePlateBeforeEvent,

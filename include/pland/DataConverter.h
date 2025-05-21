@@ -129,6 +129,7 @@ public:
                 bool use_bell;
                 bool allow_attack_animal;
                 bool allow_projectile_create;
+                bool allow_interact_entity;
             } permissions;
         };
 

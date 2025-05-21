@@ -83,6 +83,7 @@ struct LandPermTable {
     bool useBoneMeal{false};         // 使用骨粉
     bool useHoe{false};              // 使用锄头
     bool useShovel{false};           // 使用锹
+    bool allowInteractEntity{false};           // 实体交互
 
     bool editFlowerPot{false}; // 编辑花盆
     bool editSign{false};      // 编辑告示牌
@@ -93,7 +94,7 @@ using LandData_sptr = std::shared_ptr<class LandData>; // 共享指针
 using LandData_wptr = std::weak_ptr<class LandData>;   // 弱指针
 class LandData {
 public:
-    int                 version{8};                            // 版本号
+    int                 version{9};                            // 版本号
     LandPos             mPos;                                  // 领地对角坐标
     PosBase             mTeleportPos;                          // 领地传送坐标
     LandID              mLandID{LandID(-1)};                   // 领地唯一ID  (由 PLand::addLand() 时分配)

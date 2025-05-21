@@ -97,6 +97,7 @@ struct Config {
         bool PlayerEditSignBeforeEvent{true};                 // 玩家编辑告示牌事件
         bool SpawnedMobEvent{true};                           // 生物生成事件(怪物和动物)
         bool SculkCatalystAbsorbExperienceBeforeEvent{false}; // 幽匿催化体吸收经验事件
+        bool PlayerInteractEntityBeforeEvent{true}; // 实体交互事件
     } listeners;
 
     struct {

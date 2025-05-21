@@ -19,6 +19,7 @@
     "allowRideEntity": "允许骑乘实体(玩家)",
     "allowRideTrans": "允许骑乘矿车、船(玩家)",
     "allowAxePeeled": "允许斧头去皮",
+    "allowInteractEntity": "允许交互实体",
     "allowAttackEnderCrystal": "允许攻击末地水晶",
     "allowDestroyArmorStand": "允许破坏盔甲架",
     "allowLiquidFlow": "允许液体流动",
