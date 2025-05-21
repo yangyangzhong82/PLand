@@ -2,6 +2,8 @@
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/ListenerBase.h"
 #include "ll/api/event/world/SpawnMobEvent.h"
+
+
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
 #include "mc/deps/core/string/HashedString.h"
@@ -10,6 +12,7 @@
 #include "mc/world/level/block/BlockLegacy.h" 
 #include "mc/world/level/block/BlockProperty.h"
 #include "mc/world/level/Explosion.h"
+
 #include "mc/world/item/Item.h" 
 #include "mc/world/item/ItemTag.h"
 #include "mc/world/item/BucketItem.h"  
@@ -26,8 +29,11 @@
 #include "mc/world/level/block/SmokerBlock.h"
 #include "mc/world/level/block/components/BlockComponentDirectData.h"
 #include "mc/world/level/chunk/SubChunk.h"
+
 #include "mc/world/phys/AABB.h"
 #include "mc/world/phys/HitResult.h"
+
+
 #include "mod/MyMod.h"
 #include "pland/Config.h"
 #include "pland/DrawHandleManager.h"
@@ -152,17 +158,6 @@ static const std::unordered_map<std::string_view, bool LandPermTable::*> blockFu
     {"minecraft:stonecutter_block", &LandPermTable::useStonecutter}       // 切石机
 };
 
-static const std::unordered_map<std::string_view, bool LandPermTable::*> projectilePermissionMap = {
-    {"minecraft:fishing_hook",     &LandPermTable::useFishingHook},       // 鱼钩
-    {"minecraft:splash_potion",    &LandPermTable::allowThrowPotion},    // 喷溅药水
-    {"minecraft:lingering_potion", &LandPermTable::allowThrowPotion},    // 滞留药水
-    {"minecraft:thrown_trident",   &LandPermTable::allowThrowTrident},  // 三叉戟
-    {"minecraft:arrow",            &LandPermTable::allowShoot},          // 箭
-    {"minecraft:crossbow",         &LandPermTable::allowShoot},          // 弩
-    {"minecraft:snowball",         &LandPermTable::allowThrowSnowball},  // 雪球
-    {"minecraft:ender_pearl",      &LandPermTable::allowThrowEnderPearl}, // 末影珍珠
-    {"minecraft:egg",              &LandPermTable::allowThrowEgg}         // 鸡蛋
-};
 
 
 bool EventListener::setup() {
@@ -704,13 +699,13 @@ bool EventListener::setup() {
             auto&  type = ev.self().getTypeName();
 
             logger->debug("[ProjectileSpawn] type: {}", type);
-
+            auto mob = self.getOwner();
             auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
             if (PreCheck(land)) return; // land not found
 
             if (self.getOwnerEntityType() == ActorType::Player) {
                 // 由玩家所创建的实体
-                if (auto mob = self.getOwner(); mob && mob->isPlayer()) {
+                if (mob->isPlayer()) {
                     auto pl = mob->getWeakEntity().tryUnwrap<Player>();
                     if (pl.has_value() && PreCheck(land, pl->getUuid().asString())) return;
                 }
@@ -718,10 +713,14 @@ bool EventListener::setup() {
 
             if (land) {
                 auto const& tab = land->getLandPermTableConst();
-                auto it = projectilePermissionMap.find(type); 
-                if (it != projectilePermissionMap.end()) {
-                    CANCEL_AND_RETURN_IF(!(tab.*(it->second))); 
-                }
+                if (mob->isPlayer()) {
+                    // 钓鱼钩单独判断，其他抛射物统一判断
+                    if (type == "minecraft:fishing_hook") {
+                        CANCEL_AND_RETURN_IF(!tab.useFishingHook);
+                    } else {
+                        CANCEL_AND_RETURN_IF(!tab.allowProjectileCreate);
+                    }
+                } return;
             }
         })
     )

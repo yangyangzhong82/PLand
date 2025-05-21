@@ -165,13 +165,12 @@ LandData_sptr iLandConverter::convert(RawData::iLandData const& raw, string cons
         tab.placeMinecart       = p.place_minecart;
         tab.useFurnace          = p.use_furnace;
         tab.useStonecutter      = p.use_stonecutter;
-        tab.allowThrowPotion    = p.allow_throw_potion;
+        tab.allowProjectileCreate = p.allow_projectile_create;
         tab.useBeacon           = p.use_beacon;
         tab.useDaylightDetector = p.use_daylight_detector;
         tab.allowAttackPlayer   = p.allow_attack_player;
         // tab.allowDestroy        = p.allow_entity_destroy; // allow_destroy
         tab.useLectern          = p.use_lectern;
-        tab.allowShoot          = p.allow_shoot;
         tab.useEnchantingTable  = p.use_enchanting_table;
         tab.useFishingHook      = p.use_fishing_hook;
         tab.useAnvil            = p.use_anvil;

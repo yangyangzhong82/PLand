@@ -13,7 +13,7 @@ namespace land {
 struct LandPermTable {
     // 标记 [x] 为复用权限
     bool allowFireSpread{true};          // 火焰蔓延
-    bool allowAttackDragonEgg{false};    // 攻击龙蛋
+    bool allowAttackDragonEgg{false};    // 点击龙蛋
     bool allowFarmDecay{true};           // 耕地退化
     bool allowPistonPush{true};          // 活塞推动
     bool allowRedstoneUpdate{true};      // 红石更新
@@ -26,13 +26,9 @@ struct LandPermTable {
     bool allowAttackMonster{true};       // 允许攻击怪物
     bool allowOpenChest{false};          // 允许打开箱子
     bool allowPickupItem{false};         // 允许拾取物品
-    bool allowThrowSnowball{true};       // 允许投掷雪球
-    bool allowThrowEnderPearl{true};     // 允许投掷末影珍珠
-    bool allowThrowEgg{true};            // 允许投掷鸡蛋
-    bool allowThrowTrident{true};        // 允许投掷三叉戟
+
     bool allowDropItem{true};            // 允许丢弃物品
-    bool allowShoot{false};              // 允许射击 [x]
-    bool allowThrowPotion{false};        // 允许投掷药水 [x]
+    bool allowProjectileCreate{false};     // 允许投掷物 
     bool allowRideEntity{false};         // 允许骑乘实体
     bool allowRideTrans{false};          // 允许骑乘矿车、船
     bool allowAxePeeled{false};          // 允许斧头去皮
@@ -97,7 +93,7 @@ using LandData_sptr = std::shared_ptr<class LandData>; // 共享指针
 using LandData_wptr = std::weak_ptr<class LandData>;   // 弱指针
 class LandData {
 public:
-    int                 version{7};                            // 版本号
+    int                 version{8};                            // 版本号
     LandPos             mPos;                                  // 领地对角坐标
     PosBase             mTeleportPos;                          // 领地传送坐标
     LandID              mLandID{LandID(-1)};                   // 领地唯一ID  (由 PLand::addLand() 时分配)

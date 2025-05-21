@@ -90,13 +90,11 @@ public:
                 bool use_barrel;
                 bool use_furnace;
                 bool use_stonecutter;
-                bool allow_throw_potion;
                 bool use_beacon;
                 bool use_daylight_detector;
                 bool allow_attack_player;
                 bool allow_entity_destroy;
                 bool use_lectern;
-                bool allow_shoot;
                 bool use_enchanting_table;
                 bool use_fishing_hook;
                 bool use_anvil;
@@ -130,6 +128,7 @@ public:
                 bool use_cartography_table;
                 bool use_bell;
                 bool allow_attack_animal;
+                bool allow_projectile_create;
             } permissions;
         };
 
