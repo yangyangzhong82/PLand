@@ -148,6 +148,7 @@ LandData_sptr iLandConverter::convert(RawData::iLandData const& raw, string cons
         tab.allowPistonPush     = raw.settings.ev_piston_push;
         tab.allowFireSpread     = raw.settings.ev_fire_spread;
         tab.allowRedstoneUpdate = raw.settings.ev_redstone_update;
+        tab.allowBlockFall = raw.settings.ev_block_fall;
         // permissions
         auto& p                 = raw.permissions;
         tab.useDispenser        = p.use_dispenser;

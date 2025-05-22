@@ -184,4 +184,10 @@ bool LandPos::isOnOuterBoundary(BlockPos const& pos) const {
     return false;
 }
 
+bool LandPos::isAboveLand(BlockPos const& pos) const {
+    return pos.x >= mMin_A.x && pos.x <= mMax_B.x && //
+           pos.z >= mMin_A.z && pos.z <= mMax_B.z && //
+           pos.y > mMax_B.y;
+}
+
 } // namespace land

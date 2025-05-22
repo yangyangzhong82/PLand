@@ -18,6 +18,7 @@ struct LandPermTable {
     bool allowPistonPush{true};          // 活塞推动
     bool allowRedstoneUpdate{true};      // 红石更新
     bool allowExplode{false};            // 爆炸
+    bool allowBlockFall{false};        // 方块掉落
     bool allowDestroy{false};            // 允许破坏
     bool allowWitherDestroy{false};      // 允许凋零破坏
     bool allowPlace{false};              // 允许放置 [x]
@@ -94,7 +95,7 @@ using LandData_sptr = std::shared_ptr<class LandData>; // 共享指针
 using LandData_wptr = std::weak_ptr<class LandData>;   // 弱指针
 class LandData {
 public:
-    int                 version{9};                            // 版本号
+    int                 version{10};                            // 版本号
     LandPos             mPos;                                  // 领地对角坐标
     PosBase             mTeleportPos;                          // 领地传送坐标
     LandID              mLandID{LandID(-1)};                   // 领地唯一ID  (由 PLand::addLand() 时分配)

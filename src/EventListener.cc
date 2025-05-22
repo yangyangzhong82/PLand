@@ -82,6 +82,7 @@
 #include "ila/event/minecraft/world/level/block/MossGrowthEvent.h"
 #include "ila/event/minecraft/world/level/block/SculkCatalystAbsorbExperienceEvent.h"
 #include "ila/event/minecraft/world/level/block/SculkSpreadEvent.h"
+#include "ila/event/minecraft/world/level/block/BlockFallEvent.h"
 
 // Fix BlockProperty operator&
 inline BlockProperty operator&(BlockProperty a, BlockProperty b) {
@@ -756,6 +757,28 @@ bool EventListener::setup() {
             }
 
             ev.cancel();
+        })
+    )
+        CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.BlockFallBeforeEvent,
+        bus->emplaceListener<ila::mc::BlockFallBeforeEvent>([db, logger](ila::mc::BlockFallBeforeEvent& ev) {
+            logger->debug("[BlockFall] Pos: {}", ev.pos().toString());
+
+            auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
+            if (land) {
+                if (land->getLandPos().isAboveLand(ev.pos())) {
+                    logger->debug("[BlockFall] Block fall above land, cancelled for land: {}", land->getLandName());
+                    ev.cancel();
+                    return;
+                }
+            }
+            // 如果方块掉落位置在领地内，且领地不允许方块掉落，则拦截
+            if (PreCheck(land)) return; // land not found
+            if (land) {
+                if (!land->getLandPermTableConst().allowBlockFall) { // 假设有一个allowBlockFall权限
+                    ev.cancel();
+                }
+            }
         })
     )
 
