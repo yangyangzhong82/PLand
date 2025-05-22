@@ -285,6 +285,10 @@ void Canvas::render() {
     ImGui::GetCurrentWindow()->StateStorage.SetVoidPtr(ImGui::GetID("CanvasPtr"), this);
 
     // 添加工具栏
+    if (ImGui::Button("重置")) {
+        resetView();
+    }
+    ImGui::SameLine();
     ImGui::Text("缩放: %.2f", scale);
     ImGui::SameLine();
     if (ImGui::Button("-")) {
@@ -294,7 +298,7 @@ void Canvas::render() {
     if (ImGui::Button("+")) {
         scale += 0.1f;
     }
-    ImGui::SameLine(0, 25);
+    ImGui::SameLine(0, 20);
 
     // 跳转到指定位置
     static float jumpX = 0.0f, jumpY = 0.0f;
@@ -309,10 +313,6 @@ void Canvas::render() {
         ImVec2 canvasSize = ImGui::GetContentRegionAvail();
         offset.x          = -jumpX * scale + canvasSize.x / 2.0f;
         offset.y          = jumpY * scale + canvasSize.y / 2.0f;
-    }
-    ImGui::SameLine();
-    if (ImGui::Button("重置")) {
-        resetView();
     }
 
     // 获取画布区域（考虑工具栏高度）
