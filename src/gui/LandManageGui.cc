@@ -84,6 +84,7 @@ void LandManageGui::impl(Player& player, LandID id) {
         EditLandDescGui::impl(pl, land);
     });
     fm.appendButton("传送到领地", "textures/ui/icon_recipe_nature", [id](Player& pl) { LandTeleportGui::run(pl, id); });
+    fm.appendButton("设置传送点", "textures/ui/Add-Ons_Nav_Icon36x36", [land](Player& pl) {land->mTeleportPos = pl.getPosition();  });
     fm.appendButton("领地过户"_trf(player), "textures/ui/sidebar_icons/my_characters", [land](Player& pl) {
         EditLandOwnerGui::impl(pl, land);
     });
