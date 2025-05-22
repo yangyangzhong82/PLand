@@ -500,11 +500,24 @@ std::unordered_map<UUIDs, std::unordered_set<LandData_sptr>> PLand::getLandsByOw
     std::shared_lock<std::shared_mutex> lock(mMutex);
 
     std::unordered_map<UUIDs, std::unordered_set<LandData_sptr>> lands;
-    for (auto const& [id, ptr] : mLandCache) {
+    for (const auto& ptr : mLandCache | std::views::values) {
         auto& owner = ptr->getLandOwner();
         lands[owner].insert(ptr);
     }
     return lands;
+}
+std::unordered_map<UUIDs, std::unordered_set<LandData_sptr>> PLand::getLandsByOwner(LandDimid dimid) const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+
+    std::unordered_map<UUIDs, std::unordered_set<LandData_sptr>> res;
+    for (const auto& ptr : mLandCache | std::views::values) {
+        if (ptr->getLandDimid() != dimid) {
+            continue;
+        }
+        auto& owner = ptr->getLandOwner();
+        res[owner].insert(ptr);
+    }
+    return res;
 }
 
 
