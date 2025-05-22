@@ -302,16 +302,21 @@ void Canvas::render() {
 
     // 跳转到指定位置
     ImGui::SetNextItemWidth(180);
-    ImGui::InputFloat("X", &jumpPos.x, 1.0f);
+    ImGui::InputFloat("X", &jumpPos.x, 1.0f, 0, "%.2f", ImGuiInputTextFlags_CharsDecimal);
     ImGui::SameLine();
     ImGui::SetNextItemWidth(180);
-    ImGui::InputFloat("Y", &jumpPos.y, 1.0f);
+    ImGui::InputFloat("Y", &jumpPos.y, 1.0f, 0, "%.2f", ImGuiInputTextFlags_CharsDecimal);
     ImGui::SameLine();
     if (ImGui::Button("跳转")) {
+        // 检查输入值是否合法
+        constexpr float MAX_COORD = 320000; // 1.0f 缩放下最大支持范围，超出 325000 后会崩坏
+        jumpPos.x                 = ImClamp(jumpPos.x, -MAX_COORD, MAX_COORD);
+        jumpPos.y                 = ImClamp(jumpPos.y, -MAX_COORD, MAX_COORD);
+
         // 计算新的偏移量，使得指定的点位于画布中心
-        ImVec2 canvasSize = ImGui::GetContentRegionAvail();
-        offset.x          = -jumpPos.x * scale + canvasSize.x / 2.0f;
-        offset.y          = jumpPos.y * scale + canvasSize.y / 2.0f;
+        const ImVec2 canvasSize = ImGui::GetContentRegionAvail();
+        offset.x                = -jumpPos.x * scale + canvasSize.x / 2.0f;
+        offset.y                = jumpPos.y * scale + canvasSize.y / 2.0f;
     }
 
     // 获取画布区域（考虑工具栏高度）
