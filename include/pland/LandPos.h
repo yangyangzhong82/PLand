@@ -56,6 +56,11 @@ public:
 
     LDNDAPI bool hasPos(BlockPos const& pos, bool ignoreY = false) const;
 
+    // 判断某个pos是否在领地内边界
+    LDNDAPI bool isOnInnerBoundary(BlockPos const& pos) const;
+    // 判断某个pos是否在领地外边界
+    LDNDAPI bool isOnOuterBoundary(BlockPos const& pos) const;
+
     LDAPI bool operator==(LandPos const& pos) const;
     LDAPI bool operator!=(LandPos const& pos) const;
 

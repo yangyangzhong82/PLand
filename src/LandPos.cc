@@ -163,5 +163,25 @@ bool LandPos::isContain(LandPos const& src, LandPos const& dst) {
            src.mMin_A.z <= dst.mMin_A.z && src.mMax_B.z >= dst.mMax_B.z;
 }
 
+bool LandPos::isOnInnerBoundary(BlockPos const& pos) const {
+    if(mMin_A.x == pos.x || mMin_A.z == pos.z || mMin_A.y == pos.z||
+        mMax_B.x == pos.x || mMax_B.z == pos.z || mMax_B.y == pos.z) {
+        return true;
+    }
+    return false;
+}
+
+bool LandPos::isOnOuterBoundary(BlockPos const& pos) const {
+    // 构造扩大一圈的 LandPos
+    LandPos expanded(
+        PosBase{mMin_A.x - 1, mMin_A.y - 1, mMin_A.z - 1},
+        PosBase{mMax_B.x + 1, mMax_B.y + 1, mMax_B.z + 1}
+    );
+    if(pos.x == expanded.mMin_A.x || pos.z == expanded.mMin_A.z || pos.y == expanded.mMin_A.y ||
+        pos.x == expanded.mMax_B.x || pos.z == expanded.mMax_B.z || pos.y == expanded.mMax_B.y) {
+        return true;
+    }
+    return false;
+}
 
 } // namespace land
