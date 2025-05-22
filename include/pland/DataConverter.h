@@ -73,6 +73,7 @@ public:
                 std::vector<string> share;
                 bool                ev_redstone_update;
                 bool                ev_block_fall;
+                bool                enderman_leave_block;
             } settings;
 
             struct {
@@ -131,6 +132,7 @@ public:
                 bool allow_attack_animal;
                 bool allow_projectile_create;
                 bool allow_interact_entity;
+                bool allow_actor_destroy;
             } permissions;
         };
 

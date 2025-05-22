@@ -83,7 +83,9 @@
 #include "ila/event/minecraft/world/level/block/SculkCatalystAbsorbExperienceEvent.h"
 #include "ila/event/minecraft/world/level/block/SculkSpreadEvent.h"
 #include "ila/event/minecraft/world/level/block/BlockFallEvent.h"
-
+#include "ila/event/minecraft/world/actor/ActorDestroyBlockEvent.h"
+#include "ila/event/minecraft/world/actor/EndermanLeaveBlockEvent.h"
+#include "ila/event/minecraft/world/actor/EndermanTakeBlockEvent.h"
 // Fix BlockProperty operator&
 inline BlockProperty operator&(BlockProperty a, BlockProperty b) {
     return static_cast<BlockProperty>(static_cast<uint64_t>(a) & static_cast<uint64_t>(b));
@@ -273,6 +275,67 @@ bool EventListener::setup() {
 
             auto& tab = land->getLandPermTableConst();
             if (tab.allowPlace) {
+                return;
+            }
+
+            ev.cancel();
+        })
+    )
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.ActorDestroyBlockEvent,
+        bus->emplaceListener<ila::mc::ActorDestroyBlockEvent>([db, logger](ila::mc::ActorDestroyBlockEvent& ev) {
+            auto& actor    = ev.self();
+            auto& blockPos = ev.pos();
+
+            logger->debug("[ActorDestroyBlock] Actor: {}, Pos: {}", actor.getTypeName(), blockPos.toString());
+
+            auto land = db->getLandAt(blockPos, actor.getDimensionId());
+            if (PreCheck(land)) return; // land not found
+
+
+            auto& tab = land->getLandPermTableConst();
+            if (tab.ActorDestroy) {
+                return;
+            }
+
+            ev.cancel();
+        })
+    )
+
+        CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.EndermanLeaveBlockEvent,
+        bus->emplaceListener<ila::mc::EndermanLeaveBlockBeforeEvent>([db, logger](ila::mc::EndermanLeaveBlockBeforeEvent& ev) {
+            auto& actor    = ev.self();
+            auto& blockPos = ev.pos();
+
+            logger->debug("[EndermanLeave] Actor: {}, Pos: {}", actor.getTypeName(), blockPos.toString());
+
+            auto land = db->getLandAt(blockPos, actor.getDimensionId());
+            if (PreCheck(land)) return; // land not found
+
+
+            auto& tab = land->getLandPermTableConst();
+            if (tab.ActorDestroy) {
+                return;
+            }
+
+            ev.cancel();
+        })
+    )
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.EndermanTakeBlockEvent,
+        bus->emplaceListener<ila::mc::EndermanLeaveBlockBeforeEvent>([db, logger](ila::mc::EndermanLeaveBlockBeforeEvent& ev) {
+            auto& actor    = ev.self();
+            auto& blockPos = ev.pos();
+
+            logger->debug("[EndermanLeave] Actor: {}, Pos: {}", actor.getTypeName(), blockPos.toString());
+
+            auto land = db->getLandAt(blockPos, actor.getDimensionId());
+            if (PreCheck(land)) return; // land not found
+
+
+            auto& tab = land->getLandPermTableConst();
+            if (tab.ActorDestroy) {
                 return;
             }
 
@@ -501,6 +564,7 @@ bool EventListener::setup() {
         })
     )
 
+
     // ila
     CHECK_EVENT_AND_REGISTER_LISTENER(
         Config::cfg.listeners.PlayerAttackBlockBeforeEvent,
@@ -665,7 +729,7 @@ bool EventListener::setup() {
 
             auto land  = db->getLandAt(push, region.getDimensionId());
             auto land2 = db->getLandAt(piston, region.getDimensionId());
-            if (land && !land->getLandPermTableConst().allowPistonPush && land != land2) {
+            if (land && !land->getLandPermTableConst().allowPistonPush && land != land2 && land->getLandPos().isOnOuterBoundary(push)) {
                 ev.cancel();
             }
         })
@@ -837,7 +901,7 @@ bool EventListener::setup() {
             // 源头在领地外
             if (landTo) { // 判空
                 if (!landTo->getLandPermTableConst().allowLiquidFlow &&
-                    landTo->getLandPos().isOnOuterBoundary(sou) && // landTo 已经检查过，可以直接使用
+                    landTo->getLandPos().isOnOuterBoundary(sou) && 
                     landTo->getLandPos().isOnInnerBoundary(to)) {
                     logger->debug("[LiquidFlow] 液体流动成功拦截 {}", landTo->getLandName());
                     ev.cancel();
@@ -845,7 +909,6 @@ bool EventListener::setup() {
                 logger->debug("[LiquidFlow] 液体流动: {}", landTo->getLandName());
             }
             logger->debug("[LiquidFlow] Land:null");
-            // 其他情况（源头和目标都在领地外），允许流动
         })
     )
 

@@ -4,7 +4,7 @@
     "allowFireSpread": "火焰蔓延",
     "allowAttackDragonEgg": "点击龙蛋",
     "allowFarmDecay": "耕地退化",
-    "allowPistonPush": "活塞推动",
+    "allowPistonPush": "活塞推动(边界)",
     "allowRedstoneUpdate": "红石更新",
     "allowExplode": "爆炸",
     "allowDestroy": "允许破坏",
@@ -26,6 +26,9 @@
     "allowSculkBlockGrowth": "允许幽匿尖啸体生长",
     "allowAnimalSpawn": "允许动物生成",
     "allowMonsterSpawn": "允许怪物生成",
+    "allowEndermanLeaveBlock": "允许末影人搬运方块",
+    "ActorDestroy" : "允许实体破坏方块",
+
     "useAnvil": "使用铁砧",
     "useBarrel": "使用木桶",
     "useBeacon": "使用信标",
