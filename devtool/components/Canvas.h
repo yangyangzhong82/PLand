@@ -110,6 +110,7 @@ private:
     Vec2  lastMousePos  = {0, 0}; // 上一次鼠标位置
     Vec2  mousePos      = {0, 0}; // 当前鼠标位置（画布坐标系）
     bool  mouseInCanvas = false;  // 鼠标是否在画布内
+    Vec2  jumpPos       = {0, 0}; // 跳转位置
 
     // 形状存储
     std::vector<std::unique_ptr<Shape>> shapes;

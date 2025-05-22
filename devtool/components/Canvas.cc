@@ -301,18 +301,17 @@ void Canvas::render() {
     ImGui::SameLine(0, 20);
 
     // 跳转到指定位置
-    static float jumpX = 0.0f, jumpY = 0.0f;
     ImGui::SetNextItemWidth(180);
-    ImGui::InputFloat("X", &jumpX, 1.0f);
+    ImGui::InputFloat("X", &jumpPos.x, 1.0f);
     ImGui::SameLine();
     ImGui::SetNextItemWidth(180);
-    ImGui::InputFloat("Y", &jumpY, 1.0f);
+    ImGui::InputFloat("Y", &jumpPos.y, 1.0f);
     ImGui::SameLine();
     if (ImGui::Button("跳转")) {
         // 计算新的偏移量，使得指定的点位于画布中心
         ImVec2 canvasSize = ImGui::GetContentRegionAvail();
-        offset.x          = -jumpX * scale + canvasSize.x / 2.0f;
-        offset.y          = jumpY * scale + canvasSize.y / 2.0f;
+        offset.x          = -jumpPos.x * scale + canvasSize.x / 2.0f;
+        offset.y          = jumpPos.y * scale + canvasSize.y / 2.0f;
     }
 
     // 获取画布区域（考虑工具栏高度）
@@ -491,8 +490,9 @@ std::string Canvas::getShapeUserData(int index) const {
 }
 
 void Canvas::resetView() {
-    offset = {0, 0};
-    scale  = 1.0f;
+    jumpPos = {0, 0};
+    offset  = {0, 0};
+    scale   = 1.0f;
 }
 
 } // namespace devtool
