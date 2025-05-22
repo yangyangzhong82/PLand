@@ -9,7 +9,7 @@ namespace land {
 enum class EconomyKit : int { LegacyMoney, ScoreBoard };
 
 struct Config {
-    int              version{12};
+    int              version{13};
     ll::io::LogLevel logLevel{ll::io::LogLevel::Info};
 
     struct {

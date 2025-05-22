@@ -9,7 +9,7 @@ add_repositories("OTOTYAN https://github.com/OEOTYAN/xmake-repo.git")
 -- add_requires("levilamina develop") to use develop version
 -- please note that you should add bdslibrary yourself if using dev version
 if is_config("target_type", "server") then
-    add_requires("levilamina 1.2.0-rc.2", {configs = {target_type = "server"}})
+    add_requires("levilamina", {configs = {target_type = "server"}})
 else
     add_requires("levilamina 1.0.1", {configs = {target_type = "client"}})
 end
@@ -72,7 +72,7 @@ target("PLand") -- Change this to your mod name.
 
     set_exceptions("none") -- To avoid conflicts with /EHa.
     set_kind("shared")
-    set_languages("c++20")
+    set_languages("c++23")
     set_symbols("debug")
 
     add_defines("PLUGIN_NAME=\"[PLand] \"")
