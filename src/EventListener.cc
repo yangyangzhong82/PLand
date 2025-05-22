@@ -39,6 +39,7 @@
 #include "pland/DrawHandleManager.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
+#include "pland/LandPos.h"
 #include "pland/LandScheduler.h"
 #include "pland/LandSelector.h"
 #include "pland/PLand.h"
@@ -77,7 +78,7 @@
 #include "ila/event/minecraft/world/actor/player/PlayerEditSignEvent.h"
 #include "ila/event/minecraft/world/actor/player/PlayerOperatedItemFrameEvent.h"
 #include "ila/event/minecraft/world/level/block/FarmDecayEvent.h"
-#include "ila/event/minecraft/world/level/block/LiquidTryFlowEvent.h"
+#include "ila/event/minecraft/world/level/block/LiquidFlowEvent.h"
 #include "ila/event/minecraft/world/level/block/MossGrowthEvent.h"
 #include "ila/event/minecraft/world/level/block/SculkCatalystAbsorbExperienceEvent.h"
 #include "ila/event/minecraft/world/level/block/SculkSpreadEvent.h"
@@ -786,7 +787,7 @@ bool EventListener::setup() {
                 return;
             }
 
-            auto lds = db->getLandAt(pos - 2, pos + 2, ev.blockSource().getDimensionId());
+            auto lds = db->getLandAt(pos - 9, pos + 9, ev.blockSource().getDimensionId());
             for (auto const& p : lds) {
                 if (p->getLandPermTableConst().useBoneMeal) {
                     return;
@@ -799,15 +800,29 @@ bool EventListener::setup() {
 
     CHECK_EVENT_AND_REGISTER_LISTENER(
         Config::cfg.listeners.LiquidTryFlowBeforeEvent,
-        bus->emplaceListener<ila::mc::LiquidTryFlowBeforeEvent>([db, logger](ila::mc::LiquidTryFlowBeforeEvent& ev) {
-            auto& sou = ev.pos();
-            // auto& from = ev.FlowFromPos();
-            // logger->debug("[LiquidFlow] {} -> {}", sou.toString(), from.toString());
+        bus->emplaceListener<ila::mc::LiquidFlowBeforeEvent>([db, logger](ila::mc::LiquidFlowBeforeEvent& ev) {
+            auto& sou = ev.flowFromPos();
+            auto& to = ev.pos();
+            logger->debug("[LiquidFlow] {} -> {}", sou.toString(), to.toString());
+            
 
-            auto land = db->getLandAt(sou, ev.blockSource().getDimensionId());
-            if (land && !land->getLandPermTableConst().allowLiquidFlow) {
-                ev.cancel();
+
+
+            auto landSou = db->getLandAt(sou, ev.blockSource().getDimensionId());
+            auto landTo = db->getLandAt(to, ev.blockSource().getDimensionId());
+
+            // 源头在领地外
+            if (landTo) { // 判空
+                if (!landTo->getLandPermTableConst().allowLiquidFlow &&
+                    landTo->getLandPos().isOnOuterBoundary(sou) && // landTo 已经检查过，可以直接使用
+                    landTo->getLandPos().isOnInnerBoundary(to)) {
+                    logger->debug("[LiquidFlow] 液体流动成功拦截 {}", landTo->getLandName());
+                    ev.cancel();
+                }
+                logger->debug("[LiquidFlow] 液体流动: {}", landTo->getLandName());
             }
+            logger->debug("[LiquidFlow] Land:null");
+            // 其他情况（源头和目标都在领地外），允许流动
         })
     )
 
