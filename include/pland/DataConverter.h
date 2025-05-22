@@ -77,8 +77,6 @@ public:
             } settings;
 
             struct {
-                bool place_minecart;
-                bool place_boat;
                 bool use_dispenser;
                 bool use_door;
                 bool allow_dropitem;
@@ -130,9 +128,6 @@ public:
                 bool use_cartography_table;
                 bool use_bell;
                 bool allow_attack_animal;
-                bool allow_projectile_create;
-                bool allow_interact_entity;
-                bool allow_actor_destroy;
             } permissions;
         };
 

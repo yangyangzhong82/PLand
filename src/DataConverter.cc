@@ -163,11 +163,8 @@ LandData_sptr iLandConverter::convert(RawData::iLandData const& raw, string cons
         tab.useFiregen          = p.use_firegen;
         tab.useCampfire         = p.use_campfire;
         tab.useBarrel           = p.use_barrel;
-        tab.placeBoat           = p.place_boat;
-        tab.placeMinecart       = p.place_minecart;
         tab.useFurnace          = p.use_furnace;
         tab.useStonecutter      = p.use_stonecutter;
-        tab.allowProjectileCreate = p.allow_projectile_create;
         tab.useBeacon           = p.use_beacon;
         tab.useDaylightDetector = p.use_daylight_detector;
         tab.allowAttackPlayer   = p.allow_attack_player;
@@ -204,9 +201,6 @@ LandData_sptr iLandConverter::convert(RawData::iLandData const& raw, string cons
         tab.useCauldron         = p.use_cauldron;
         tab.useCartographyTable = p.use_cartography_table;
         tab.useBell             = p.use_bell;
-        tab.allowAttackAnimal   = p.allow_attack_animal;
-        tab.allowInteractEntity  = p.allow_interact_entity;
-        tab.ActorDestroy         = p.allow_actor_destroy;
     }
 
     return ptr;
