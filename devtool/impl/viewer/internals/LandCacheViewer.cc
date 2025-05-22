@@ -1,5 +1,6 @@
 #include "LandCacheViewer.h"
 #include "ll/api/service/PlayerInfo.h"
+#include "mod/MyMod.h"
 #include "pland/PLand.h"
 
 #include <imgui_internal.h>
@@ -24,18 +25,41 @@ LandCacheViewerWindow::LandCacheViewerWindow() {}
 void LandCacheViewerWindow::handleButtonClicked(Buttons bt, land::LandData_sptr land) {
     switch (bt) {
     case EditLandData:
-        break;
-    case ViewLandData:
+        handleEditLandData(land);
         break;
     case ExportLandData:
+        handleExportLandData(land);
         break;
     case LocateChunk:
+        handleLocateChunk(land);
         break;
     }
 }
+void LandCacheViewerWindow::handleEditLandData(land::LandData_sptr land) {
+    auto id = land->getLandID();
+    if (!editors_.contains(id)) {
+        editors_.emplace(id, std::make_unique<LandDataEditor>(land));
+    }
+    auto const& editor = editors_[id];
+    editor->setOpenFlag(!editor->isOpen());
+}
+void LandCacheViewerWindow::handleExportLandData(land::LandData_sptr land) {
+    namespace fs = std::filesystem;
+    auto dir     = my_mod::MyMod::getInstance().getSelf().getModDir() / "devtool_exports";
+    if (!fs::exists(dir)) {
+        fs::create_directory(dir);
+    }
+    auto          file = dir / fmt::format("land_{}.json", land->mLandID);
+    std::ofstream ofs(file);
+    ofs << land->toJSON().dump(2);
+    ofs.close();
+}
+void LandCacheViewerWindow::handleLocateChunk(land::LandData_sptr land) {
+    // TODO: 定位区块
+}
 
 void LandCacheViewerWindow::preBuildData() {
-    lands_ = land::PLand::getInstance().getLandsByOwner();
+    lands_ = std::move(land::PLand::getInstance().getLandsByOwner());
 
     auto& playerInfo = ll::service::PlayerInfo::getInstance();
     for (const auto& owner : lands_ | std::views::keys) {
@@ -61,6 +85,13 @@ void LandCacheViewerWindow::preBuildData() {
     for (auto iter = isShow_.begin(); iter != isShow_.end();) {
         if (!lands_.contains(iter->first)) {
             iter = isShow_.erase(iter); // 玩家不存在，删除 CheckBox
+        }
+        ++iter;
+    }
+    // 移除不存在的窗口
+    for (auto iter = editors_.begin(); iter != editors_.end();) {
+        if (!iter->second->land_.lock()) {
+            iter = editors_.erase(iter); // weak ptr 解锁失败，窗口已移除
         }
         ++iter;
     }
@@ -170,17 +201,19 @@ void LandCacheViewerWindow::renderCacheLand() {
                 handleButtonClicked(EditLandData, ld);
             }
             ImGui::SameLine();
-            if (ImGui::Button(fmt::format("原始数据##{}", ld->mLandID).c_str())) {
-                handleButtonClicked(ViewLandData, ld);
+            if (ImGui::Button(fmt::format("复制##{}", ld->mLandID).c_str())) {
+                ImGui::SetClipboardText(ld->toJSON().dump().c_str());
             }
             ImGui::SameLine();
             if (ImGui::Button(fmt::format("导出##{}", ld->mLandID).c_str())) {
                 handleButtonClicked(ExportLandData, ld);
             }
+            if (ImGui::IsItemHovered()) ImGui::SetItemTooltip("将当前领地数据导出到 pland/devtool_exports 下");
             ImGui::SameLine();
             if (ImGui::Button(fmt::format("定位区块##{}", ld->mLandID).c_str())) {
                 handleButtonClicked(LocateChunk, ld);
             }
+            if (ImGui::IsItemHovered()) ImGui::SetItemTooltip("在领地 2D 图中定位当前领地位置");
         }
     }
     ImGui::EndTable();
@@ -193,16 +226,47 @@ void LandCacheViewerWindow::render() {
     }
     preBuildData();
     renderToolBar();
-    ImGui::Dummy(ImVec2(0, 5));  // 5像素上间距
+    ImGui::Dummy(ImVec2(0, 5)); // 5像素上间距
     ImGui::Separator();
-    ImGui::Dummy(ImVec2(0, 5));  // 5像素下间距
+    ImGui::Dummy(ImVec2(0, 5)); // 5像素下间距
     renderCacheLand();
     ImGui::End();
 }
 
 void LandCacheViewerWindow::tick() {
     IWindow::tick();
-    // TODO: 广播 tick
+    for (auto const& val : editors_ | std::views::values) {
+        val->tick();
+    }
 }
+
+
+// LandDataEditor
+LandDataEditor::LandDataEditor(land::LandData_sptr land) : CodeEditor(land->toJSON().dump(4)), land_(land) {}
+
+void LandDataEditor::renderMenuElement() {
+    CodeEditor::renderMenuElement();
+    if (ImGui::BeginMenu("LandData")) {
+        if (ImGui::Button("写入")) {
+            auto land = land_.lock();
+            if (!land) {
+                return;
+            }
+            auto backup = land->toJSON();
+            try {
+                auto json = nlohmann::json::parse(editor_.GetText());
+                land->load(json);
+            } catch (...) {
+                land->load(backup);
+                my_mod::MyMod::getInstance().getSelf().getLogger().error("Failed to parse json");
+            }
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetItemTooltip("将当前更改应用到领地");
+        }
+        ImGui::EndMenu();
+    }
+}
+
 
 } // namespace devtool::internals
