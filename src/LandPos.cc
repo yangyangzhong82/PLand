@@ -164,8 +164,8 @@ bool LandPos::isContain(LandPos const& src, LandPos const& dst) {
 }
 
 bool LandPos::isOnInnerBoundary(BlockPos const& pos) const {
-    if(mMin_A.x == pos.x || mMin_A.z == pos.z || mMin_A.y == pos.z||
-        mMax_B.x == pos.x || mMax_B.z == pos.z || mMax_B.y == pos.z) {
+    if(mMin_A.x == pos.x || mMin_A.z == pos.z || mMin_A.y == pos.y||
+        mMax_B.x == pos.x || mMax_B.z == pos.z || mMax_B.y == pos.y) {
         return true;
     }
     return false;
