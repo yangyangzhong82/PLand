@@ -72,8 +72,6 @@ public:
                 bool                ev_fire_spread;
                 std::vector<string> share;
                 bool                ev_redstone_update;
-                bool                ev_block_fall;
-                bool                enderman_leave_block;
             } settings;
 
             struct {
