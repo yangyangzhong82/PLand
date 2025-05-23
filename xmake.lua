@@ -5,8 +5,9 @@ add_repositories("engsr6982-repo https://github.com/engsr6982/xmake-repo.git")
 add_repositories("miracleforest-repo https://github.com/MiracleForest/xmake-repo.git")
 add_repositories("OTOTYAN https://github.com/OEOTYAN/xmake-repo.git")
 
+
 -- LeviMc(LiteLDev)
-add_requires("levilamina 1.2.0-rc.2", {configs = {target_type = "server"}})
+add_requires("levilamina 93a0da5b3284d083331a72fbb506d97ff00a5789", {configs = {target_type = "server"}})
 add_requires("levibuildscript 0.4.0")
 add_requires("legacymoney 0.9.0-rc.1")
 
@@ -68,7 +69,7 @@ target("PLand") -- Change this to your mod name.
 
     set_exceptions("none") -- To avoid conflicts with /EHa.
     set_kind("shared")
-    set_languages("c++20")
+    set_languages("c++23")
     set_symbols("debug")
 
     add_defines("PLUGIN_NAME=\"[PLand] \"")

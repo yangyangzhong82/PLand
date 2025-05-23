@@ -9,7 +9,7 @@ namespace land {
 enum class EconomyKit : int { LegacyMoney, ScoreBoard };
 
 struct Config {
-    int              version{12};
+    int              version{13};
     ll::io::LogLevel logLevel{ll::io::LogLevel::Info};
 
     struct {
@@ -97,6 +97,11 @@ struct Config {
         bool PlayerEditSignBeforeEvent{true};                 // 玩家编辑告示牌事件
         bool SpawnedMobEvent{true};                           // 生物生成事件(怪物和动物)
         bool SculkCatalystAbsorbExperienceBeforeEvent{false}; // 幽匿催化体吸收经验事件
+        bool PlayerInteractEntityBeforeEvent{true}; // 实体交互事件
+        bool BlockFallBeforeEvent{true};                 // 方块下落事件
+        bool ActorDestroyBlockEvent{true}; // 实体破坏方块事件
+        bool EndermanLeaveBlockEvent{true}; // 末影人搬走方块
+        bool EndermanTakeBlockEvent{true};  // 末影人放下方块
     } listeners;
 
     struct {
