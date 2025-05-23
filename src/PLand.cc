@@ -496,6 +496,30 @@ std::vector<LandData_sptr> PLand::getLands(UUIDs const& uuid, LandDimid dimid) c
     }
     return lands;
 }
+std::unordered_map<UUIDs, std::unordered_set<LandData_sptr>> PLand::getLandsByOwner() const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+
+    std::unordered_map<UUIDs, std::unordered_set<LandData_sptr>> lands;
+    for (const auto& ptr : mLandCache | std::views::values) {
+        auto& owner = ptr->getLandOwner();
+        lands[owner].insert(ptr);
+    }
+    return lands;
+}
+std::unordered_map<UUIDs, std::unordered_set<LandData_sptr>> PLand::getLandsByOwner(LandDimid dimid) const {
+    std::shared_lock<std::shared_mutex> lock(mMutex);
+
+    std::unordered_map<UUIDs, std::unordered_set<LandData_sptr>> res;
+    for (const auto& ptr : mLandCache | std::views::values) {
+        if (ptr->getLandDimid() != dimid) {
+            continue;
+        }
+        auto& owner = ptr->getLandOwner();
+        res[owner].insert(ptr);
+    }
+    return res;
+}
+
 
 LandPermType PLand::getPermType(UUIDs const& uuid, LandID id, bool ignoreOperator) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);

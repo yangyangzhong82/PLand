@@ -1,21 +1,21 @@
-#ifdef LD_DEVTOOL
-#pragma once
 #include "CodeEditor.h"
 #include "ImGuiColorTextEdit/TextEditor.h"
 #include "fmt/compile.h"
 #include "imgui.h"
 #include <format>
 
+namespace devtool {
 
-namespace land {
 
+CodeEditor::CodeEditor(std::string const& code) {
+    static int NEXT_WINDOW_ID = 0;
+    this->windowId_           = NEXT_WINDOW_ID++;
 
-CodeEditor::CodeEditor(std::string const& code, int windowId) : windowId_(windowId) {
     editor_.SetText(code);
     editor_.SetLanguage(TextEditor::Language::Json());
 }
 
-void CodeEditor::_renderMenuBarItem() {
+void CodeEditor::renderMenuElement() {
     // clang-format off
     #define SHORTCUT "Ctrl-"
     if (ImGui::BeginMenu("编辑")) {
@@ -66,9 +66,9 @@ void CodeEditor::_renderMenuBarItem() {
     // clang-format on
 }
 
-void CodeEditor::_renderMenuBar() {
+void CodeEditor::renderMenuBar() {
     if (ImGui::BeginMenuBar()) {
-        _renderMenuBarItem();
+        renderMenuElement();
         ImGui::EndMenuBar();
     }
 }
@@ -82,13 +82,12 @@ void CodeEditor::render() {
         ImGui::End();
         return;
     }
-    _renderMenuBar();
+
+    renderMenuBar();
     editor_.Render(fmt::format("CodeEditor-Impl##{}", windowId_).data());
+
     ImGui::End();
 }
 
 
-} // namespace land
-
-
-#endif
+} // namespace devtool

@@ -5,19 +5,20 @@ add_repositories("engsr6982-repo https://github.com/engsr6982/xmake-repo.git")
 add_repositories("miracleforest-repo https://github.com/MiracleForest/xmake-repo.git")
 add_repositories("OTOTYAN https://github.com/OEOTYAN/xmake-repo.git")
 
--- add_requires("levilamina x.x.x") for a specific version
--- add_requires("levilamina develop") to use develop version
--- please note that you should add bdslibrary yourself if using dev version
-if is_config("target_type", "server") then
-    add_requires("levilamina", {configs = {target_type = "server"}})
-else
-    add_requires("levilamina 1.0.1", {configs = {target_type = "client"}})
-end
-add_requires("levibuildscript")
-add_requires("exprtk 0.0.3")
+
+-- LeviMc(LiteLDev)
+add_requires("levilamina 93a0da5b3284d083331a72fbb506d97ff00a5789", {configs = {target_type = "server"}})
+add_requires("levibuildscript 0.4.0")
 add_requires("legacymoney 0.9.0-rc.1")
-add_requires("ilistenattentively 0.5.0-rc.1")
+
+-- OTOTYAN
 add_requires("bsci 0.1.6")
+
+-- MiracleForest
+add_requires("ilistenattentively 0.5.0-rc.1")
+
+-- xmake
+add_requires("exprtk 0.0.3")
 
 if has_config("devtool") then
     add_requires("imgui v1.91.6-docking", {configs = { opengl3 = true, glfw = true }})
@@ -28,11 +29,6 @@ if not has_config("vs_runtime") then
     set_runtimes("MD")
 end
 
-option("target_type")
-    set_default("server")
-    set_showmenu(true)
-    set_values("server", "client")
-option_end()
 
 option("test")
     set_default(false)
@@ -48,6 +44,7 @@ option_end()
 target("PLand") -- Change this to your mod name.
     add_rules("@levibuildscript/linkrule")
     add_rules("@levibuildscript/modpacker")
+    add_rules("plugin.compile_commands.autoupdate")
     add_cxflags(
         "/EHa",
         "/utf-8",
@@ -59,7 +56,7 @@ target("PLand") -- Change this to your mod name.
         "/w44738",
         "/w45204"
     )
-    add_defines("NOMINMAX", "UNICODE", "LDAPI_EXPORT")
+    add_defines("NOMINMAX", "UNICODE", "LDAPI_EXPORT", "_HAS_CXX23=1")
     add_files("src/**.cpp", "src/**.cc")
     add_includedirs("src", "include")
     add_packages(
@@ -93,8 +90,8 @@ target("PLand") -- Change this to your mod name.
             "imgui",
             "glew"
         )
-        add_includedirs("third-party")
-        add_files("third-party/ImGuiColorTextEdit/*.cpp")
+        add_includedirs("devtool", "devtool/deps")
+        add_files("devtool/**.cc", "devtool/**.cpp")
         add_defines("LD_DEVTOOL")
     end
 
