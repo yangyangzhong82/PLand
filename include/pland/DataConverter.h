@@ -89,12 +89,14 @@ public:
                 bool use_campfire;
                 bool use_barrel;
                 bool use_furnace;
-                bool use_stonecutter;
+                bool use_stonecutter; // x
+                bool allow_throw_potion;
                 bool use_beacon;
                 bool use_daylight_detector;
                 bool allow_attack_player;
                 bool allow_entity_destroy;
                 bool use_lectern;
+                bool allow_shoot; // x
                 bool use_enchanting_table;
                 bool use_fishing_hook;
                 bool use_anvil;
