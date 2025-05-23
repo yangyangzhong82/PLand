@@ -18,7 +18,7 @@ struct LandPermTable {
     bool allowPistonPush{true};          // 活塞推动
     bool allowRedstoneUpdate{true};      // 红石更新
     bool allowExplode{false};            // 爆炸
-    bool allowBlockFall{false};        // 方块掉落
+    bool allowBlockFall{false};          // 方块掉落
     bool allowDestroy{false};            // 允许破坏
     bool allowWitherDestroy{false};      // 允许凋零破坏
     bool allowPlace{false};              // 允许放置 [x]
@@ -30,7 +30,7 @@ struct LandPermTable {
     bool allowEndermanLeaveBlock{false}; // 允许末影人放下方块
 
     bool allowDropItem{true};            // 允许丢弃物品
-    bool allowProjectileCreate{false};     // 允许投掷物 
+    bool allowProjectileCreate{false};   // 允许投掷物
     bool allowRideEntity{false};         // 允许骑乘实体
     bool allowRideTrans{false};          // 允许骑乘矿车、船
     bool allowAxePeeled{false};          // 允许斧头去皮
@@ -85,10 +85,10 @@ struct LandPermTable {
     bool useBoneMeal{false};         // 使用骨粉
     bool useHoe{false};              // 使用锄头
     bool useShovel{false};           // 使用锹
-    bool allowInteractEntity{false};           // 实体交互
-    bool ActorDestroy{false};         // 实体破坏
-    bool editFlowerPot{false}; // 编辑花盆
-    bool editSign{false};      // 编辑告示牌
+    bool allowInteractEntity{false}; // 实体交互
+    bool allowActorDestroy{false};   // 实体破坏
+    bool editFlowerPot{false};       // 编辑花盆
+    bool editSign{false};            // 编辑告示牌
 };
 
 
@@ -96,7 +96,7 @@ using LandData_sptr = std::shared_ptr<class LandData>; // 共享指针
 using LandData_wptr = std::weak_ptr<class LandData>;   // 弱指针
 class LandData {
 public:
-    int                 version{11};                            // 版本号
+    int                 version{11};                           // 版本号
     LandPos             mPos;                                  // 领地对角坐标
     PosBase             mTeleportPos;                          // 领地传送坐标
     LandID              mLandID{LandID(-1)};                   // 领地唯一ID  (由 PLand::addLand() 时分配)

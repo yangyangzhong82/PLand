@@ -294,7 +294,7 @@ bool EventListener::setup() {
 
 
             auto& tab = land->getLandPermTableConst();
-            if (tab.ActorDestroy) {
+            if (tab.allowActorDestroy) {
                 return;
             }
 
@@ -315,7 +315,7 @@ bool EventListener::setup() {
 
 
             auto& tab = land->getLandPermTableConst();
-            if (tab.ActorDestroy) {
+            if (tab.allowActorDestroy) {
                 return;
             }
 
@@ -335,7 +335,7 @@ bool EventListener::setup() {
 
 
             auto& tab = land->getLandPermTableConst();
-            if (tab.ActorDestroy) {
+            if (tab.allowActorDestroy) {
                 return;
             }
 

@@ -27,8 +27,7 @@
     "allowAnimalSpawn": "允许动物生成",
     "allowMonsterSpawn": "允许怪物生成",
     "allowEndermanLeaveBlock": "允许末影人搬运方块",
-    "ActorDestroy" : "允许实体破坏方块",
-
+    "allowActorDestroy": "允许实体破坏方块",
     "useAnvil": "使用铁砧",
     "useBarrel": "使用木桶",
     "useBeacon": "使用信标",
