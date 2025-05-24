@@ -4,7 +4,7 @@
     "allowFireSpread": "Fire spread",
     "allowAttackDragonEgg": "Click on dragon egg",
     "allowFarmDecay": "Farmland decay",
-    "allowPistonPush": "Piston push (boundary)",
+    "allowPistonPushOnBoundary": "Piston push (boundary)",
     "allowRedstoneUpdate": "Redstone update",
     "allowExplode": "Explosions",
     "allowDestroy": "Allow block destruction",

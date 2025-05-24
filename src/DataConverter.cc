@@ -143,11 +143,11 @@ LandData_sptr iLandConverter::convert(RawData::iLandData const& raw, string cons
     {
         auto& tab = ptr->mLandPermTable;
         // settings
-        tab.allowFarmDecay      = raw.settings.ev_farmland_decay;
-        tab.allowExplode        = raw.settings.ev_explode;
-        tab.allowPistonPush     = raw.settings.ev_piston_push;
-        tab.allowFireSpread     = raw.settings.ev_fire_spread;
-        tab.allowRedstoneUpdate = raw.settings.ev_redstone_update;
+        tab.allowFarmDecay            = raw.settings.ev_farmland_decay;
+        tab.allowExplode              = raw.settings.ev_explode;
+        tab.allowPistonPushOnBoundary = raw.settings.ev_piston_push;
+        tab.allowFireSpread           = raw.settings.ev_fire_spread;
+        tab.allowRedstoneUpdate       = raw.settings.ev_redstone_update;
         // permissions
         auto& p                 = raw.permissions;
         tab.useDispenser        = p.use_dispenser;

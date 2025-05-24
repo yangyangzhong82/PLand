@@ -734,7 +734,7 @@ bool EventListener::setup() {
 
             auto land  = db->getLandAt(push, region.getDimensionId());
             auto land2 = db->getLandAt(piston, region.getDimensionId());
-            if (land && !land->getLandPermTableConst().allowPistonPush && land != land2
+            if (land && !land->getLandPermTableConst().allowPistonPushOnBoundary && land != land2
                 && land->getLandPos().isOnOuterBoundary(push)) {
                 ev.cancel();
             }
@@ -897,8 +897,7 @@ bool EventListener::setup() {
         bus->emplaceListener<ila::mc::LiquidFlowBeforeEvent>([db, logger](ila::mc::LiquidFlowBeforeEvent& ev) {
             auto& sou = ev.flowFromPos();
             auto& to  = ev.pos();
-            logger->debug("[LiquidFlow] {} -> {}", sou.toString(), to.toString());
-
+            // logger->debug("[LiquidFlow] {} -> {}", sou.toString(), to.toString());
 
             auto landSou = db->getLandAt(sou, ev.blockSource().getDimensionId());
             auto landTo  = db->getLandAt(to, ev.blockSource().getDimensionId());
@@ -912,7 +911,7 @@ bool EventListener::setup() {
                 }
                 logger->debug("[LiquidFlow] 液体流动: {}", landTo->getLandName());
             }
-            logger->debug("[LiquidFlow] Land:null");
+            // logger->debug("[LiquidFlow] Land:null");
         })
     )
 

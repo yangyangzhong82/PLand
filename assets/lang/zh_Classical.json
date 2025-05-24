@@ -3,7 +3,7 @@
     "allowFireSpread": "火炎蔓延",
     "allowAttackDragonEgg": "點擊龍蛋",
     "allowFarmDecay": "田亩荒芜",
-    "allowPistonPush": "活塞推動(邊界)",
+    "allowPistonPushOnBoundary": "活塞推動(邊界)",
     "allowRedstoneUpdate": "红石之变",
     "allowExplode": "爆裂",
     "allowDestroy": "许毁物",

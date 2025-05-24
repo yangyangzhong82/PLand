@@ -4,7 +4,7 @@
     "allowFireSpread": "Распространение огня",
     "allowAttackDragonEgg": "Клик по яицкролю",
     "allowFarmDecay": "Деградация грядок",
-    "allowPistonPush": "Движение поршнем (предел)",
+    "allowPistonPushOnBoundary": "Движение поршнем (предел)",
     "allowRedstoneUpdate": "Обновление редстоуна",
     "allowExplode": "Взрывы",
     "allowDestroy": "Разрушение блоков",

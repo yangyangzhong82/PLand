@@ -12,22 +12,22 @@ namespace land {
 
 struct LandPermTable {
     // 标记 [x] 为复用权限
-    bool allowFireSpread{true};          // 火焰蔓延
-    bool allowAttackDragonEgg{false};    // 点击龙蛋
-    bool allowFarmDecay{true};           // 耕地退化
-    bool allowPistonPush{true};          // 活塞推动
-    bool allowRedstoneUpdate{true};      // 红石更新
-    bool allowExplode{false};            // 爆炸
-    bool allowBlockFall{false};          // 方块掉落
-    bool allowDestroy{false};            // 允许破坏
-    bool allowWitherDestroy{false};      // 允许凋零破坏
-    bool allowPlace{false};              // 允许放置 [x]
-    bool allowAttackPlayer{false};       // 允许攻击玩家
-    bool allowAttackAnimal{false};       // 允许攻击动物
-    bool allowAttackMonster{true};       // 允许攻击怪物
-    bool allowOpenChest{false};          // 允许打开箱子
-    bool allowPickupItem{false};         // 允许拾取物品
-    bool allowEndermanLeaveBlock{false}; // 允许末影人放下方块
+    bool allowFireSpread{true};           // 火焰蔓延
+    bool allowAttackDragonEgg{false};     // 点击龙蛋
+    bool allowFarmDecay{true};            // 耕地退化
+    bool allowPistonPushOnBoundary{true}; // 活塞推动
+    bool allowRedstoneUpdate{true};       // 红石更新
+    bool allowExplode{false};             // 爆炸
+    bool allowBlockFall{false};           // 方块掉落
+    bool allowDestroy{false};             // 允许破坏
+    bool allowWitherDestroy{false};       // 允许凋零破坏
+    bool allowPlace{false};               // 允许放置 [x]
+    bool allowAttackPlayer{false};        // 允许攻击玩家
+    bool allowAttackAnimal{false};        // 允许攻击动物
+    bool allowAttackMonster{true};        // 允许攻击怪物
+    bool allowOpenChest{false};           // 允许打开箱子
+    bool allowPickupItem{false};          // 允许拾取物品
+    bool allowEndermanLeaveBlock{false};  // 允许末影人放下方块
 
     bool allowDropItem{true};            // 允许丢弃物品
     bool allowProjectileCreate{false};   // 允许投掷物
@@ -96,7 +96,7 @@ using LandData_sptr = std::shared_ptr<class LandData>; // 共享指针
 using LandData_wptr = std::weak_ptr<class LandData>;   // 弱指针
 class LandData {
 public:
-    int                 version{11};                           // 版本号
+    int                 version{12};                           // 版本号
     LandPos             mPos;                                  // 领地对角坐标
     PosBase             mTeleportPos;                          // 领地传送坐标
     LandID              mLandID{LandID(-1)};                   // 领地唯一ID  (由 PLand::addLand() 时分配)

@@ -69,7 +69,7 @@ target("PLand") -- Change this to your mod name.
 
     set_exceptions("none") -- To avoid conflicts with /EHa.
     set_kind("shared")
-    set_languages("c++23")
+    set_languages("c++20")
     set_symbols("debug")
 
     add_defines("PLUGIN_NAME=\"[PLand] \"")
