@@ -734,13 +734,13 @@ bool EventListener::setup() {
 
             auto const dimid = ev.blockSource().getDimensionId();
 
-            // TODO: 支持 粘液块/蜂蜜块 推动检测
             auto pistonLand = db->getLandAt(piston, dimid);
             auto pushLand   = db->getLandAt(push, dimid);
             if ((!pistonLand &&                                               // 活塞所在位置没有领地
                  pushLand &&                                                  // 被推动的位置有领地
                  !pushLand->getLandPermTableConst().allowPistonPushOnBoundary // 被推动的位置领地不允许活塞在边界推动
-                 && pushLand->getLandPos().isOnOuterBoundary(piston))         // 被推动的位置领地在边界上
+                 && (pushLand->getLandPos().isOnOuterBoundary(piston) || pushLand->getLandPos().isOnInnerBoundary(push))
+                ) // 被推动的位置领地在边界上 (活塞在边界或边界外，被推的方块在边界内)
                 || (pistonLand && pushLand && pistonLand != pushLand
                 ) // 活塞和被推动的位置不在同一个领地 (例如：父子领地/无间距领地)
             ) {
