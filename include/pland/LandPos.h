@@ -60,7 +60,7 @@ public:
     LDNDAPI bool isOnInnerBoundary(BlockPos const& pos) const;
     // 判断某个pos是否在领地外边界
     LDNDAPI bool isOnOuterBoundary(BlockPos const& pos) const;
-    // 判断某个坐标是否在领地正上方
+    // 检查位置是否在领地上方（x/z 在领地范围内，且 y > mMax_B.y）
     LDNDAPI bool isAboveLand(BlockPos const& pos) const;
 
     LDAPI bool operator==(LandPos const& pos) const;

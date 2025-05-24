@@ -86,6 +86,7 @@
 #include "ila/event/minecraft/world/level/block/MossGrowthEvent.h"
 #include "ila/event/minecraft/world/level/block/SculkCatalystAbsorbExperienceEvent.h"
 #include "ila/event/minecraft/world/level/block/SculkSpreadEvent.h"
+
 // Fix BlockProperty operator&
 inline BlockProperty operator&(BlockProperty a, BlockProperty b) {
     return static_cast<BlockProperty>(static_cast<uint64_t>(a) & static_cast<uint64_t>(b));
@@ -728,14 +729,20 @@ bool EventListener::setup() {
         bus->emplaceListener<ila::mc::PistonPushBeforeEvent>([db, logger](ila::mc::PistonPushBeforeEvent& ev) {
             auto const& piston = ev.pistonPos();
             auto const& push   = ev.pushPos();
-            auto&       region = ev.blockSource();
 
             logger->debug("[PistonTryPush] piston: {}, push: {}", piston.toString(), push.toString());
 
-            auto land  = db->getLandAt(push, region.getDimensionId());
-            auto land2 = db->getLandAt(piston, region.getDimensionId());
-            if (land && !land->getLandPermTableConst().allowPistonPushOnBoundary && land != land2
-                && land->getLandPos().isOnOuterBoundary(push)) {
+            auto const dimid = ev.blockSource().getDimensionId();
+
+            auto pistonLand = db->getLandAt(piston, dimid);
+            auto pushLand   = db->getLandAt(push, dimid);
+            if ((!pistonLand &&                                               // 活塞所在位置没有领地
+                 pushLand &&                                                  // 被推动的位置有领地
+                 !pushLand->getLandPermTableConst().allowPistonPushOnBoundary // 被推动的位置领地不允许活塞在边界推动
+                 && pushLand->getLandPos().isOnOuterBoundary(piston))         // 被推动的位置领地在边界上
+                || (pistonLand && pushLand && pistonLand != pushLand
+                ) // 活塞和被推动的位置不在同一个领地 (例如：父子领地/无间距领地)
+            ) {
                 ev.cancel();
             }
         })

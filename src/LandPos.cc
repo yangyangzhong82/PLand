@@ -164,24 +164,30 @@ bool LandPos::isContain(LandPos const& src, LandPos const& dst) {
 }
 
 bool LandPos::isOnInnerBoundary(BlockPos const& pos) const {
-    if(mMin_A.x == pos.x || mMin_A.z == pos.z || mMin_A.y == pos.y||
-        mMax_B.x == pos.x || mMax_B.z == pos.z || mMax_B.y == pos.y) {
-        return true;
-    }
-    return false;
+    bool isXBoundary = (pos.x == mMin_A.x || pos.x == mMax_B.x) && (pos.y >= mMin_A.y && pos.y <= mMax_B.y)
+                    && (pos.z >= mMin_A.z && pos.z <= mMax_B.z);
+
+    bool isYBoundary = (pos.y == mMin_A.y || pos.y == mMax_B.y) && (pos.x >= mMin_A.x && pos.x <= mMax_B.x)
+                    && (pos.z >= mMin_A.z && pos.z <= mMax_B.z);
+
+    bool isZBoundary = (pos.z == mMin_A.z || pos.z == mMax_B.z) && (pos.x >= mMin_A.x && pos.x <= mMax_B.x)
+                    && (pos.y >= mMin_A.y && pos.y <= mMax_B.y);
+
+    return isXBoundary || isYBoundary || isZBoundary;
 }
 
 bool LandPos::isOnOuterBoundary(BlockPos const& pos) const {
-    // 构造扩大一圈的 LandPos
-    LandPos expanded(
-        PosBase{mMin_A.x - 1, mMin_A.y - 1, mMin_A.z - 1},
-        PosBase{mMax_B.x + 1, mMax_B.y + 1, mMax_B.z + 1}
-    );
-    if(pos.x == expanded.mMin_A.x || pos.z == expanded.mMin_A.z || pos.y == expanded.mMin_A.y ||
-        pos.x == expanded.mMax_B.x || pos.z == expanded.mMax_B.z || pos.y == expanded.mMax_B.y) {
-        return true;
-    }
-    return false;
+    // 检查是否在领地外紧贴边界
+    bool isXBoundary = (pos.x == mMin_A.x - 1 || pos.x == mMax_B.x + 1) && (pos.y >= mMin_A.y && pos.y <= mMax_B.y)
+                    && (pos.z >= mMin_A.z && pos.z <= mMax_B.z);
+
+    bool isYBoundary = (pos.y == mMin_A.y - 1 || pos.y == mMax_B.y + 1) && (pos.x >= mMin_A.x && pos.x <= mMax_B.x)
+                    && (pos.z >= mMin_A.z && pos.z <= mMax_B.z);
+
+    bool isZBoundary = (pos.z == mMin_A.z - 1 || pos.z == mMax_B.z + 1) && (pos.x >= mMin_A.x && pos.x <= mMax_B.x)
+                    && (pos.y >= mMin_A.y && pos.y <= mMax_B.y);
+
+    return isXBoundary || isYBoundary || isZBoundary;
 }
 
 bool LandPos::isAboveLand(BlockPos const& pos) const {
