@@ -5,27 +5,27 @@
 
 
 #include "mc/deps/core/math/Vec3.h"
-#include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
 #include "mc/deps/core/string/HashedString.h"
+#include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/world/level/BlockPos.h"
-#include "mc/world/level/block/BlockLegacy.h" 
-#include "mc/world/level/block/BlockProperty.h"
 #include "mc/world/level/Explosion.h"
+#include "mc/world/level/block/BlockLegacy.h"
+#include "mc/world/level/block/BlockProperty.h"
 
-#include "mc/world/item/Item.h" 
-#include "mc/world/item/ItemTag.h"
-#include "mc/world/item/BucketItem.h"  
-#include "mc/world/item/HatchetItem.h" 
-#include "mc/world/item/HoeItem.h"     
-#include "mc/world/item/ShovelItem.h" 
+#include "mc/world/item/BucketItem.h"
 #include "mc/world/item/FishingRodItem.h"
+#include "mc/world/item/HatchetItem.h"
+#include "mc/world/item/HoeItem.h"
 #include "mc/world/item/HorseArmorItem.h"
-#include "mc/world/level/block/SignBlock.h"
+#include "mc/world/item/Item.h"
+#include "mc/world/item/ItemTag.h"
+#include "mc/world/item/ShovelItem.h"
+#include "mc/world/level/block/BlastFurnaceBlock.h"
+#include "mc/world/level/block/FurnaceBlock.h"
 #include "mc/world/level/block/HangingSignBlock.h"
 #include "mc/world/level/block/ShulkerBoxBlock.h"
-#include "mc/world/level/block/FurnaceBlock.h"
-#include "mc/world/level/block/BlastFurnaceBlock.h"
+#include "mc/world/level/block/SignBlock.h"
 #include "mc/world/level/block/SmokerBlock.h"
 #include "mc/world/level/block/components/BlockComponentDirectData.h"
 #include "mc/world/level/chunk/SubChunk.h"
@@ -45,10 +45,10 @@
 #include "pland/PLand.h"
 #include "pland/utils/McUtils.h"
 #include <cstdint>
+#include <functional>
+#include <string_view>
 #include <unordered_set>
 #include <vector>
-#include <functional> 
-#include <string_view> 
 
 
 #include "ll/api/event/entity/ActorHurtEvent.h"
@@ -63,29 +63,29 @@
 
 
 #include "ila/event/minecraft/world/ExplosionEvent.h"
-#include "ila/event/minecraft/world/actor/player/PlayerInteractEntityEvent.h"
 #include "ila/event/minecraft/world/PistonPushEvent.h"
 #include "ila/event/minecraft/world/RedstoneUpdateEvent.h"
 #include "ila/event/minecraft/world/SculkBlockGrowthEvent.h"
 #include "ila/event/minecraft/world/WitherDestroyEvent.h"
+#include "ila/event/minecraft/world/actor/ActorDestroyBlockEvent.h"
 #include "ila/event/minecraft/world/actor/ActorRideEvent.h"
 #include "ila/event/minecraft/world/actor/ActorTriggerPressurePlateEvent.h"
 #include "ila/event/minecraft/world/actor/ArmorStandSwapItemEvent.h"
+#include "ila/event/minecraft/world/actor/EndermanLeaveBlockEvent.h"
+#include "ila/event/minecraft/world/actor/EndermanTakeBlockEvent.h"
 #include "ila/event/minecraft/world/actor/MobHurtEffectEvent.h"
 #include "ila/event/minecraft/world/actor/ProjectileCreateEvent.h"
 #include "ila/event/minecraft/world/actor/player/PlayerAttackBlockEvent.h"
 #include "ila/event/minecraft/world/actor/player/PlayerDropItemEvent.h"
 #include "ila/event/minecraft/world/actor/player/PlayerEditSignEvent.h"
+#include "ila/event/minecraft/world/actor/player/PlayerInteractEntityEvent.h"
 #include "ila/event/minecraft/world/actor/player/PlayerOperatedItemFrameEvent.h"
+#include "ila/event/minecraft/world/level/block/BlockFallEvent.h"
 #include "ila/event/minecraft/world/level/block/FarmDecayEvent.h"
 #include "ila/event/minecraft/world/level/block/LiquidFlowEvent.h"
 #include "ila/event/minecraft/world/level/block/MossGrowthEvent.h"
 #include "ila/event/minecraft/world/level/block/SculkCatalystAbsorbExperienceEvent.h"
 #include "ila/event/minecraft/world/level/block/SculkSpreadEvent.h"
-#include "ila/event/minecraft/world/level/block/BlockFallEvent.h"
-#include "ila/event/minecraft/world/actor/ActorDestroyBlockEvent.h"
-#include "ila/event/minecraft/world/actor/EndermanLeaveBlockEvent.h"
-#include "ila/event/minecraft/world/actor/EndermanTakeBlockEvent.h"
 // Fix BlockProperty operator&
 inline BlockProperty operator&(BlockProperty a, BlockProperty b) {
     return static_cast<BlockProperty>(static_cast<uint64_t>(a) & static_cast<uint64_t>(b));
@@ -117,52 +117,51 @@ inline bool PreCheck(LandData_sptr const& ptr, UUIDs const& uuid = "", bool igno
 }
 
 static const std::unordered_map<std::string_view, bool LandPermTable::*> itemSpecificPermissionMap = {
-    {"minecraft:skull",           &LandPermTable::allowPlace},           // 放置头颅
-    {"minecraft:banner",          &LandPermTable::allowPlace},           // 放置旗帜
-    {"minecraft:glow_ink_sac",    &LandPermTable::allowPlace},           // 荧光墨囊给告示牌上色
-    {"minecraft:end_crystal",     &LandPermTable::allowPlace},           // 放置末地水晶
-    {"minecraft:ender_eye",       &LandPermTable::allowPlace},           // 放置末影之眼
-    {"minecraft:flint_and_steel", &LandPermTable::useFiregen},           // 使用打火石
-    {"minecraft:bone_meal",       &LandPermTable::useBoneMeal},          // 使用骨粉
-    {"minecraft:armor_stand",     &LandPermTable::allowPlace}            // 放置盔甲架
+    {          "minecraft:skull",  &LandPermTable::allowPlace}, // 放置头颅
+    {         "minecraft:banner",  &LandPermTable::allowPlace}, // 放置旗帜
+    {   "minecraft:glow_ink_sac",  &LandPermTable::allowPlace}, // 荧光墨囊给告示牌上色
+    {    "minecraft:end_crystal",  &LandPermTable::allowPlace}, // 放置末地水晶
+    {      "minecraft:ender_eye",  &LandPermTable::allowPlace}, // 放置末影之眼
+    {"minecraft:flint_and_steel",  &LandPermTable::useFiregen}, // 使用打火石
+    {      "minecraft:bone_meal", &LandPermTable::useBoneMeal}, // 使用骨粉
+    {    "minecraft:armor_stand",  &LandPermTable::allowPlace}  // 放置盔甲架
 };
 
 
 static const std::unordered_map<std::string_view, bool LandPermTable::*> blockSpecificPermissionMap = {
-    {"minecraft:dragon_egg",    &LandPermTable::allowAttackDragonEgg}, // 攻击龙蛋
-    {"minecraft:bed",           &LandPermTable::useBed},               // 使用床
-    {"minecraft:chest",         &LandPermTable::allowOpenChest},       // 打开箱子
-    {"minecraft:trapped_chest", &LandPermTable::allowOpenChest},       // 打开陷阱箱
-    {"minecraft:campfire",      &LandPermTable::useCampfire},          // 使用营火 
-    {"minecraft:soul_campfire", &LandPermTable::useCampfire},          // 使用灵魂营火
-    {"minecraft:composter",     &LandPermTable::useComposter},         // 使用堆肥桶
-    {"minecraft:noteblock",     &LandPermTable::useNoteBlock},         // 使用音符盒
-    {"minecraft:jukebox",       &LandPermTable::useJukebox},           // 使用唱片机
-    {"minecraft:bell",          &LandPermTable::useBell},              // 使用钟
-    {"minecraft:daylight_detector_inverted", &LandPermTable::useDaylightDetector}, // 使用阳光探测器 (反向)
-    {"minecraft:daylight_detector", &LandPermTable::useDaylightDetector},          // 使用阳光探测器 
-    {"minecraft:lectern",       &LandPermTable::useLectern},           // 使用讲台
-    {"minecraft:cauldron",      &LandPermTable::useCauldron},          // 使用炼药锅
-    {"minecraft:respawn_anchor",&LandPermTable::useRespawnAnchor},    // 使用重生锚
-    {"minecraft:flower_pot",    &LandPermTable::editFlowerPot}         // 编辑花盆
+    {                "minecraft:dragon_egg", &LandPermTable::allowAttackDragonEgg}, // 攻击龙蛋
+    {                       "minecraft:bed",               &LandPermTable::useBed}, // 使用床
+    {                     "minecraft:chest",       &LandPermTable::allowOpenChest}, // 打开箱子
+    {             "minecraft:trapped_chest",       &LandPermTable::allowOpenChest}, // 打开陷阱箱
+    {                  "minecraft:campfire",          &LandPermTable::useCampfire}, // 使用营火
+    {             "minecraft:soul_campfire",          &LandPermTable::useCampfire}, // 使用灵魂营火
+    {                 "minecraft:composter",         &LandPermTable::useComposter}, // 使用堆肥桶
+    {                 "minecraft:noteblock",         &LandPermTable::useNoteBlock}, // 使用音符盒
+    {                   "minecraft:jukebox",           &LandPermTable::useJukebox}, // 使用唱片机
+    {                      "minecraft:bell",              &LandPermTable::useBell}, // 使用钟
+    {"minecraft:daylight_detector_inverted",  &LandPermTable::useDaylightDetector}, // 使用阳光探测器 (反向)
+    {         "minecraft:daylight_detector",  &LandPermTable::useDaylightDetector}, // 使用阳光探测器
+    {                   "minecraft:lectern",           &LandPermTable::useLectern}, // 使用讲台
+    {                  "minecraft:cauldron",          &LandPermTable::useCauldron}, // 使用炼药锅
+    {            "minecraft:respawn_anchor",     &LandPermTable::useRespawnAnchor}, // 使用重生锚
+    {                "minecraft:flower_pot",        &LandPermTable::editFlowerPot}  // 编辑花盆
 };
 
 static const std::unordered_map<std::string_view, bool LandPermTable::*> blockFunctionalPermissionMap = {
     {"minecraft:cartography_table", &LandPermTable::useCartographyTable}, // 制图台
-    {"minecraft:smithing_table",    &LandPermTable::useSmithingTable},    // 锻造台
-    {"minecraft:brewing_stand",     &LandPermTable::useBrewingStand},     // 酿造台
-    {"minecraft:anvil",             &LandPermTable::useAnvil},            // 铁砧
-    {"minecraft:grindstone",        &LandPermTable::useGrindstone},       // 砂轮
-    {"minecraft:enchanting_table",  &LandPermTable::useEnchantingTable},  // 附魔台
-    {"minecraft:barrel",            &LandPermTable::useBarrel},           // 木桶
-    {"minecraft:beacon",            &LandPermTable::useBeacon},           // 信标
-    {"minecraft:hopper",            &LandPermTable::useHopper},           // 漏斗
-    {"minecraft:dropper",           &LandPermTable::useDropper},          // 投掷器
-    {"minecraft:dispenser",         &LandPermTable::useDispenser},        // 发射器
-    {"minecraft:loom",              &LandPermTable::useLoom},             // 织布机
-    {"minecraft:stonecutter_block", &LandPermTable::useStonecutter}       // 切石机
+    {   "minecraft:smithing_table",    &LandPermTable::useSmithingTable}, // 锻造台
+    {    "minecraft:brewing_stand",     &LandPermTable::useBrewingStand}, // 酿造台
+    {            "minecraft:anvil",            &LandPermTable::useAnvil}, // 铁砧
+    {       "minecraft:grindstone",       &LandPermTable::useGrindstone}, // 砂轮
+    { "minecraft:enchanting_table",  &LandPermTable::useEnchantingTable}, // 附魔台
+    {           "minecraft:barrel",           &LandPermTable::useBarrel}, // 木桶
+    {           "minecraft:beacon",           &LandPermTable::useBeacon}, // 信标
+    {           "minecraft:hopper",           &LandPermTable::useHopper}, // 漏斗
+    {          "minecraft:dropper",          &LandPermTable::useDropper}, // 投掷器
+    {        "minecraft:dispenser",        &LandPermTable::useDispenser}, // 发射器
+    {             "minecraft:loom",             &LandPermTable::useLoom}, // 织布机
+    {"minecraft:stonecutter_block",      &LandPermTable::useStonecutter}  // 切石机
 };
-
 
 
 bool EventListener::setup() {
@@ -302,45 +301,49 @@ bool EventListener::setup() {
         })
     )
 
-        CHECK_EVENT_AND_REGISTER_LISTENER(
+    CHECK_EVENT_AND_REGISTER_LISTENER(
         Config::cfg.listeners.EndermanLeaveBlockEvent,
-        bus->emplaceListener<ila::mc::EndermanLeaveBlockBeforeEvent>([db, logger](ila::mc::EndermanLeaveBlockBeforeEvent& ev) {
-            auto& actor    = ev.self();
-            auto& blockPos = ev.pos();
+        bus->emplaceListener<ila::mc::EndermanLeaveBlockBeforeEvent>(
+            [db, logger](ila::mc::EndermanLeaveBlockBeforeEvent& ev) {
+                auto& actor    = ev.self();
+                auto& blockPos = ev.pos();
 
-            logger->debug("[EndermanLeave] Actor: {}, Pos: {}", actor.getTypeName(), blockPos.toString());
+                logger->debug("[EndermanLeave] Actor: {}, Pos: {}", actor.getTypeName(), blockPos.toString());
 
-            auto land = db->getLandAt(blockPos, actor.getDimensionId());
-            if (PreCheck(land)) return; // land not found
+                auto land = db->getLandAt(blockPos, actor.getDimensionId());
+                if (PreCheck(land)) return; // land not found
 
 
-            auto& tab = land->getLandPermTableConst();
-            if (tab.allowActorDestroy) {
-                return;
+                auto& tab = land->getLandPermTableConst();
+                if (tab.allowActorDestroy) {
+                    return;
+                }
+
+                ev.cancel();
             }
-
-            ev.cancel();
-        })
+        )
     )
     CHECK_EVENT_AND_REGISTER_LISTENER(
         Config::cfg.listeners.EndermanTakeBlockEvent,
-        bus->emplaceListener<ila::mc::EndermanLeaveBlockBeforeEvent>([db, logger](ila::mc::EndermanLeaveBlockBeforeEvent& ev) {
-            auto& actor    = ev.self();
-            auto& blockPos = ev.pos();
+        bus->emplaceListener<ila::mc::EndermanLeaveBlockBeforeEvent>(
+            [db, logger](ila::mc::EndermanLeaveBlockBeforeEvent& ev) {
+                auto& actor    = ev.self();
+                auto& blockPos = ev.pos();
 
-            logger->debug("[EndermanLeave] Actor: {}, Pos: {}", actor.getTypeName(), blockPos.toString());
+                logger->debug("[EndermanLeave] Actor: {}, Pos: {}", actor.getTypeName(), blockPos.toString());
 
-            auto land = db->getLandAt(blockPos, actor.getDimensionId());
-            if (PreCheck(land)) return; // land not found
+                auto land = db->getLandAt(blockPos, actor.getDimensionId());
+                if (PreCheck(land)) return; // land not found
 
 
-            auto& tab = land->getLandPermTableConst();
-            if (tab.allowActorDestroy) {
-                return;
+                auto& tab = land->getLandPermTableConst();
+                if (tab.allowActorDestroy) {
+                    return;
+                }
+
+                ev.cancel();
             }
-
-            ev.cancel();
-        })
+        )
     )
 
     CHECK_EVENT_AND_REGISTER_LISTENER(
@@ -353,7 +356,7 @@ bool EventListener::setup() {
             auto  block     = ev.block().has_value() ? &ev.block().get() : nullptr;
 
             // 从 ItemStack 获取 Item 对象
-            const Item* actualItem = itemStack.getItem(); 
+            const Item* actualItem = itemStack.getItem();
 
             auto const  itemTypeNameForMap = itemStack.getTypeName(); // 用于 itemSpecificPermissionMap 的键
             auto const& blockTypeName      = block ? block->getTypeName() : "";
@@ -362,7 +365,7 @@ bool EventListener::setup() {
                 "[InteractBlock] Pos: {}, item: {} (Item*: {}), block: {}",
                 pos.toString(),
                 itemTypeNameForMap,
-                (void*)actualItem, 
+                (void*)actualItem,
                 blockTypeName
             );
 
@@ -376,20 +379,19 @@ bool EventListener::setup() {
 
             bool itemCancel = false;
 
-            if (actualItem) { // 判空
+            if (actualItem) {                                                      // 判空
                 void** itemVftable = *reinterpret_cast<void** const*>(actualItem); // 获取物品的虚函数表
-               auto& a = *actualItem->mTags;
-               for (auto const& tag : a) {
-                logger->debug("Item Tag: {}", tag.getString());
-            }
-                
-                if ((itemVftable == BucketItem::$vftable() && !tab.useBucket) ||         // 桶类 (BucketItem)
-                    (itemVftable == HatchetItem::$vftable() && !tab.allowAxePeeled) ||  // 斧头 (HatchetItem)
-                    (itemVftable == HoeItem::$vftable() && !tab.useHoe) ||              // 锄头 (HoeItem)
+                auto&  a           = *actualItem->mTags;
+                for (auto const& tag : a) {
+                    logger->debug("Item Tag: {}", tag.getString());
+                }
+
+                if ((itemVftable == BucketItem::$vftable() && !tab.useBucket) ||       // 桶类 (BucketItem)
+                    (itemVftable == HatchetItem::$vftable() && !tab.allowAxePeeled) || // 斧头 (HatchetItem)
+                    (itemVftable == HoeItem::$vftable() && !tab.useHoe) ||             // 锄头 (HoeItem)
                     (itemVftable == ShovelItem::$vftable() && !tab.useShovel)
-                    ||(actualItem->hasTag(HashedString("minecraft:boat")) && !tab.placeBoat)
-                ||(actualItem->hasTag(HashedString("minecraft:is_minecart")) && !tab.placeMinecart)
-                ) {        
+                    || (actualItem->hasTag(HashedString("minecraft:boat")) && !tab.placeBoat)
+                    || (actualItem->hasTag(HashedString("minecraft:is_minecart")) && !tab.placeMinecart)) {
                     itemCancel = true;
                 } else {
                     auto it = itemSpecificPermissionMap.find(itemTypeNameForMap);
@@ -403,9 +405,9 @@ bool EventListener::setup() {
                     itemCancel = true;
                 }
             }
-            CANCEL_AND_RETURN_IF(itemCancel); 
+            CANCEL_AND_RETURN_IF(itemCancel);
 
-           
+
             if (block) { // 判空
                 auto const& legacyBlock = block->getLegacyBlock();
                 bool        blockCancel = false;
@@ -416,44 +418,47 @@ bool EventListener::setup() {
                 }
                 CANCEL_AND_RETURN_IF(blockCancel);
 
-                void**      instanceVftable = *reinterpret_cast<void** const*>(&legacyBlock);
+                void** instanceVftable = *reinterpret_cast<void** const*>(&legacyBlock);
 
-                if ((legacyBlock.isButtonBlock() && !tab.useButton) ||           // 按钮
-                    (legacyBlock.isDoorBlock() && !tab.useDoor) ||               // 门
-                    (legacyBlock.isFenceGateBlock() && !tab.useFenceGate) ||     // 栅栏门
-                    (legacyBlock.mIsTrapdoor && !tab.useTrapdoor) ||             // 活板门
-                    ((instanceVftable == SignBlock::$vftable() || instanceVftable == HangingSignBlock::$vftable()) && !tab.editSign) || // 告示牌
-                    (instanceVftable == ShulkerBoxBlock::$vftable() && !tab.useShulkerBox) || // 潜影盒 
-                    (legacyBlock.isCraftingBlock() && !tab.useCraftingTable) ||  // 工作台
-                    (legacyBlock.isLeverBlock() && !tab.useLever)||
-                    (instanceVftable == BlastFurnaceBlock::$vftable() && !tab.useBlastFurnace) || // 高炉 
-                    (instanceVftable == FurnaceBlock::$vftable() && !tab.useFurnace) ||           // 熔炉
-                    (instanceVftable == SmokerBlock::$vftable() && !tab.useSmoker)) {             // 拉杆
+                if ((legacyBlock.isButtonBlock() && !tab.useButton) ||       // 按钮
+                    (legacyBlock.isDoorBlock() && !tab.useDoor) ||           // 门
+                    (legacyBlock.isFenceGateBlock() && !tab.useFenceGate) || // 栅栏门
+                    (legacyBlock.mIsTrapdoor && !tab.useTrapdoor) ||         // 活板门
+                    ((instanceVftable == SignBlock::$vftable() || instanceVftable == HangingSignBlock::$vftable())
+                     && !tab.editSign)
+                    ||                                                                        // 告示牌
+                    (instanceVftable == ShulkerBoxBlock::$vftable() && !tab.useShulkerBox) || // 潜影盒
+                    (legacyBlock.isCraftingBlock() && !tab.useCraftingTable) ||               // 工作台
+                    (legacyBlock.isLeverBlock() && !tab.useLever)
+                    || (instanceVftable == BlastFurnaceBlock::$vftable() && !tab.useBlastFurnace) || // 高炉
+                    (instanceVftable == FurnaceBlock::$vftable() && !tab.useFurnace) ||              // 熔炉
+                    (instanceVftable == SmokerBlock::$vftable() && !tab.useSmoker)) {                // 拉杆
                     blockCancel = true;
                 }
-                if((instanceVftable == BlastFurnaceBlock::$vftable() && !tab.useBlastFurnace) || // 高炉 
+                if ((instanceVftable == BlastFurnaceBlock::$vftable() && !tab.useBlastFurnace) || // 高炉
                     (instanceVftable == FurnaceBlock::$vftable() && !tab.useFurnace) ||           // 熔炉
                     (instanceVftable == SmokerBlock::$vftable() && !tab.useSmoker)) {
                     bool BA = instanceVftable == BlastFurnaceBlock::$vftable(); // 高炉
-                    bool FA = instanceVftable == FurnaceBlock::$vftable(); // 熔炉
-                    bool SA = instanceVftable == SmokerBlock::$vftable(); 
-                    logger->info("A {}, B{} C{} D {}E {}F {}",tab.useSmoker,tab.useFurnace,tab.useSmoker,BA,FA,SA),          
-                    blockCancel = true;
+                    bool FA = instanceVftable == FurnaceBlock::$vftable();      // 熔炉
+                    bool SA = instanceVftable == SmokerBlock::$vftable();
+                    logger
+                        ->info("A {}, B{} C{} D {}E {}F {}", tab.useSmoker, tab.useFurnace, tab.useSmoker, BA, FA, SA),
+                        blockCancel = true;
                 }
-                
-                CANCEL_AND_RETURN_IF(blockCancel); 
-                blockCancel = false; 
+
+                CANCEL_AND_RETURN_IF(blockCancel);
+                blockCancel = false;
             }
         })
     )
 
-        CHECK_EVENT_AND_REGISTER_LISTENER(
+    CHECK_EVENT_AND_REGISTER_LISTENER(
         Config::cfg.listeners.PlayerInteractEntityBeforeEvent,
         bus->emplaceListener<ila::mc::PlayerInteractEntityBeforeEvent>(
             [db, logger](ila::mc::PlayerInteractEntityBeforeEvent& ev) {
                 logger->debug("[交互实体] name: {}", ev.self().getRealName());
-               auto& entity = ev.target();
-                auto land = db->getLandAt(entity.getPosition(), ev.self().getDimensionId());
+                auto& entity = ev.target();
+                auto  land   = db->getLandAt(entity.getPosition(), ev.self().getDimensionId());
                 if (PreCheck(land, ev.self().getUuid().asString())) return;
 
                 if (land->getLandPermTableConst().allowInteractEntity) return;
@@ -497,9 +502,9 @@ bool EventListener::setup() {
 
             auto const& et  = mob.getTypeName();
             auto const& tab = land->getLandPermTableConst();
-            if (et == "minecraft:ender_crystal" && tab.allowAttackEnderCrystal) return;      // 末影水晶
-            if (et == "minecraft:armor_stand" && tab.allowDestroyArmorStand) return;         // 盔甲架
-            if (tab.allowAttackPlayer && mob.isPlayer()) return;                             // 玩家
+            if (et == "minecraft:ender_crystal" && tab.allowAttackEnderCrystal) return; // 末影水晶
+            if (et == "minecraft:armor_stand" && tab.allowDestroyArmorStand) return;    // 盔甲架
+            if (tab.allowAttackPlayer && mob.isPlayer()) return;                        // 玩家
 
             bool isMonster = mob.hasCategory(::ActorCategory::Monster) || mob.hasFamily("monster");
 
@@ -549,8 +554,8 @@ bool EventListener::setup() {
                 return;
             }
 
-            auto const& tab = land->getLandPermTableConst();
-            bool isMonster = mob->hasCategory(::ActorCategory::Monster) || mob->hasFamily("monster");
+            auto const& tab       = land->getLandPermTableConst();
+            bool        isMonster = mob->hasCategory(::ActorCategory::Monster) || mob->hasFamily("monster");
 
             if (isMonster) {
                 if (!tab.allowMonsterSpawn) {
@@ -729,7 +734,8 @@ bool EventListener::setup() {
 
             auto land  = db->getLandAt(push, region.getDimensionId());
             auto land2 = db->getLandAt(piston, region.getDimensionId());
-            if (land && !land->getLandPermTableConst().allowPistonPush && land != land2 && land->getLandPos().isOnOuterBoundary(push)) {
+            if (land && !land->getLandPermTableConst().allowPistonPush && land != land2
+                && land->getLandPos().isOnOuterBoundary(push)) {
                 ev.cancel();
             }
         })
@@ -783,7 +789,7 @@ bool EventListener::setup() {
             auto&  type = ev.self().getTypeName();
 
             logger->debug("[ProjectileSpawn] type: {}", type);
-            auto mob = self.getOwner();
+            auto mob  = self.getOwner();
             auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
             if (PreCheck(land)) return; // land not found
 
@@ -804,7 +810,8 @@ bool EventListener::setup() {
                     } else {
                         CANCEL_AND_RETURN_IF(!tab.allowProjectileCreate);
                     }
-                } return;
+                }
+                return;
             }
         })
     )
@@ -823,7 +830,7 @@ bool EventListener::setup() {
             ev.cancel();
         })
     )
-        CHECK_EVENT_AND_REGISTER_LISTENER(
+    CHECK_EVENT_AND_REGISTER_LISTENER(
         Config::cfg.listeners.BlockFallBeforeEvent,
         bus->emplaceListener<ila::mc::BlockFallBeforeEvent>([db, logger](ila::mc::BlockFallBeforeEvent& ev) {
             logger->debug("[BlockFall] Pos: {}", ev.pos().toString());
@@ -889,20 +896,17 @@ bool EventListener::setup() {
         Config::cfg.listeners.LiquidTryFlowBeforeEvent,
         bus->emplaceListener<ila::mc::LiquidFlowBeforeEvent>([db, logger](ila::mc::LiquidFlowBeforeEvent& ev) {
             auto& sou = ev.flowFromPos();
-            auto& to = ev.pos();
+            auto& to  = ev.pos();
             logger->debug("[LiquidFlow] {} -> {}", sou.toString(), to.toString());
-            
-
 
 
             auto landSou = db->getLandAt(sou, ev.blockSource().getDimensionId());
-            auto landTo = db->getLandAt(to, ev.blockSource().getDimensionId());
+            auto landTo  = db->getLandAt(to, ev.blockSource().getDimensionId());
 
             // 源头在领地外
             if (landTo) { // 判空
-                if (!landTo->getLandPermTableConst().allowLiquidFlow &&
-                    landTo->getLandPos().isOnOuterBoundary(sou) && 
-                    landTo->getLandPos().isOnInnerBoundary(to)) {
+                if (!landTo->getLandPermTableConst().allowLiquidFlow && landTo->getLandPos().isOnOuterBoundary(sou)
+                    && landTo->getLandPos().isOnInnerBoundary(to)) {
                     logger->debug("[LiquidFlow] 液体流动成功拦截 {}", landTo->getLandName());
                     ev.cancel();
                 }
@@ -1000,8 +1004,6 @@ bool EventListener::release() {
 
     return true;
 }
-
-
 
 
 } // namespace land
