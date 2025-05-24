@@ -734,6 +734,7 @@ bool EventListener::setup() {
 
             auto const dimid = ev.blockSource().getDimensionId();
 
+            // TODO: 支持 粘液块/蜂蜜块 推动检测
             auto pistonLand = db->getLandAt(piston, dimid);
             auto pushLand   = db->getLandAt(push, dimid);
             if ((!pistonLand &&                                               // 活塞所在位置没有领地
@@ -852,10 +853,9 @@ bool EventListener::setup() {
             }
             // 如果方块掉落位置在领地内，且领地不允许方块掉落，则拦截
             if (PreCheck(land)) return; // land not found
-            if (land) {
-                if (!land->getLandPermTableConst().allowBlockFall) { // 假设有一个allowBlockFall权限
-                    ev.cancel();
-                }
+
+            if (land && !land->getLandPermTableConst().allowBlockFall) {
+                ev.cancel();
             }
         })
     )
