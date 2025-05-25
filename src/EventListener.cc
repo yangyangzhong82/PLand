@@ -81,12 +81,13 @@
 #include "ila/event/minecraft/world/actor/player/PlayerInteractEntityEvent.h"
 #include "ila/event/minecraft/world/actor/player/PlayerOperatedItemFrameEvent.h"
 #include "ila/event/minecraft/world/level/block/BlockFallEvent.h"
+#include "ila/event/minecraft/world/level/block/DragonEggBlockTeleportEvent.h"
 #include "ila/event/minecraft/world/level/block/FarmDecayEvent.h"
 #include "ila/event/minecraft/world/level/block/LiquidFlowEvent.h"
 #include "ila/event/minecraft/world/level/block/MossGrowthEvent.h"
 #include "ila/event/minecraft/world/level/block/SculkCatalystAbsorbExperienceEvent.h"
 #include "ila/event/minecraft/world/level/block/SculkSpreadEvent.h"
-#include "ila/event/minecraft/world/level/block/DragonEggBlockTeleportEvent.h"
+
 
 // Fix BlockProperty operator&
 inline BlockProperty operator&(BlockProperty a, BlockProperty b) {
@@ -922,20 +923,22 @@ bool EventListener::setup() {
             // logger->debug("[LiquidFlow] Land:null");
         })
     )
-    CHECK_EVENT_AND_REGISTER_LISTENER(//再加个事件拦龙蛋，
-        Config::cfg.listeners.DragonEggBlockTeleportBeforeEvent,
-        bus->emplaceListener<ila::mc::DragonEggBlockTeleportBeforeEvent>([db,
-                                                                    logger](ila::mc::DragonEggBlockTeleportBeforeEvent& ev) {
-            auto& pos = ev.pos();
-            logger->debug("[SculkBlockGrowth] {}", pos.toString());
 
-            auto land = db->getLandAt(pos, ev.blockSource().getDimensionId());
-            if (land) {
-                if (!land->getLandPermTableConst().allowAttackDragonEgg) {
-                    ev.cancel();
+    CHECK_EVENT_AND_REGISTER_LISTENER(
+        Config::cfg.listeners.DragonEggBlockTeleportBeforeEvent,
+        bus->emplaceListener<ila::mc::DragonEggBlockTeleportBeforeEvent>(
+            [db, logger](ila::mc::DragonEggBlockTeleportBeforeEvent& ev) {
+                auto& pos = ev.pos();
+                logger->debug("[DragonEggBlockTeleport] {}", pos.toString());
+
+                auto land = db->getLandAt(pos, ev.blockSource().getDimensionId());
+                if (land) {
+                    if (!land->getLandPermTableConst().allowAttackDragonEgg) {
+                        ev.cancel();
+                    }
                 }
             }
-        })
+        )
     )
 
     CHECK_EVENT_AND_REGISTER_LISTENER(
@@ -962,9 +965,9 @@ bool EventListener::setup() {
             auto sou = db->getLandAt(ev.selfPos(), ev.blockSource().getDimensionId());
             auto tar = db->getLandAt(ev.targetPos(), ev.blockSource().getDimensionId());
 
-            if (!sou && !tar) return; // 领地外蔓延
-            if (sou && tar) return;   // 领地内蔓延
-            if (sou && !tar) return;  // 领地内蔓延到外
+            // if (!sou && !tar) return; // 领地外蔓延
+            // if (sou && tar) return;   // 领地内蔓延
+            // if (sou && !tar) return;  // 领地内蔓延到外
             if (!sou && tar) {
                 ev.cancel(); // 外蔓延到领地内
             }
