@@ -158,14 +158,14 @@ LandData_sptr iLandConverter::convert(RawData::iLandData const& raw, string cons
         tab.useFenceGate        = p.use_fence_gate;
         tab.usePressurePlate    = p.use_pressure_plate;
         tab.useBlastFurnace     = p.use_blast_furnace;
-        tab.useFiregen          = p.use_firegen;
+        tab.useFlintAndSteel    = p.use_firegen;
         tab.useCampfire         = p.use_campfire;
         tab.useBarrel           = p.use_barrel;
         tab.useFurnace          = p.use_furnace;
         tab.useStonecutter      = p.use_stonecutter;
         tab.useBeacon           = p.use_beacon;
         tab.useDaylightDetector = p.use_daylight_detector;
-        tab.allowAttackPlayer   = p.allow_attack_player;
+        tab.allowPlayerDamage   = p.allow_attack_player;
         // tab.allowDestroy        = p.allow_entity_destroy; // allow_destroy
         tab.useLectern          = p.use_lectern;
         tab.useEnchantingTable  = p.use_enchanting_table;
@@ -173,7 +173,7 @@ LandData_sptr iLandConverter::convert(RawData::iLandData const& raw, string cons
         tab.useAnvil            = p.use_anvil;
         tab.useLever            = p.use_lever;
         tab.useButton           = p.use_button;
-        tab.allowAttackMonster  = p.allow_attack_mobs;
+        tab.allowMonsterDamage  = p.allow_attack_mobs;
         tab.useComposter        = p.use_composter;
         tab.allowRideEntity     = p.allow_ride_entity;
         tab.useSmithingTable    = p.use_smithing_table;

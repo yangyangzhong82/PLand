@@ -120,14 +120,14 @@ inline bool PreCheck(LandData_sptr const& ptr, UUIDs const& uuid = "", bool igno
 }
 
 static const std::unordered_map<std::string_view, bool LandPermTable::*> itemSpecificPermissionMap = {
-    {          "minecraft:skull",  &LandPermTable::allowPlace}, // 放置头颅
-    {         "minecraft:banner",  &LandPermTable::allowPlace}, // 放置旗帜
-    {   "minecraft:glow_ink_sac",  &LandPermTable::allowPlace}, // 荧光墨囊给告示牌上色
-    {    "minecraft:end_crystal",  &LandPermTable::allowPlace}, // 放置末地水晶
-    {      "minecraft:ender_eye",  &LandPermTable::allowPlace}, // 放置末影之眼
-    {"minecraft:flint_and_steel",  &LandPermTable::useFiregen}, // 使用打火石
-    {      "minecraft:bone_meal", &LandPermTable::useBoneMeal}, // 使用骨粉
-    {    "minecraft:armor_stand",  &LandPermTable::allowPlace}  // 放置盔甲架
+    {          "minecraft:skull",       &LandPermTable::allowPlace}, // 放置头颅
+    {         "minecraft:banner",       &LandPermTable::allowPlace}, // 放置旗帜
+    {   "minecraft:glow_ink_sac",       &LandPermTable::allowPlace}, // 荧光墨囊给告示牌上色
+    {    "minecraft:end_crystal",       &LandPermTable::allowPlace}, // 放置末地水晶
+    {      "minecraft:ender_eye",       &LandPermTable::allowPlace}, // 放置末影之眼
+    {"minecraft:flint_and_steel", &LandPermTable::useFlintAndSteel}, // 使用打火石
+    {      "minecraft:bone_meal",      &LandPermTable::useBoneMeal}, // 使用骨粉
+    {    "minecraft:armor_stand",       &LandPermTable::allowPlace}  // 放置盔甲架
 };
 
 
@@ -233,9 +233,9 @@ bool EventListener::setup() {
 
             if (land) {
                 auto const& tab = land->getLandPermTableConst();
-                CANCEL_AND_RETURN_IF(!tab.allowAttackPlayer && self.isPlayer());
-                CANCEL_AND_RETURN_IF(!tab.allowAttackAnimal && self.hasCategory(::ActorCategory::Animal));
-                CANCEL_AND_RETURN_IF(!tab.allowAttackMonster && self.hasCategory(::ActorCategory::Monster));
+                CANCEL_AND_RETURN_IF(!tab.allowPlayerDamage && self.isPlayer());
+                CANCEL_AND_RETURN_IF(!tab.allowAnimalDamage && self.hasCategory(::ActorCategory::Animal));
+                CANCEL_AND_RETURN_IF(!tab.allowMonsterDamage && self.hasCategory(::ActorCategory::Monster));
             }
         })
     )
@@ -701,9 +701,9 @@ bool EventListener::setup() {
             if (PreCheck(land)) return; // land not found
             if (land) {
                 auto const& tab = land->getLandPermTableConst();
-                if (tab.allowAttackPlayer && self.isPlayer()) return;
-                if (tab.allowAttackAnimal && self.hasCategory(::ActorCategory::Animal)) return;
-                if (tab.allowAttackMonster && self.hasCategory(::ActorCategory::Monster)) return;
+                if (tab.allowPlayerDamage && self.isPlayer()) return;
+                if (tab.allowAnimalDamage && self.hasCategory(::ActorCategory::Animal)) return;
+                if (tab.allowMonsterDamage && self.hasCategory(::ActorCategory::Monster)) return;
             }
 
             if (self.isPlayer()) {

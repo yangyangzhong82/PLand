@@ -22,9 +22,9 @@ struct LandPermTable {
     bool allowDestroy{false};             // 允许破坏
     bool allowWitherDestroy{false};       // 允许凋零破坏
     bool allowPlace{false};               // 允许放置 [x]
-    bool allowAttackPlayer{false};        // 允许攻击玩家
-    bool allowAttackAnimal{false};        // 允许攻击动物
-    bool allowAttackMonster{true};        // 允许攻击怪物
+    bool allowPlayerDamage{false};        // 允许玩家受伤
+    bool allowAnimalDamage{false};        // 允许动物受伤
+    bool allowMonsterDamage{true};        // 允许怪物受伤
     bool allowOpenChest{false};           // 允许打开箱子
     bool allowPickupItem{false};          // 允许拾取物品
     bool allowEndermanLeaveBlock{false};  // 允许末影人放下方块
@@ -51,7 +51,7 @@ struct LandPermTable {
     bool useCampfire{false};         // 使用营火
     bool placeBoat{false};           // 放置船
     bool placeMinecart{false};       // 放置矿车
-    bool useFiregen{false};          // 使用打火石
+    bool useFlintAndSteel{false};    // 使用打火石
     bool useCartographyTable{false}; // 使用制图台
     bool useComposter{false};        // 使用堆肥桶
     bool useCraftingTable{false};    // 使用工作台
@@ -96,7 +96,7 @@ using LandData_sptr = std::shared_ptr<class LandData>; // 共享指针
 using LandData_wptr = std::weak_ptr<class LandData>;   // 弱指针
 class LandData {
 public:
-    int                 version{12};                           // 版本号
+    int                 version{13};                           // 版本号
     LandPos             mPos;                                  // 领地对角坐标
     PosBase             mTeleportPos;                          // 领地传送坐标
     LandID              mLandID{LandID(-1)};                   // 领地唯一ID  (由 PLand::addLand() 时分配)
