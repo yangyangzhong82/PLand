@@ -507,15 +507,6 @@ bool EventListener::setup() {
             auto const& tab = land->getLandPermTableConst();
             if (et == "minecraft:ender_crystal" && tab.allowAttackEnderCrystal) return; // 末影水晶
             if (et == "minecraft:armor_stand" && tab.allowDestroyArmorStand) return;    // 盔甲架
-            if (tab.allowAttackPlayer && mob.isPlayer()) return;                        // 玩家
-
-            bool isMonster = mob.hasCategory(::ActorCategory::Monster) || mob.hasFamily("monster");
-
-            if (isMonster) {
-                if (tab.allowAttackMonster) return;
-            } else {
-                if (tab.allowAttackAnimal) return;
-            }
 
             ev.cancel();
         })
