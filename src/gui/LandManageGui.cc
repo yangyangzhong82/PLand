@@ -366,13 +366,18 @@ void LandManageGui::EditLandDescGui::impl(Player& player, LandData_sptr const& p
     );
 }
 void LandManageGui::EditLandOwnerGui::impl(Player& player, LandData_sptr const& ptr) {
-    ChoosePlayerUtilGui::impl(player, [ptr](Player& self, Player& target) {
-        if (self.getUuid() == target.getUuid()) {
+    ChoosePlayerUtilGui::impl(player, [ptr](Player& self, Player* target) {
+        if (!target) {
+            mc_utils::sendText<mc_utils::LogLevel::Error>(self, "目标玩家已离线，无法继续操作!"_trf(self));
+            return;
+        }
+
+        if (self.getUuid() == target->getUuid()) {
             mc_utils::sendText(self, "不能将领地转让给自己, 左手倒右手哦!"_trf(self));
             return;
         }
 
-        LandOwnerChangeBeforeEvent ev(self, target, ptr->getLandID());
+        LandOwnerChangeBeforeEvent ev(self, *target, ptr->getLandID());
         ll::event::EventBus::getInstance().publish(ev);
         if (ev.isCancelled()) {
             return;
@@ -382,34 +387,42 @@ void LandManageGui::EditLandOwnerGui::impl(Player& player, LandData_sptr const& 
             PLUGIN_NAME + " | 确认转让?"_trf(self),
             "您确定要将领地转让给 {} 吗?\n转让后，您将失去此领地的权限。\n此操作不可逆,请谨慎操作!"_trf(
                 self,
-                target.getRealName()
+                target->getRealName()
             ),
             "确认"_trf(self),
             "返回"_trf(self)
         );
-        fm.sendTo(self, [ptr, &target](Player& self, ModalFormResult const& res, FormCancelReason) {
-            if (!res) {
-                return;
-            }
+        fm.sendTo(
+            self,
+            [ptr, weak = target->getWeakEntity()](Player& self, ModalFormResult const& res, FormCancelReason) {
+                if (!res) {
+                    return;
+                }
+                Player* target = weak.tryUnwrap<Player>();
+                if (!target) {
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(self, "目标玩家已离线，无法继续操作!"_trf(self));
+                    return;
+                }
 
-            if (!(bool)res.value()) {
-                LandManageGui::impl(self, ptr->getLandID());
-                return;
-            }
+                if (!(bool)res.value()) {
+                    LandManageGui::impl(self, ptr->getLandID());
+                    return;
+                }
 
-            if (ptr->setLandOwner(target.getUuid().asString())) {
-                mc_utils::sendText(self, "领地已转让给 {}"_trf(self, target.getRealName()));
-                mc_utils::sendText(
-                    target,
-                    "您已成功接手来自 \"{}\" 的领地 \"{}\""_trf(self, self.getRealName(), ptr->getLandName())
-                );
+                if (ptr->setLandOwner(target->getUuid().asString())) {
+                    mc_utils::sendText(self, "领地已转让给 {}"_trf(self, target->getRealName()));
+                    mc_utils::sendText(
+                        target,
+                        "您已成功接手来自 \"{}\" 的领地 \"{}\""_trf(self, self.getRealName(), ptr->getLandName())
+                    );
 
-                LandOwnerChangeAfterEvent ev(self, target, ptr->getLandID());
-                ll::event::EventBus::getInstance().publish(ev);
-            } else {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(self, "领地转让失败!"_trf(self));
+                    LandOwnerChangeAfterEvent ev(self, *target, ptr->getLandID());
+                    ll::event::EventBus::getInstance().publish(ev);
+                } else {
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(self, "领地转让失败!"_trf(self));
+                }
             }
-        });
+        );
     });
 }
 void LandManageGui::ReSelectLandGui::impl(Player& player, LandData_sptr const& ptr) {

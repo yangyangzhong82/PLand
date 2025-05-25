@@ -7,6 +7,11 @@
 #include "pland/PLand.h"
 #include "pland/wrapper/FormEx.h"
 
+#include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
+#include "mc/deps/ecs/gamerefs_entity/GameRefsEntity.h"
+#include "mc/deps/game_refs/GameRefs.h"
+#include "mc/deps/game_refs/WeakRef.h"
+
 
 namespace land {
 
@@ -35,7 +40,7 @@ public:
 
 class ChoosePlayerUtilGui {
 public:
-    using ChoosePlayerCall = std::function<void(Player&, Player& choosedPlayer)>;
+    using ChoosePlayerCall = std::function<void(Player&, Player* choosedPlayer)>;
     template <typename ParentForm = void>
     static void impl(Player& player, ChoosePlayerCall const& callback) {
         auto fm = SimpleFormEx::create<LandMainGui, BackButtonPos::Upper>();
@@ -46,7 +51,11 @@ public:
                 return true; // ignore
             }
 
-            fm.appendButton(target.getRealName(), "", [callback, &target](Player& self) { callback(self, target); });
+            fm.appendButton(target.getRealName(), [callback, weakRef = target.getWeakEntity()](Player& self) {
+                if (auto target = weakRef.tryUnwrap<Player>()) {
+                    callback(self, target);
+                }
+            });
             return true;
         });
 

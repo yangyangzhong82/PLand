@@ -247,13 +247,18 @@ void EditLandMemberGui::impl(Player& player, LandData_sptr ptr) {
     fm.sendTo(player);
 }
 void EditLandMemberGui::AddMemberGui::impl(Player& player, LandData_sptr ptr) {
-    ChoosePlayerUtilGui::impl<EditLandMemberGui>(player, [ptr](Player& self, Player& target) {
-        if (self.getUuid() == target.getUuid() && !PLand::getInstance().isOperator(self.getUuid().asString())) {
+    ChoosePlayerUtilGui::impl<EditLandMemberGui>(player, [ptr](Player& self, Player* target) {
+        if (!target) {
+            mc_utils::sendText<mc_utils::LogLevel::Error>(self, "目标玩家已离线，无法继续操作!"_trf(self));
+            return;
+        }
+
+        if (self.getUuid() == target->getUuid() && !PLand::getInstance().isOperator(self.getUuid().asString())) {
             mc_utils::sendText(self, "不能添加自己为领地成员哦!"_trf(self));
             return;
         }
 
-        LandMemberChangeBeforeEvent ev(self, target.getUuid().asString(), ptr->getLandID(), true);
+        LandMemberChangeBeforeEvent ev(self, target->getUuid().asString(), ptr->getLandID(), true);
         ll::event::EventBus::getInstance().publish(ev);
         if (ev.isCancelled()) {
             return;
@@ -261,34 +266,42 @@ void EditLandMemberGui::AddMemberGui::impl(Player& player, LandData_sptr ptr) {
 
         ModalForm fm(
             PLUGIN_NAME + " | 添加成员"_trf(self),
-            "您确定要添加 {} 为领地成员吗?"_trf(self, target.getRealName()),
+            "您确定要添加 {} 为领地成员吗?"_trf(self, target->getRealName()),
             "确认"_trf(self),
             "返回"_trf(self)
         );
-        fm.sendTo(self, [ptr, &target](Player& self, ModalFormResult const& res, FormCancelReason) {
-            if (!res) {
-                return;
-            }
+        fm.sendTo(
+            self,
+            [ptr, weak = target->getWeakEntity()](Player& self, ModalFormResult const& res, FormCancelReason) {
+                if (!res) {
+                    return;
+                }
+                Player* target = weak.tryUnwrap<Player>();
+                if (!target) {
+                    mc_utils::sendText<mc_utils::LogLevel::Error>(self, "目标玩家已离线，无法继续操作!"_trf(self));
+                    return;
+                }
 
-            if (!(bool)res.value()) {
-                EditLandMemberGui::impl(self, ptr);
-                return;
-            }
+                if (!(bool)res.value()) {
+                    EditLandMemberGui::impl(self, ptr);
+                    return;
+                }
 
-            if (ptr->isLandMember(target.getUuid().asString())) {
-                mc_utils::sendText(self, "该玩家已经是领地成员, 请不要重复添加哦!"_trf(self));
-                return;
-            }
+                if (ptr->isLandMember(target->getUuid().asString())) {
+                    mc_utils::sendText(self, "该玩家已经是领地成员, 请不要重复添加哦!"_trf(self));
+                    return;
+                }
 
-            if (ptr->addLandMember(target.getUuid().asString())) {
-                mc_utils::sendText(self, "添加成功!"_trf(self));
+                if (ptr->addLandMember(target->getUuid().asString())) {
+                    mc_utils::sendText(self, "添加成功!"_trf(self));
 
-                LandMemberChangeAfterEvent ev(self, target.getUuid().asString(), ptr->getLandID(), true);
-                ll::event::EventBus::getInstance().publish(ev);
-            } else {
-                mc_utils::sendText(self, "添加失败!"_trf(self));
+                    LandMemberChangeAfterEvent ev(self, target->getUuid().asString(), ptr->getLandID(), true);
+                    ll::event::EventBus::getInstance().publish(ev);
+                } else {
+                    mc_utils::sendText(self, "添加失败!"_trf(self));
+                }
             }
-        });
+        );
     });
 }
 void EditLandMemberGui::RemoveMemberGui::impl(Player& player, LandData_sptr ptr, UUIDs member) {

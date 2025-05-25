@@ -33,9 +33,6 @@ public:
 };
 
 
-// 领地管理GUI
-
-
 // 领地成员管理GUI
 class EditLandMemberGui {
 public:
