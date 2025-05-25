@@ -84,7 +84,20 @@ void LandManageGui::impl(Player& player, LandID id) {
         EditLandDescGui::impl(pl, land);
     });
     fm.appendButton("传送到领地", "textures/ui/icon_recipe_nature", [id](Player& pl) { LandTeleportGui::run(pl, id); });
-    fm.appendButton("设置传送点", "textures/ui/Add-Ons_Nav_Icon36x36", [land](Player& pl) {land->mTeleportPos = pl.getPosition();  });
+    fm.appendButton("设置传送点", "textures/ui/Add-Ons_Nav_Icon36x36", [land](Player& pl) {
+        auto& db = PLand::getInstance();
+        if (!land->mPos.hasPos(pl.getPosition(), true)) {
+            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您当前不在该领地内，无法设置传送点"_trf(pl));
+            return;
+        }
+        auto uuid = pl.getUuid().asString();
+        if (!land->isLandOwner(uuid) && !db.isOperator(uuid)) {
+            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "您不是领地主人或管理员，无法设置传送点"_trf(pl));
+            return;
+        }
+        land->mTeleportPos = pl.getPosition();
+        mc_utils::sendText(pl, "领地传送点已设置!"_trf(pl));
+    });
     fm.appendButton("领地过户"_trf(player), "textures/ui/sidebar_icons/my_characters", [land](Player& pl) {
         EditLandOwnerGui::impl(pl, land);
     });
