@@ -14,6 +14,7 @@
 #include "pland/LandScheduler.h"
 #include "pland/LandSelector.h"
 #include "pland/PLand.h"
+#include "pland/Version.h"
 
 #ifdef LD_TEST
 #include "LandEventTest.h"
@@ -40,11 +41,19 @@ bool MyMod::load() {
     logger.info(R"( |_|     |______|\__,_||_| |_| \__,_|)");
     logger.info(R"(                                     )");
     logger.info("Loading...");
+    logger.info("{}", PLAND_VERSION_STRING);
 
     if (auto res = ll::i18n::getInstance().load(getSelf().getLangDir()); !res) {
         logger.error("Load language file failed, plugin will use default language.");
         res.error().log(logger);
     }
+
+    if (PLAND_VERSION_SNAPSHOT) {
+        logger.warn("您当前正在使用开发快照版本，此版本可能某些功能异常、损坏、甚至导致崩溃，请勿在生产环境中使用。");
+        logger.warn("You are using a development snapshot version, this version may have some abnormal, broken or even "
+                    "crash functions, please do not use it in production environment.");
+    }
+
 
     land::Config::tryLoad();
     logger.setLevel(land::Config::cfg.logLevel); // set console log level

@@ -40,8 +40,14 @@ option("devtool") -- 开发工具
     set_showmenu(true)
 option_end()
 
+rule("gen_version")
+    before_build(function(target)
+        import("scripts.gen_version")()
+    end)
+
 
 target("PLand") -- Change this to your mod name.
+    add_rules("gen_version")
     add_rules("@levibuildscript/linkrule")
     add_rules("@levibuildscript/modpacker")
     add_rules("plugin.compile_commands.autoupdate")

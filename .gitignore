@@ -562,3 +562,5 @@ fabric.properties
 vsxmake2022
 
 doxygen/
+
+include/pland/Version.h
