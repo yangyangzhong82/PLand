@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 增加 getLandsByOwner API 与重载方法@engsr6982
 - 领地UI表单增加设置传送点设置的按钮@yangyangzhong82
 - 增加 使用合成器,雕纹书架,红石比较器,红石中继器,潜影盒五种方块交互权限，并修复权限判断问题 (#48)@yangyangzhong82
-- 增加 玩家破坏画的权限控制(#48)@yangyangzhong82
+- 增加 玩家破坏画、矿车、船的权限控制(#48)@yangyangzhong82
 - 增加 放置船和矿车权限 （#41）@yangyangzhong82
 
 ---
@@ -25,7 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🐛 问题修复
 
 - 修复悬挂告示牌权限判断缺失的问题（#40）@yangyangzhong82
-- 修复领地传送 UI 异常显示问题 @engsr6982 @yangyangzhong82
 - 修复部分事件未正确取消导致的逻辑穿透问题 @engsr6982
 - 修复语言文件打包路径错误问题 @engsr6982
 - 修复玩家长时间停留 GUI 导致 `Player` 悬空引用问题@engsr6982
@@ -37,10 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 修改生物判断逻辑，将非 monster 类型统一视为动物,避免某些生物没有归类导致判断问题 (#35) @yangyangzhong82
 - 优化弹射物权限判定流程，将除了钓鱼竿之外的弹射物权限全部合并至发射弹射物权限中@yangyangzhong82
-- 将液体流动事件替换为 `LiquidFlowBeforeEvent`，提升性能 @yangyangzhong82
+- 将液体流动事件替换为 `LiquidFlowBeforeEvent`，提升性能 @yangyangzhong82(#44)
 - 将活塞和液体流动修改为只对边界判断@yangyangzhong82 @engsr6982
 - 优化领地创建时对数量与范围限制的判断：允许领地管理员无视配置文件的限制创建领地 @yangyangzhong82
-- 优化权限判定,对部分方块和物品不再单纯使用类型名进行判断，使其更加灵活@yangyangzhong82
+- 优化权限判定,对部分方块和物品不再单纯使用类型名进行判断，使其判断更加灵活@yangyangzhong82
 
 ---
 

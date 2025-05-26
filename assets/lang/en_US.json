@@ -40,6 +40,8 @@
     "useBeacon": "Use beacon",
     "useBed": "Use bed",
     "useBell": "Use bell",
+    "allowAttackBoat": "Allow attacking boats",
+    "allowAttackMinecart": "Allow attacking minecarts",
     "useBlastFurnace": "Use blast furnace",
     "useBrewingStand": "Use brewing stand",
     "useCampfire": "Use campfire",
@@ -279,4 +281,5 @@
     "您不是领地主人或管理员，无法设置传送点": "You are not the territory owner or administrator and cannot set a teleport point",
     "领地传送点已设置!": "Territory teleport point has been set!",
     "目标玩家已离线，无法继续操作!": "The target player is offline and cannot continue the operation!"
+
 }

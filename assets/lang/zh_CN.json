@@ -27,6 +27,8 @@
     "allowAnimalSpawn": "允许动物生成",
     "allowMonsterSpawn": "允许怪物生成",
     "allowAttackPainting": "允许破坏画",
+    "allowAttackBoat": "允许攻击船",
+    "allowAttackMinecart": "允许攻击矿车",
     "allowEndermanLeaveBlock": "允许末影人搬运方块",
     "allowActorDestroy": "允许实体破坏方块",
     "useAnvil": "使用铁砧",
