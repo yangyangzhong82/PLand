@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复部分事件未正确取消导致的逻辑穿透问题 @engsr6982
 - 修复语言文件打包路径错误问题 @engsr6982
 - 修复玩家长时间停留 GUI 导致 `Player` 悬空引用问题@engsr6982
+- 修复玩家乘骑实体权限判断的问题，现在以被乘骑实体的坐标来判断领地而非操作玩家的坐标(#50)
 
 ---
 

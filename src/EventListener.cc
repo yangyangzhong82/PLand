@@ -742,7 +742,7 @@ bool EventListener::setup() {
             }
 
             auto const& typeName = ev.target().getTypeName();
-            auto        land     = db->getLandAt(passenger.getPosition(), passenger.getDimensionId());
+            auto        land     = db->getLandAt(target.getPosition(), target.getDimensionId());
             if (PreCheck(land)) return; // land not found
             // 特殊处理：
             if (land) {
