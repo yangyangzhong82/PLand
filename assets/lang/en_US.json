@@ -26,6 +26,7 @@
     "allowRideTrans": "Ride minecarts/boats (players)",
     "allowAxePeeled": "Axe peeling (allow)",
     "allowInteractEntity": "Allow interacting with entities",
+    "allowAttackPainting": "Allow attacking paintings",
     "allowAttackEnderCrystal": "Attack Ender Crystals (allow)",
     "allowDestroyArmorStand": "Destroy armor stands (allow)",
     "allowLiquidFlow": "Allow external liquid to flow into the territory",

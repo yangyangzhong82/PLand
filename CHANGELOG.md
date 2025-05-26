@@ -13,10 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 增加生物交互权限（#43）@yangyangzhong82
 - 增加末影人搬运、实体破坏、方块下落事件的权限控制（#44）@yangyangzhong82 @engsr6982
-- 增加龙蛋交互事件支持，并修复关闭权限后龙蛋仍然能被交互的问题（#39）@engsr6982
+- 增加龙蛋交互事件支持，并修复关闭权限后龙蛋仍然能被交互的问题（#39）@yangyangzhong82
 - 增加 getLandsByOwner API 与重载方法@engsr6982
 - 领地UI表单增加设置传送点设置的按钮@yangyangzhong82
 - 增加 使用合成器,雕纹书架,红石比较器,红石中继器,潜影盒五种方块交互权限，并修复权限判断问题 (#48)@yangyangzhong82
+- 增加 玩家破坏画的权限控制(#48)@yangyangzhong82
 - 增加 放置船和矿车权限 （#41）@yangyangzhong82
 
 ---

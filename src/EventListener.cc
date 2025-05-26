@@ -606,7 +606,8 @@ bool EventListener::setup() {
             auto const& et  = mob.getTypeName();
             auto const& tab = land->getLandPermTableConst();
             if ((et == "minecraft:armor_stand" && !tab.allowDestroyArmorStand) || // 盔甲架
-                (et == "minecraft:ender_crystal" && !tab.allowAttackEnderCrystal) // 末影水晶
+                (et == "minecraft:ender_crystal" && !tab.allowAttackEnderCrystal)|| // 末影水晶
+                (et == "minecraft:painting" && !tab.allowAttackPainting) // 画
             ) {
                 ev.cancel();
             }

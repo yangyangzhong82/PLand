@@ -26,6 +26,7 @@
     "allowRideTrans": "Ездить на вагонетках/лодках (игроки)",
     "allowAxePeeled": "Снимать кору топором (разрешить)",
     "allowInteractEntity": "Разрешить tương tácение ссущностями",
+    "allowAttackPainting": "Разрешить атаковать картины",
     "allowAttackEnderCrystal": "Атаковать кристаллы Края (разрешить)",
     "allowDestroyArmorStand": "Разрушать стойки для брони (разрешить)",
     "allowLiquidFlow": "Позволить впадению внешней жидкости в領дьну",

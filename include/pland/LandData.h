@@ -71,6 +71,7 @@ struct LandPermTable {
     bool useCrafter{false};             // 使用合成器
     bool useChiseledBookshelf{false};      // 使用雕纹书架
     bool useCake{false};        // 吃蛋糕
+    bool allowAttackPainting{false};       // 攻击画
     bool useComparator{false};      // 使用红石比较器
     bool useRepeater{false};        // 使用红石中继器
     bool useShulkerBox{false};       // 使用潜影盒
