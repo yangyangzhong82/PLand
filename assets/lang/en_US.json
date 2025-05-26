@@ -26,6 +26,7 @@
     "allowRideTrans": "Ride minecarts/boats (players)",
     "allowAxePeeled": "Axe peeling (allow)",
     "allowInteractEntity": "Allow interacting with entities",
+    "allowAttackPainting": "Allow attacking paintings",
     "allowAttackEnderCrystal": "Attack Ender Crystals (allow)",
     "allowDestroyArmorStand": "Destroy armor stands (allow)",
     "allowLiquidFlow": "Allow external liquid to flow into the territory",
@@ -39,6 +40,8 @@
     "useBeacon": "Use beacon",
     "useBed": "Use bed",
     "useBell": "Use bell",
+    "allowAttackBoat": "Allow attacking boats",
+    "allowAttackMinecart": "Allow attacking minecarts",
     "useBlastFurnace": "Use blast furnace",
     "useBrewingStand": "Use brewing stand",
     "useCampfire": "Use campfire",
@@ -76,6 +79,11 @@
     "useBoneMeal": "Use bone meal",
     "useHoe": "Use hoe (till soil)",
     "useShovel": "Use shovel (path creation)",
+    "useCrafter": "Use crafter",
+    "useChiseledBookshelf": "Use chiseled bookshelf",
+    "useCake": "Eat cake",
+    "useComparator": "Use redstone repeater",
+    "useRepeater": "Use redstone comparator",
     "editFlowerPot": "Edit flower pots (plant flowers, etc.)",
     "editSign": "Edit signs",
     "placeMinecart": "Place minecart",
@@ -273,4 +281,5 @@
     "您不是领地主人或管理员，无法设置传送点": "You are not the territory owner or administrator and cannot set a teleport point",
     "领地传送点已设置!": "Territory teleport point has been set!",
     "目标玩家已离线，无法继续操作!": "The target player is offline and cannot continue the operation!"
+
 }
