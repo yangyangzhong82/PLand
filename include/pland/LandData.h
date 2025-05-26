@@ -68,6 +68,14 @@ struct LandPermTable {
     bool useLoom{false};             // 使用织布机
     bool useStonecutter{false};      // 使用切石机
     bool useNoteBlock{false};        // 使用音符盒
+    bool useCrafter{false};             // 使用合成器
+    bool useChiseledBookshelf{false};      // 使用雕纹书架
+    bool useCake{false};        // 吃蛋糕
+    bool allowAttackPainting{false};       // 攻击画
+    bool allowAttackMinecart{false};       // 攻击矿车
+    bool allowAttackBoat{false};           // 攻击船
+    bool useComparator{false};      // 使用红石比较器
+    bool useRepeater{false};        // 使用红石中继器
     bool useShulkerBox{false};       // 使用潜影盒
     bool useSmithingTable{false};    // 使用锻造台
     bool useSmoker{false};           // 使用烟熏炉
@@ -96,7 +104,7 @@ using LandData_sptr = std::shared_ptr<class LandData>; // 共享指针
 using LandData_wptr = std::weak_ptr<class LandData>;   // 弱指针
 class LandData {
 public:
-    int                 version{13};                           // 版本号
+    int                 version{14};                           // 版本号
     LandPos             mPos;                                  // 领地对角坐标
     PosBase             mTeleportPos;                          // 领地传送坐标
     LandID              mLandID{LandID(-1)};                   // 领地唯一ID  (由 PLand::addLand() 时分配)
