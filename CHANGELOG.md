@@ -9,18 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.8.0] - 2025-05-?
 
-本版本是对 v0.7.1 以来的功能补强与权限系统完善。包含多个实用功能的增加，以及针对权限与边界行为的精细化控制和 bug 修复。
-
----
-
 ### ✨ 新增功能
 
 - 增加生物交互权限（#43）
 - 增加末影人搬运、实体破坏、方块下落事件的权限控制（#44）
 - 增加龙蛋交互事件支持，修复相关交互缺陷（#39）
-- 增加配置文件版本字段，用于未来的兼容性控制
 - 增加 getLandsByOwner API 与重载方法
-- 新增语言目录自动创建逻辑，增强多语言支持
 
 ---
 
@@ -32,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复领地传送 UI 异常显示问题
 - 修复 piston 推动边界权限判断逻辑漏洞
 - 修复部分事件未正确取消导致的逻辑穿透问题
+- 修复语言文件打包路径错误问题
+- 修复玩家长时间停留 GUI 导致 `Player` 悬空引用问题
 
 ---
 
@@ -41,8 +37,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 优化弹射物权限判定流程，提升稳定性与边界防御能力
 - 将液体流动事件替换为 `LiquidFlowBeforeEvent`，提升边界判断性能
 - 优化领地创建时对数量与范围限制的判断：允许管理员无视配置项限制
-- 优化 GUI 模块中玩家交互逻辑
-- 优化 iLand 数据结构
 
 ---
 
