@@ -374,6 +374,7 @@ bool EventListener::setup() {
 
             auto land = db->getLandAt(pos, player.getDimensionId());
             if (PreCheck(land, player.getUuid().asString())) {
+                logger->debug("[InteractBlock] PreCheck returned true. Player: {}, Land: {}", player.getUuid().asString(), land ? land->getLandName() : "nullptr");
                 return;
             }
 
@@ -390,56 +391,160 @@ bool EventListener::setup() {
                     logger->debug("Item Tag: {}", tag.getString());
                 }
 
-                if ((itemVftable == BucketItem::$vftable() && !tab.useBucket) ||       // 桶类 (BucketItem)
-                    (itemVftable == HatchetItem::$vftable() && !tab.allowAxePeeled) || // 斧头 (HatchetItem)
-                    (itemVftable == HoeItem::$vftable() && !tab.useHoe) ||             // 锄头 (HoeItem)
-                    (itemVftable == ShovelItem::$vftable() && !tab.useShovel) ||
-                    (actualItem->hasTag(HashedString("minecraft:boat")) && !tab.placeBoat) ||
-                    (actualItem->hasTag(HashedString("minecraft:boats")) && !tab.placeBoat) ||
-                    (actualItem->hasTag(HashedString("minecraft:is_minecart")) && !tab.placeMinecart)
-                ) {
-                    itemCancel = true;
+                if (itemVftable == BucketItem::$vftable()) {
+                    if (!tab.useBucket) {
+                        logger->debug("[InteractBlock] Item Cancel: BucketItem, useBucket is false");
+                        itemCancel = true;
+                    }
+                } else if (itemVftable == HatchetItem::$vftable()) {
+                    if (!tab.allowAxePeeled) {
+                        logger->debug("[InteractBlock] Item Cancel: HatchetItem, allowAxePeeled is false");
+                        itemCancel = true;
+                    }
+                } else if (itemVftable == HoeItem::$vftable()) {
+                    if (!tab.useHoe) {
+                        logger->debug("[InteractBlock] Item Cancel: HoeItem, useHoe is false");
+                        itemCancel = true;
+                    }
+                } else if (itemVftable == ShovelItem::$vftable()) {
+                    if (!tab.useShovel) {
+                        logger->debug("[InteractBlock] Item Cancel: ShovelItem, useShovel is false");
+                        itemCancel = true;
+                    }
+                } else if (actualItem->hasTag(HashedString("minecraft:boat"))) {
+                    if (!tab.placeBoat) {
+                        logger->debug("[InteractBlock] Item Cancel: minecraft:boat tag, placeBoat is false");
+                        itemCancel = true;
+                    }
+                } else if (actualItem->hasTag(HashedString("minecraft:boats"))) {
+                    if (!tab.placeBoat) {
+                        logger->debug("[InteractBlock] Item Cancel: minecraft:boats tag, placeBoat is false");
+                        itemCancel = true;
+                    }
+                } else if (actualItem->hasTag(HashedString("minecraft:is_minecart"))) {
+                    if (!tab.placeMinecart) {
+                        logger->debug("[InteractBlock] Item Cancel: minecraft:is_minecart tag, placeMinecart is false");
+                        itemCancel = true;
+                    }
                 } else {
                     auto it = itemSpecificPermissionMap.find(itemTypeNameForMap);
-                    if (it != itemSpecificPermissionMap.end() && !(tab.*(it->second))) {
-                        itemCancel = true;
+                    if (it != itemSpecificPermissionMap.end()) {
+                        if (!(tab.*(it->second))) {
+                            logger->debug("[InteractBlock] Item Cancel: Specific item permission denied for {}", itemTypeNameForMap);
+                            itemCancel = true;
+                        } else {
+                            logger->debug("[InteractBlock] Item Specific Permission Allowed: {} for {}", itemTypeNameForMap, tab.*(it->second));
+                        }
+                    } else {
+                        logger->debug("[InteractBlock] Item: {} not found in itemSpecificPermissionMap", itemTypeNameForMap);
                     }
                 }
             } else {
                 auto it = itemSpecificPermissionMap.find(itemTypeNameForMap);
-                if (it != itemSpecificPermissionMap.end() && !(tab.*(it->second))) {
-                    itemCancel = true;
+                if (it != itemSpecificPermissionMap.end()) {
+                    if (!(tab.*(it->second))) {
+                        logger->debug("[InteractBlock] Item Cancel (actualItem is null): Specific item permission denied for {}", itemTypeNameForMap);
+                        itemCancel = true;
+                    } else {
+                        logger->debug("[InteractBlock] Item Specific Permission Allowed (actualItem is null): {} for {}", itemTypeNameForMap, tab.*(it->second));
+                    }
+                } else {
+                    logger->debug("[InteractBlock] Item (actualItem is null): {} not found in itemSpecificPermissionMap", itemTypeNameForMap);
                 }
             }
             CANCEL_AND_RETURN_IF(itemCancel);
+            logger->debug("[InteractBlock] Item check passed.");
 
             if (block) { // 判空
                 auto const& legacyBlock = block->getLegacyBlock();
                 bool        blockCancel = false;
 
                 auto blockIter = blockSpecificPermissionMap.find(blockTypeName);
-                if (blockIter != blockSpecificPermissionMap.end() && !(tab.*(blockIter->second))) {
-                    blockCancel = true;
+                if (blockIter != blockSpecificPermissionMap.end()) {
+                    if (!(tab.*(blockIter->second))) {
+                        logger->debug("[InteractBlock] Block Cancel: Specific block permission denied for {}", blockTypeName);
+                        blockCancel = true;
+                    } else {
+                        logger->debug("[InteractBlock] Block Specific Permission Allowed: {} for {}", blockTypeName, tab.*(blockIter->second));
+                    }
+                } else {
+                    logger->debug("[InteractBlock] Block: {} not found in blockSpecificPermissionMap", blockTypeName);
                 }
+
+                auto blockFuncIter = blockFunctionalPermissionMap.find(blockTypeName);
+                if (blockFuncIter != blockFunctionalPermissionMap.end()) {
+                    if (!(tab.*(blockFuncIter->second))) {
+                        logger->debug("[InteractBlock] Block Cancel: Functional block permission denied for {}", blockTypeName);
+                        blockCancel = true;
+                    } else {
+                        logger->debug("[InteractBlock] Block Functional Permission Allowed: {} for {}", blockTypeName, tab.*(blockFuncIter->second));
+                    }
+                } else {
+                    logger->debug("[InteractBlock] Block: {} not found in blockFunctionalPermissionMap", blockTypeName);
+                }
+
                 CANCEL_AND_RETURN_IF(blockCancel);
 
                 void** blockVftable = *reinterpret_cast<void** const*>(&legacyBlock);
 
-                if ((legacyBlock.isButtonBlock() && !tab.useButton) || // 按钮
-                    (legacyBlock.isDoorBlock() && !tab.useDoor) || // 门
-                    (legacyBlock.isFenceGateBlock() && !tab.useFenceGate) || // 栅栏门
-                    (legacyBlock.mIsTrapdoor && !tab.useTrapdoor) || // 活板门
-                    ((blockVftable == SignBlock::$vftable() || blockVftable == HangingSignBlock::$vftable()) && !tab.editSign) || // 告示牌
-                    (blockVftable == ShulkerBoxBlock::$vftable() && !tab.useShulkerBox) || // 潜影盒
-                    (legacyBlock.isCraftingBlock() && !tab.useCraftingTable) || // 工作台
-                    (legacyBlock.isLeverBlock() && !tab.useLever) || // 拉杆
-                    (blockVftable == BlastFurnaceBlock::$vftable() && !tab.useBlastFurnace) || // 高炉
-                    (blockVftable == FurnaceBlock::$vftable() && !tab.useFurnace) || // 熔炉
-                    (blockVftable == SmokerBlock::$vftable() && !tab.useSmoker) // 烟熏炉
-                ) {
-                    blockCancel = true;
+                if (legacyBlock.isButtonBlock()) {
+                    if (!tab.useButton) {
+                        logger->debug("[InteractBlock] Block Cancel: Button, useButton is false");
+                        blockCancel = true;
+                    }
+                } else if (legacyBlock.isDoorBlock()) {
+                    if (!tab.useDoor) {
+                        logger->debug("[InteractBlock] Block Cancel: Door, useDoor is false");
+                        blockCancel = true;
+                    }
+                } else if (legacyBlock.isFenceGateBlock()) {
+                    if (!tab.useFenceGate) {
+                        logger->debug("[InteractBlock] Block Cancel: FenceGate, useFenceGate is false");
+                        blockCancel = true;
+                    }
+                } else if (legacyBlock.mIsTrapdoor) {
+                    if (!tab.useTrapdoor) {
+                        logger->debug("[InteractBlock] Block Cancel: Trapdoor, useTrapdoor is false");
+                        blockCancel = true;
+                    }
+                } else if (blockVftable == SignBlock::$vftable() || blockVftable == HangingSignBlock::$vftable()) {
+                    if (!tab.editSign) {
+                        logger->debug("[InteractBlock] Block Cancel: Sign, editSign is false");
+                        blockCancel = true;
+                    }
+                } else if (blockVftable == ShulkerBoxBlock::$vftable()) {
+                    if (!tab.useShulkerBox) {
+                        logger->debug("[InteractBlock] Block Cancel: ShulkerBox, useShulkerBox is false");
+                        blockCancel = true;
+                    }
+                } else if (legacyBlock.isCraftingBlock()) {
+                    if (!tab.useCraftingTable) {
+                        logger->debug("[InteractBlock] Block Cancel: CraftingTable, useCraftingTable is false");
+                        blockCancel = true;
+                    }
+                } else if (legacyBlock.isLeverBlock()) {
+                    if (!tab.useLever) {
+                        logger->debug("[InteractBlock] Block Cancel: Lever, useLever is false");
+                        blockCancel = true;
+                    }
+                } else if (blockVftable == BlastFurnaceBlock::$vftable()) {
+                    if (!tab.useBlastFurnace) {
+                        logger->debug("[InteractBlock] Block Cancel: BlastFurnace, useBlastFurnace is false");
+                        blockCancel = true;
+                    }
+                } else if (blockVftable == FurnaceBlock::$vftable()) {
+                    if (!tab.useFurnace) {
+                        logger->debug("[InteractBlock] Block Cancel: Furnace, useFurnace is false");
+                        blockCancel = true;
+                    }
+                } else if (blockVftable == SmokerBlock::$vftable()) {
+                    if (!tab.useSmoker) {
+                        logger->debug("[InteractBlock] Block Cancel: Smoker, useSmoker is false");
+                        blockCancel = true;
+                    }
                 }
                 CANCEL_AND_RETURN_IF(blockCancel);
+                logger->debug("[InteractBlock] Block check passed.");
             }
             // clang-format on
         })
