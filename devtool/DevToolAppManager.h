@@ -1,9 +1,10 @@
 #pragma once
+#include "DevToolApp.h"
 #include <memory>
+
 
 namespace devtool {
 
-class DevToolApp;
 
 class DevToolAppManager final {
     std::unique_ptr<DevToolApp> app_;

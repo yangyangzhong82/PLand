@@ -6,22 +6,17 @@
 
 namespace devtool::internals {
 
-class LandCacheViewerWindow;
+class LandDataEditor : public CodeEditor {
+    land::LandData_wptr land_;
 
-class LandCacheViewer final : public IMenuElement {
-    std::unique_ptr<LandCacheViewerWindow> window_;
+    friend class LandCacheViewerWindow;
 
 public:
-    explicit LandCacheViewer();
+    explicit LandDataEditor(land::LandData_sptr land);
 
-    bool* getSelectFlag() override;
-    bool  isSelected() const override;
-
-    void tick() override;
+    void renderMenuElement() override;
 };
 
-
-class LandDataEditor;
 class LandCacheViewerWindow : public IWindow {
     std::unordered_map<land::UUIDs, std::unordered_set<land::LandData_sptr>> lands_;     // 领地缓存
     std::unordered_map<land::UUIDs, std::string>                             realNames_; // 玩家名缓存
@@ -40,15 +35,13 @@ public:
     explicit LandCacheViewerWindow();
 
     enum Buttons {
-        EditLandData,   // 编辑领地数据
-        ExportLandData, // 导出领地数据
-        LocateChunk     // 定位领地所在区块
+        EditLandData,  // 编辑领地数据
+        ExportLandData // 导出领地数据
     };
     void handleButtonClicked(Buttons bt, land::LandData_sptr land);
 
     void handleEditLandData(land::LandData_sptr land);
     void handleExportLandData(land::LandData_sptr land);
-    void handleLocateChunk(land::LandData_sptr land);
 
     void renderCacheLand(); // 渲染缓存的领地
 
@@ -61,16 +54,16 @@ public:
     void tick() override;
 };
 
-
-class LandDataEditor : public CodeEditor {
-    land::LandData_wptr land_;
-
-    friend class LandCacheViewerWindow;
+class LandCacheViewer final : public IMenuElement {
+    std::unique_ptr<LandCacheViewerWindow> window_;
 
 public:
-    explicit LandDataEditor(land::LandData_sptr land);
+    explicit LandCacheViewer();
 
-    void renderMenuElement() override;
+    bool* getSelectFlag() override;
+    bool  isSelected() const override;
+
+    void tick() override;
 };
 
 

@@ -20,7 +20,7 @@ void LandCacheViewer::tick() { window_->tick(); }
 
 
 // LandCacheViewerWindow
-LandCacheViewerWindow::LandCacheViewerWindow() {}
+LandCacheViewerWindow::LandCacheViewerWindow() { this->setOpenFlag(true); }
 
 void LandCacheViewerWindow::handleButtonClicked(Buttons bt, land::LandData_sptr land) {
     switch (bt) {
@@ -29,9 +29,6 @@ void LandCacheViewerWindow::handleButtonClicked(Buttons bt, land::LandData_sptr 
         break;
     case ExportLandData:
         handleExportLandData(land);
-        break;
-    case LocateChunk:
-        handleLocateChunk(land);
         break;
     }
 }
@@ -53,9 +50,6 @@ void LandCacheViewerWindow::handleExportLandData(land::LandData_sptr land) {
     std::ofstream ofs(file);
     ofs << land->toJSON().dump(2);
     ofs.close();
-}
-void LandCacheViewerWindow::handleLocateChunk(land::LandData_sptr land) {
-    // TODO: 定位区块
 }
 
 void LandCacheViewerWindow::preBuildData() {
@@ -209,11 +203,6 @@ void LandCacheViewerWindow::renderCacheLand() {
                 handleButtonClicked(ExportLandData, ld);
             }
             if (ImGui::IsItemHovered()) ImGui::SetItemTooltip("将当前领地数据导出到 pland/devtool_exports 下");
-            ImGui::SameLine();
-            if (ImGui::Button(fmt::format("定位区块##{}", ld->mLandID).c_str())) {
-                handleButtonClicked(LocateChunk, ld);
-            }
-            if (ImGui::IsItemHovered()) ImGui::SetItemTooltip("在领地 2D 图中定位当前领地位置");
         }
     }
     ImGui::EndTable();
@@ -263,6 +252,18 @@ void LandDataEditor::renderMenuElement() {
         }
         if (ImGui::IsItemHovered()) {
             ImGui::SetItemTooltip("将当前更改应用到领地");
+        }
+
+        if (ImGui::Button("刷新")) {
+            auto land = land_.lock();
+            if (!land) {
+                return;
+            }
+            auto json = land->toJSON();
+            this->editor_.SetText(json.dump(4));
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetItemTooltip("将当前领地数据刷新到编辑器中");
         }
         ImGui::EndMenu();
     }
