@@ -38,7 +38,7 @@
 |          LeviLamina          |           https://github.com/LiteLDev/LeviLamina            |
 |            exprtk            |            https://github.com/ArashPartow/exprtk            |
 |         LegacyMoney          |           https://github.com/LiteLDev/LegacyMoney           |
-|      iListenAttentively      | https://github.com/MiracleForest/iListenAttentively-Release |
+|   iListenAttentively(闭源)   | https://github.com/MiracleForest/iListenAttentively-Release |
 | BedrockServerClientInterface |   https://github.com/OEOTYAN/BedrockServerClientInterface   |
 |            ImGui             |              https://github.com/ocornut/imgui               |
 |             glew             |             https://github.com/nigels-com/glew              |

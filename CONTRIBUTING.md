@@ -59,20 +59,6 @@ feat: 新增末影人搬运权限控制
 
 ---
 
-## 📦 依赖和工具
-
-- 构建工具：xmake
-- 引擎依赖：LeviLamina
-- 编译环境请参考项目根目录下的文档说明
-
----
-
-## 💬 社区交流
-
-如有疑问或想加入开发，可在 GitHub Discussions 中发帖或加入官方交流群（请向维护者索取）。
-
----
-
 再次感谢你的贡献！
 
 Thanks again for contributing!
