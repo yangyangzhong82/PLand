@@ -163,7 +163,12 @@ static const std::unordered_map<std::string_view, bool LandPermTable::*> blockFu
     {          "minecraft:dropper",          &LandPermTable::useDropper}, // 投掷器
     {        "minecraft:dispenser",        &LandPermTable::useDispenser}, // 发射器
     {             "minecraft:loom",             &LandPermTable::useLoom}, // 织布机
-    {"minecraft:stonecutter_block",      &LandPermTable::useStonecutter}  // 切石机
+    {"minecraft:stonecutter_block",      &LandPermTable::useStonecutter},  // 切石机
+    {"minecraft:crafter",      &LandPermTable::useCrafter},  // 合成器
+    {"minecraft:chiseled_bookshelf",      &LandPermTable::useChiseledBookshelf},  // 书架
+    {"minecraft:cake",      &LandPermTable::useCake},//蛋糕
+    {"minecraft:comparator",      &LandPermTable::useComparator},//比较器
+    {"minecraft:repeater",      &LandPermTable::useRepeater}//中继器
 };
 
 
