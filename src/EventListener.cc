@@ -382,19 +382,24 @@ bool EventListener::setup() {
 
             bool itemCancel = false;
 
+            // clang-format off
             if (actualItem) {                                                      // 判空
                 void** itemVftable = *reinterpret_cast<void** const*>(actualItem); // 获取物品的虚函数表
-                auto&  a           = *actualItem->mTags;
-                for (auto const& tag : a) {
+                auto&  itemTags           = *actualItem->mTags;
+                #ifdef DEBUG
+                for (auto const& tag : itemTags) {
                     logger->debug("Item Tag: {}", tag.getString());
                 }
+                #endif
 
                 if ((itemVftable == BucketItem::$vftable() && !tab.useBucket) ||       // 桶类 (BucketItem)
                     (itemVftable == HatchetItem::$vftable() && !tab.allowAxePeeled) || // 斧头 (HatchetItem)
                     (itemVftable == HoeItem::$vftable() && !tab.useHoe) ||             // 锄头 (HoeItem)
-                    (itemVftable == ShovelItem::$vftable() && !tab.useShovel)
-                    || (actualItem->hasTag(HashedString("minecraft:boat")) && !tab.placeBoat)
-                    || (actualItem->hasTag(HashedString("minecraft:is_minecart")) && !tab.placeMinecart)) {
+                    (itemVftable == ShovelItem::$vftable() && !tab.useShovel) ||
+                    (actualItem->hasTag(HashedString("minecraft:boat")) && !tab.placeBoat) ||
+                    (actualItem->hasTag(HashedString("minecraft:boats")) && !tab.placeBoat) ||
+                    (actualItem->hasTag(HashedString("minecraft:is_minecart")) && !tab.placeMinecart)
+                ) {
                     itemCancel = true;
                 } else {
                     auto it = itemSpecificPermissionMap.find(itemTypeNameForMap);
@@ -410,48 +415,35 @@ bool EventListener::setup() {
             }
             CANCEL_AND_RETURN_IF(itemCancel);
 
-
             if (block) { // 判空
                 auto const& legacyBlock = block->getLegacyBlock();
                 bool        blockCancel = false;
 
-                auto blockIt = blockSpecificPermissionMap.find(blockTypeName);
-                if (blockIt != blockSpecificPermissionMap.end() && !(tab.*(blockIt->second))) {
+                auto blockIter = blockSpecificPermissionMap.find(blockTypeName);
+                if (blockIter != blockSpecificPermissionMap.end() && !(tab.*(blockIter->second))) {
                     blockCancel = true;
                 }
                 CANCEL_AND_RETURN_IF(blockCancel);
 
-                void** instanceVftable = *reinterpret_cast<void** const*>(&legacyBlock);
+                void** blockVftable = *reinterpret_cast<void** const*>(&legacyBlock);
 
-                if ((legacyBlock.isButtonBlock() && !tab.useButton) ||       // 按钮
-                    (legacyBlock.isDoorBlock() && !tab.useDoor) ||           // 门
+                if ((legacyBlock.isButtonBlock() && !tab.useButton) || // 按钮
+                    (legacyBlock.isDoorBlock() && !tab.useDoor) || // 门
                     (legacyBlock.isFenceGateBlock() && !tab.useFenceGate) || // 栅栏门
-                    (legacyBlock.mIsTrapdoor && !tab.useTrapdoor) ||         // 活板门
-                    ((instanceVftable == SignBlock::$vftable() || instanceVftable == HangingSignBlock::$vftable())
-                     && !tab.editSign)
-                    ||                                                                        // 告示牌
-                    (instanceVftable == ShulkerBoxBlock::$vftable() && !tab.useShulkerBox) || // 潜影盒
-                    (legacyBlock.isCraftingBlock() && !tab.useCraftingTable) ||               // 工作台
-                    (legacyBlock.isLeverBlock() && !tab.useLever)
-                    || (instanceVftable == BlastFurnaceBlock::$vftable() && !tab.useBlastFurnace) || // 高炉
-                    (instanceVftable == FurnaceBlock::$vftable() && !tab.useFurnace) ||              // 熔炉
-                    (instanceVftable == SmokerBlock::$vftable() && !tab.useSmoker)) {                // 拉杆
+                    (legacyBlock.mIsTrapdoor && !tab.useTrapdoor) || // 活板门
+                    ((blockVftable == SignBlock::$vftable() || blockVftable == HangingSignBlock::$vftable()) && !tab.editSign) || // 告示牌
+                    (blockVftable == ShulkerBoxBlock::$vftable() && !tab.useShulkerBox) || // 潜影盒
+                    (legacyBlock.isCraftingBlock() && !tab.useCraftingTable) || // 工作台
+                    (legacyBlock.isLeverBlock() && !tab.useLever) || // 拉杆
+                    (blockVftable == BlastFurnaceBlock::$vftable() && !tab.useBlastFurnace) || // 高炉
+                    (blockVftable == FurnaceBlock::$vftable() && !tab.useFurnace) || // 熔炉
+                    (blockVftable == SmokerBlock::$vftable() && !tab.useSmoker) // 烟熏炉
+                ) {
                     blockCancel = true;
                 }
-                if ((instanceVftable == BlastFurnaceBlock::$vftable() && !tab.useBlastFurnace) || // 高炉
-                    (instanceVftable == FurnaceBlock::$vftable() && !tab.useFurnace) ||           // 熔炉
-                    (instanceVftable == SmokerBlock::$vftable() && !tab.useSmoker)) {
-                    bool BA = instanceVftable == BlastFurnaceBlock::$vftable(); // 高炉
-                    bool FA = instanceVftable == FurnaceBlock::$vftable();      // 熔炉
-                    bool SA = instanceVftable == SmokerBlock::$vftable();
-                    logger
-                        ->info("A {}, B{} C{} D {}E {}F {}", tab.useSmoker, tab.useFurnace, tab.useSmoker, BA, FA, SA),
-                        blockCancel = true;
-                }
-
                 CANCEL_AND_RETURN_IF(blockCancel);
-                blockCancel = false;
             }
+            // clang-format on
         })
     )
 
@@ -627,8 +619,14 @@ bool EventListener::setup() {
     CHECK_EVENT_AND_REGISTER_LISTENER(
         Config::cfg.listeners.ActorRideBeforeEvent,
         bus->emplaceListener<ila::mc::ActorRideBeforeEvent>([db, logger](ila::mc::ActorRideBeforeEvent& ev) {
-            logger->debug("[ActorRide]: executed");
             Actor& passenger = ev.self();
+            Actor& target    = ev.target();
+
+            logger->debug(
+                "[ActorRide]: passenger: {}, target: {}",
+                passenger.getActorIdentifier().mIdentifier.get(),
+                target.getTypeName()
+            );
 
             if (!passenger.isPlayer()) {
                 return; // 忽略非玩家骑乘事件
