@@ -386,11 +386,9 @@ bool EventListener::setup() {
             if (actualItem) {                                                      // 判空
                 void** itemVftable = *reinterpret_cast<void** const*>(actualItem); // 获取物品的虚函数表
                 auto&  itemTags           = *actualItem->mTags;
-                #ifdef DEBUG
                 for (auto const& tag : itemTags) {
                     logger->debug("Item Tag: {}", tag.getString());
                 }
-                #endif
 
                 if ((itemVftable == BucketItem::$vftable() && !tab.useBucket) ||       // 桶类 (BucketItem)
                     (itemVftable == HatchetItem::$vftable() && !tab.allowAxePeeled) || // 斧头 (HatchetItem)
