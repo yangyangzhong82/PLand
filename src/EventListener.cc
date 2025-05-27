@@ -151,24 +151,24 @@ static const std::unordered_map<std::string_view, bool LandPermTable::*> blockSp
 };
 
 static const std::unordered_map<std::string_view, bool LandPermTable::*> blockFunctionalPermissionMap = {
-    {"minecraft:cartography_table", &LandPermTable::useCartographyTable}, // 制图台
-    {   "minecraft:smithing_table",    &LandPermTable::useSmithingTable}, // 锻造台
-    {    "minecraft:brewing_stand",     &LandPermTable::useBrewingStand}, // 酿造台
-    {            "minecraft:anvil",            &LandPermTable::useAnvil}, // 铁砧
-    {       "minecraft:grindstone",       &LandPermTable::useGrindstone}, // 砂轮
-    { "minecraft:enchanting_table",  &LandPermTable::useEnchantingTable}, // 附魔台
-    {           "minecraft:barrel",           &LandPermTable::useBarrel}, // 木桶
-    {           "minecraft:beacon",           &LandPermTable::useBeacon}, // 信标
-    {           "minecraft:hopper",           &LandPermTable::useHopper}, // 漏斗
-    {          "minecraft:dropper",          &LandPermTable::useDropper}, // 投掷器
-    {        "minecraft:dispenser",        &LandPermTable::useDispenser}, // 发射器
-    {             "minecraft:loom",             &LandPermTable::useLoom}, // 织布机
-    {"minecraft:stonecutter_block",      &LandPermTable::useStonecutter},  // 切石机
-    {"minecraft:crafter",      &LandPermTable::useCrafter},  // 合成器
-    {"minecraft:chiseled_bookshelf",      &LandPermTable::useChiseledBookshelf},  // 书架
-    {"minecraft:cake",      &LandPermTable::useCake},//蛋糕
-    {"minecraft:comparator",      &LandPermTable::useComparator},//比较器
-    {"minecraft:repeater",      &LandPermTable::useRepeater}//中继器
+    {   "minecraft:cartography_table",  &LandPermTable::useCartographyTable}, // 制图台
+    {      "minecraft:smithing_table",     &LandPermTable::useSmithingTable}, // 锻造台
+    {       "minecraft:brewing_stand",      &LandPermTable::useBrewingStand}, // 酿造台
+    {               "minecraft:anvil",             &LandPermTable::useAnvil}, // 铁砧
+    {          "minecraft:grindstone",        &LandPermTable::useGrindstone}, // 砂轮
+    {    "minecraft:enchanting_table",   &LandPermTable::useEnchantingTable}, // 附魔台
+    {              "minecraft:barrel",            &LandPermTable::useBarrel}, // 木桶
+    {              "minecraft:beacon",            &LandPermTable::useBeacon}, // 信标
+    {              "minecraft:hopper",            &LandPermTable::useHopper}, // 漏斗
+    {             "minecraft:dropper",           &LandPermTable::useDropper}, // 投掷器
+    {           "minecraft:dispenser",         &LandPermTable::useDispenser}, // 发射器
+    {                "minecraft:loom",              &LandPermTable::useLoom}, // 织布机
+    {   "minecraft:stonecutter_block",       &LandPermTable::useStonecutter}, // 切石机
+    {             "minecraft:crafter",           &LandPermTable::useCrafter}, // 合成器
+    {  "minecraft:chiseled_bookshelf", &LandPermTable::useChiseledBookshelf}, // 书架
+    {                "minecraft:cake",              &LandPermTable::useCake}, //  蛋糕
+    {"minecraft:unpowered_comparator",        &LandPermTable::useComparator}, //  比较器
+    {  "minecraft:unpowered_repeater",          &LandPermTable::useRepeater}  //  中继器
 };
 
 
@@ -379,7 +379,11 @@ bool EventListener::setup() {
 
             auto land = db->getLandAt(pos, player.getDimensionId());
             if (PreCheck(land, player.getUuid().asString())) {
-                logger->debug("[InteractBlock] PreCheck returned true. Player: {}, Land: {}", player.getUuid().asString(), land ? land->getLandName() : "nullptr");
+                logger->debug(
+                    "[InteractBlock] PreCheck returned true. Player: {}, Land: {}",
+                    player.getUuid().asString(),
+                    land ? land->getLandName() : "nullptr"
+                );
                 return;
             }
 
@@ -605,11 +609,11 @@ bool EventListener::setup() {
 
             auto const& et  = mob.getTypeName();
             auto const& tab = land->getLandPermTableConst();
-            if ((et == "minecraft:armor_stand" && !tab.allowDestroyArmorStand) || // 盔甲架
-                (et == "minecraft:ender_crystal" && !tab.allowAttackEnderCrystal)|| // 末影水晶
-                (et == "minecraft:painting" && !tab.allowAttackPainting)|| // 画
-                (mob.hasFamily("boat") && !tab.allowAttackBoat)||// 船
-                (mob.hasFamily("minecart") && !tab.allowAttackMinecart)// 矿车
+            if ((et == "minecraft:armor_stand" && !tab.allowDestroyArmorStand) ||    // 盔甲架
+                (et == "minecraft:ender_crystal" && !tab.allowAttackEnderCrystal) || // 末影水晶
+                (et == "minecraft:painting" && !tab.allowAttackPainting) ||          // 画
+                (mob.hasFamily("boat") && !tab.allowAttackBoat) ||                   // 船
+                (mob.hasFamily("minecart") && !tab.allowAttackMinecart)              // 矿车
             ) {
                 ev.cancel();
             }
