@@ -41,7 +41,7 @@ bool MyMod::load() {
     logger.info(R"( |_|     |______|\__,_||_| |_| \__,_|)");
     logger.info(R"(                                     )");
     logger.info("Loading...");
-    logger.info("{}", PLAND_VERSION_STRING);
+    logger.info("Version: {}", PLAND_VERSION_STRING);
 
     if (auto res = ll::i18n::getInstance().load(getSelf().getLangDir()); !res) {
         logger.error("Load language file failed, plugin will use default language.");
@@ -97,7 +97,7 @@ bool MyMod::disable() {
     logger.debug("[Main] Land data saved.");
 
     logger.debug("Stopping coroutine...");
-    land::GlobalRepeatCoroTaskRunning = false;
+    land::GlobalRepeatCoroTaskRunning.store(false);
 
     logger.debug("cleaning up...");
     land::SelectorManager::getInstance().cleanup();
