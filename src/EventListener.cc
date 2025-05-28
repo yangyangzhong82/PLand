@@ -102,13 +102,12 @@ inline BlockProperty operator&(BlockProperty a, BlockProperty b) {
 
 #define CHECK_EVENT_AND_REGISTER_LISTENER(EXPRESSION, LISTENER)                                                        \
     if (EXPRESSION) {                                                                                                  \
-        mListeners.push_back(LISTENER);                                                                                \
+        Listeners.push_back(LISTENER);                                                                                 \
     }
 
 
-static std::vector<ll::event::ListenerPtr> mListeners;
-
 namespace land {
+static std::vector<ll::event::ListenerPtr> Listeners; // 事件监听器列表
 inline bool PreCheck(LandData_sptr const& ptr, UUIDs const& uuid = "", bool ignoreOperator = false) {
     if (!ptr ||                                                       // 无领地
         (!ignoreOperator && PLand::getInstance().isOperator(uuid)) || // 管理员
@@ -119,7 +118,7 @@ inline bool PreCheck(LandData_sptr const& ptr, UUIDs const& uuid = "", bool igno
     return false;
 }
 
-static const std::unordered_map<std::string_view, bool LandPermTable::*> itemSpecificPermissionMap = {
+static const std::unordered_map<std::string_view, bool LandPermTable::*> ItemSpecificPermissionMap = {
     {          "minecraft:skull",       &LandPermTable::allowPlace}, // 放置头颅
     {         "minecraft:banner",       &LandPermTable::allowPlace}, // 放置旗帜
     {   "minecraft:glow_ink_sac",       &LandPermTable::allowPlace}, // 荧光墨囊给告示牌上色
@@ -130,8 +129,7 @@ static const std::unordered_map<std::string_view, bool LandPermTable::*> itemSpe
     {    "minecraft:armor_stand",       &LandPermTable::allowPlace}  // 放置盔甲架
 };
 
-
-static const std::unordered_map<std::string_view, bool LandPermTable::*> blockSpecificPermissionMap = {
+static const std::unordered_map<std::string_view, bool LandPermTable::*> BlockSpecificPermissionMap = {
     {                "minecraft:dragon_egg", &LandPermTable::allowAttackDragonEgg}, // 攻击龙蛋
     {                       "minecraft:bed",               &LandPermTable::useBed}, // 使用床
     {                     "minecraft:chest",       &LandPermTable::allowOpenChest}, // 打开箱子
@@ -150,7 +148,7 @@ static const std::unordered_map<std::string_view, bool LandPermTable::*> blockSp
     {                "minecraft:flower_pot",        &LandPermTable::editFlowerPot}  // 编辑花盆
 };
 
-static const std::unordered_map<std::string_view, bool LandPermTable::*> blockFunctionalPermissionMap = {
+static const std::unordered_map<std::string_view, bool LandPermTable::*> BlockFunctionalPermissionMap = {
     {   "minecraft:cartography_table",  &LandPermTable::useCartographyTable}, // 制图台
     {      "minecraft:smithing_table",     &LandPermTable::useSmithingTable}, // 锻造台
     {       "minecraft:brewing_stand",      &LandPermTable::useBrewingStand}, // 酿造台
@@ -179,7 +177,7 @@ bool EventListener::setup() {
     auto* bus    = &ll::event::EventBus::getInstance();
     auto* logger = &my_mod::MyMod::getInstance().getSelf().getLogger();
 
-    mListeners = {
+    Listeners = {
         bus->emplaceListener<ll::event::PlayerJoinEvent>([db, logger](ll::event::PlayerJoinEvent& ev) {
             if (ev.self().isSimulatedPlayer()) return;
             if (!db->hasPlayerSettings(ev.self().getUuid().asString())) {
@@ -262,7 +260,7 @@ bool EventListener::setup() {
                     return;
                 }
             } else { // 不是怪物，则视为动物
-                if (!tab.allowAnimalDamage) {
+                if (!tab.allowPassiveDamage) {
                     logger->debug(
                         "[ActorHurt] Cancel damage for animal: {}, allowAnimalDamage is false",
                         hurtActor.getTypeName()
@@ -317,6 +315,7 @@ bool EventListener::setup() {
             ev.cancel();
         })
     )
+
     CHECK_EVENT_AND_REGISTER_LISTENER(
         Config::cfg.listeners.ActorDestroyBlockEvent,
         bus->emplaceListener<ila::mc::ActorDestroyBlockEvent>([db, logger](ila::mc::ActorDestroyBlockEvent& ev) {
@@ -360,6 +359,7 @@ bool EventListener::setup() {
             }
         )
     )
+
     CHECK_EVENT_AND_REGISTER_LISTENER(
         Config::cfg.listeners.EndermanTakeBlockEvent,
         bus->emplaceListener<ila::mc::EndermanLeaveBlockBeforeEvent>(
@@ -463,8 +463,8 @@ bool EventListener::setup() {
                         itemCancel = true;
                     }
                 } else {
-                    auto it = itemSpecificPermissionMap.find(itemTypeNameForMap);
-                    if (it != itemSpecificPermissionMap.end()) {
+                    auto it = ItemSpecificPermissionMap.find(itemTypeNameForMap);
+                    if (it != ItemSpecificPermissionMap.end()) {
                         if (!(tab.*(it->second))) {
                             logger->debug("[InteractBlock] Item Cancel: Specific item permission denied for {}", itemTypeNameForMap);
                             itemCancel = true;
@@ -476,8 +476,8 @@ bool EventListener::setup() {
                     }
                 }
             } else {
-                auto it = itemSpecificPermissionMap.find(itemTypeNameForMap);
-                if (it != itemSpecificPermissionMap.end()) {
+                auto it = ItemSpecificPermissionMap.find(itemTypeNameForMap);
+                if (it != ItemSpecificPermissionMap.end()) {
                     if (!(tab.*(it->second))) {
                         logger->debug("[InteractBlock] Item Cancel (actualItem is null): Specific item permission denied for {}", itemTypeNameForMap);
                         itemCancel = true;
@@ -500,8 +500,8 @@ bool EventListener::setup() {
                 auto const& legacyBlock = block->getLegacyBlock();
                 bool        blockCancel = false;
 
-                auto blockIter = blockSpecificPermissionMap.find(blockTypeName);
-                if (blockIter != blockSpecificPermissionMap.end()) {
+                auto blockIter = BlockSpecificPermissionMap.find(blockTypeName);
+                if (blockIter != BlockSpecificPermissionMap.end()) {
                     if (!(tab.*(blockIter->second))) {
                         logger->debug("[InteractBlock] Block Cancel: Specific block permission denied for {}", blockTypeName);
                         blockCancel = true;
@@ -512,8 +512,8 @@ bool EventListener::setup() {
                     logger->debug("[InteractBlock] Block: {} not found in blockSpecificPermissionMap", blockTypeName);
                 }
 
-                auto blockFuncIter = blockFunctionalPermissionMap.find(blockTypeName);
-                if (blockFuncIter != blockFunctionalPermissionMap.end()) {
+                auto blockFuncIter = BlockFunctionalPermissionMap.find(blockTypeName);
+                if (blockFuncIter != BlockFunctionalPermissionMap.end()) {
                     if (!(tab.*(blockFuncIter->second))) {
                         logger->debug("[InteractBlock] Block Cancel: Functional block permission denied for {}", blockTypeName);
                         blockCancel = true;
@@ -864,7 +864,7 @@ bool EventListener::setup() {
                 } else if (self.hasCategory(::ActorCategory::Monster) || self.hasFamily("monster")) {
                     CANCEL_AND_RETURN_IF(!tab.allowMonsterDamage); // 如果不允许怪物受伤，则取消
                 } else {                                           // 不是怪物，则视为动物
-                    CANCEL_AND_RETURN_IF(!tab.allowAnimalDamage);  // 如果不允许动物受伤，则取消
+                    CANCEL_AND_RETURN_IF(!tab.allowPassiveDamage); // 如果不允许动物受伤，则取消
                 }
             }
         })
@@ -910,7 +910,6 @@ bool EventListener::setup() {
             }
         )
     )
-
 
     CHECK_EVENT_AND_REGISTER_LISTENER(
         Config::cfg.listeners.ActorTriggerPressurePlateBeforeEvent,
@@ -984,6 +983,7 @@ bool EventListener::setup() {
             ev.cancel();
         })
     )
+
     CHECK_EVENT_AND_REGISTER_LISTENER(
         Config::cfg.listeners.BlockFallBeforeEvent,
         bus->emplaceListener<ila::mc::BlockFallBeforeEvent>([db, logger](ila::mc::BlockFallBeforeEvent& ev) {
@@ -1167,7 +1167,7 @@ bool EventListener::setup() {
 bool EventListener::release() {
     auto& bus = ll::event::EventBus::getInstance();
 
-    for (auto& l : mListeners) {
+    for (auto& l : Listeners) {
         bus.removeListener(l);
     }
 
