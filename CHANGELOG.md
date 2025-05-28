@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 同步语言文件，统一命名规范@engsr6982
 - 移除 `zh_Classical.json` 语言文件 -- 千呼万唤始出来，删之 @engsr6982
 - 重命名 `PosBase`、`LandPos` 为 `LandPos`、`LandAABB` @engsr6982
+- 玩家进入领地时，默认使用领地名作为子标题 #76 @engsr6982
 
 ## [0.7.1] - 2025-04-11
 
