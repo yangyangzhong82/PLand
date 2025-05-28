@@ -139,6 +139,7 @@ public:
     LDNDAPI int             getSalePrice() const;
 
     LDNDAPI LandPermTable&       getLandPermTable();
+    LDNDAPI LandPermTable const& getLandPermTable() const;
     LDNDAPI LandPermTable const& getLandPermTableConst() const;
 
     LDNDAPI UUIDs const& getLandOwner() const;

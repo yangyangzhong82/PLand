@@ -13,6 +13,7 @@ LandAABB const&           LandData::getLandPos() const { return mPos; }
 LandID                    LandData::getLandID() const { return mLandID; }
 LandDimid                 LandData::getLandDimid() const { return mLandDimid; }
 LandPermTable&            LandData::getLandPermTable() { return mLandPermTable; }
+LandPermTable const&      LandData::getLandPermTable() const { return mLandPermTable; }
 LandPermTable const&      LandData::getLandPermTableConst() const { return mLandPermTable; }
 UUIDs const&              LandData::getLandOwner() const { return mLandOwner; }
 std::vector<UUIDs> const& LandData::getLandMembers() const { return mLandMembers; }
