@@ -218,54 +218,57 @@ bool EventListener::setup() {
     CHECK_EVENT_AND_REGISTER_LISTENER(
         Config::cfg.listeners.ActorHurtEvent,
         bus->emplaceListener<ll::event::ActorHurtEvent>([db, logger](ll::event::ActorHurtEvent& ev) {
-            auto& self            = ev.self();
-            auto& damageSource    = ev.source();         // 伤害来源
-            auto& damageCause     = damageSource.mCause; // 伤害原因
-            auto  damageActorType = damageSource.getEntityType();
-            bool  isPlayerDamage  = damageActorType == ActorType::Player;
+            auto&      hurtActor       = ev.self();
+            auto&      damageSource    = ev.source();         // 伤害来源
+            auto&      damageCause     = damageSource.mCause; // 伤害原因
+            auto const damageActorType = damageSource.getEntityType();
+            bool const isPlayerDamage  = damageActorType == ActorType::Player; // 是否是玩家造成的伤害
             logger->debug(
                 "[ActorHurt] Mob: {}, ActorDamageCause: {}, ActorType: {} isPlayerDamage:{}",
-                self.getTypeName(),
+                hurtActor.getTypeName(),
                 static_cast<int>(damageSource.mCause),
                 static_cast<int>(damageSource.getEntityType()),
                 isPlayerDamage
             );
 
-            auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
-            if (PreCheck(land)) return; // land not found
+            auto land = db->getLandAt(hurtActor.getPosition(), hurtActor.getDimensionId());
+            if (PreCheck(land)) return;
 
-            if (isPlayerDamage && damageCause == SharedTypes::Legacy::ActorDamageCause::EntityAttack) {
-                // 玩家攻击 [ActorHurt] Mob: ikun, ActorDamageCause: 2, ActorType: 319
-                if (auto souPlayer = self.getLevel().getPlayer(damageSource.getEntityUniqueID()); souPlayer) {
-                    if (PreCheck(land, souPlayer->getUuid().asString())) return;
-                }
-            }
-            if (isPlayerDamage && damageCause == SharedTypes::Legacy::ActorDamageCause::Projectile) {
-                if (auto souPlayer = self.getLevel().getPlayer(damageSource.getEntityUniqueID()); souPlayer) {
-                    if (PreCheck(land, souPlayer->getUuid().asString())) return;
+            if (isPlayerDamage) {
+                if (auto souPlayer = hurtActor.getLevel().getPlayer(damageSource.getEntityUniqueID())) {
+                    if ((damageCause == SharedTypes::Legacy::ActorDamageCause::EntityAttack
+                         || damageCause == SharedTypes::Legacy::ActorDamageCause::Projectile)
+                        && PreCheck(land, souPlayer->getUuid().asString())) {
+                        return;
+                    }
                 }
             }
 
-            if (land) {
-                auto const& tab = land->getLandPermTableConst();
-                if (self.hasCategory(::ActorCategory::Monster) || self.hasFamily("monster")) {
-                    if (!tab.allowMonsterDamage) {
-                        logger->debug(
-                            "[ActorHurt] Cancel damage for monster: {}, allowMonsterDamage is false",
-                            self.getTypeName()
-                        );
-                        ev.cancel();
-                        return;
-                    }
-                } else { // 不是怪物，则视为动物
-                    if (!tab.allowAnimalDamage) {
-                        logger->debug(
-                            "[ActorHurt] Cancel damage for animal: {}, allowAnimalDamage is false",
-                            self.getTypeName()
-                        );
-                        ev.cancel();
-                        return;
-                    }
+            auto const& tab = land->getLandPermTableConst();
+            if (!tab.allowPlayerDamage && hurtActor.isPlayer()) {
+                logger->debug(
+                    "[ActorHurt] Cancel damage for player: {}, allowPlayerDamage is false",
+                    hurtActor.getTypeName()
+                );
+                ev.cancel();
+                return;
+            } else if (hurtActor.hasCategory(::ActorCategory::Monster) || hurtActor.hasFamily("monster")) {
+                if (!tab.allowMonsterDamage) {
+                    logger->debug(
+                        "[ActorHurt] Cancel damage for monster: {}, allowMonsterDamage is false",
+                        hurtActor.getTypeName()
+                    );
+                    ev.cancel();
+                    return;
+                }
+            } else { // 不是怪物，则视为动物
+                if (!tab.allowAnimalDamage) {
+                    logger->debug(
+                        "[ActorHurt] Cancel damage for animal: {}, allowAnimalDamage is false",
+                        hurtActor.getTypeName()
+                    );
+                    ev.cancel();
+                    return;
                 }
             }
         })
@@ -413,13 +416,8 @@ bool EventListener::setup() {
                 return;
             }
 
-            auto const& tab      = land->getLandPermTableConst();
-            auto        blocktag = *block->mTags;
-            for (auto const& btag : blocktag) {
-                logger->debug("Block Tag: {}", btag.mStr); // 方块的tag信息
-            }
-
-            bool itemCancel = false;
+            auto const& tab        = land->getLandPermTableConst();
+            bool        itemCancel = false;
 
             // clang-format off
             if (actualItem) {                                                      // 判空
@@ -494,6 +492,11 @@ bool EventListener::setup() {
             logger->debug("[InteractBlock] Item check passed.");
 
             if (block) { // 判空
+                auto&       blocktag = *block->mTags;
+                for (auto const& btag : blocktag) {
+                    logger->debug("Block Tag: {}", btag.mStr); // 方块的tag信息
+                }
+
                 auto const& legacyBlock = block->getLegacyBlock();
                 bool        blockCancel = false;
 
@@ -843,21 +846,21 @@ bool EventListener::setup() {
             if (!source) {
                 return; // 没有伤害来源
             }
-            bool isplayer = source->isPlayer();
-            if (!isplayer) {
+            bool const isPlayer = source->isPlayer();
+            if (!isPlayer) {
                 return; // 不是玩家
             }
+
             auto land         = db->getLandAt(self.getPosition(), self.getDimensionId());
             auto SourcePlayer = source->getWeakEntity().tryUnwrap<Player>();
             auto uuid         = SourcePlayer.has_value() ? SourcePlayer->getUuid().asString() : "";
-            logger->debug("[MobHurtEffect] source player uuid: {}", uuid);
 
             if (PreCheck(land, uuid)) return; // land not found
+
             if (land) {
                 auto const& tab = land->getLandPermTableConst();
-                if (self.isPlayer()) {                            // 被攻击的是玩家
+                if (isPlayer) {                                   // 被攻击的是玩家
                     CANCEL_AND_RETURN_IF(!tab.allowPlayerDamage); // 如果不允许玩家受伤，则取消
-
                 } else if (self.hasCategory(::ActorCategory::Monster) || self.hasFamily("monster")) {
                     CANCEL_AND_RETURN_IF(!tab.allowMonsterDamage); // 如果不允许怪物受伤，则取消
                 } else {                                           // 不是怪物，则视为动物
