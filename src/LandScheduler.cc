@@ -123,7 +123,7 @@ bool LandScheduler::setup() {
             }
 
             title.mTitleText    = "Welcome to"_trf(player);
-            subTitle.mTitleText = "{} 的领地"_trf(player, info.has_value() ? info->name : owner);
+            subTitle.mTitleText = land->getLandName();
         }
 
         title.sendTo(player);
