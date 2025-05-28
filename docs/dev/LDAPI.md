@@ -15,21 +15,21 @@
 
 !> 以下表格仅包含您可安全访问的 class，其它 class 虽然被导出，但您不应该访问它们
 
-| 类名            | 描述                                                                          | 备注                   |
-| :-------------- | :---------------------------------------------------------------------------- | :--------------------- |
-| `PLand`         | PLand 核心类(负责存储、查询)                                                  | -                      |
-| `LandData`      | 领地数据 (记录每个领地数据)                                                   | 请使用 `LandData_sptr` |
-| `Calculate`     | 价格公式解析、计算 ([calculate 计算公式](../md/Config.md#calculate-计算公式)) | -                      |
-| `Config`        | 配置文件                                                                      | -                      |
-| `EconomySystem` | 经济系统 (已封装对接双经济)                                                   | -                      |
-| `EventListener` | 事件监听器(监听拦截 Mc 事件)                                                  | -                      |
-| `PosBase`       | 坐标基类 (负责处理 JSON 反射)                                                 | -                      |
-| `LandPos`       | 领地坐标                                                                      | -                      |
-| `LandSelector`  | 领地选区器(负责圈地、修改范围)                                                | -                      |
-| `Particle`      | 粒子系统 (负责绘制粒子效果)                                                   | -                      |
-| `SafeTeleport`  | 安全传送系统                                                                  | -                      |
+| 类名             | 描述                                                                          | 备注                   |
+| :--------------- | :---------------------------------------------------------------------------- | :--------------------- |
+| `PLand`          | PLand 核心类(负责存储、查询)                                                  | -                      |
+| `LandData`       | 领地数据 (记录每个领地数据)                                                   | 请使用 `LandData_sptr` |
+| `PriceCalculate` | 价格公式解析、计算 ([calculate 计算公式](../md/Config.md#calculate-计算公式)) | -                      |
+| `Config`         | 配置文件                                                                      | -                      |
+| `EconomySystem`  | 经济系统 (已封装对接双经济)                                                   | -                      |
+| `EventListener`  | 事件监听器(监听拦截 Mc 事件)                                                  | -                      |
+| `LandPos`        | 坐标基类 (负责处理 JSON 反射)                                                 | -                      |
+| `LandAABB`       | 领地坐标 (一个领地的对角坐标)                                                 | -                      |
+| `LandSelector`   | 领地选区器(负责圈地、修改范围)                                                | -                      |
+| `DrawHandle`     | 绘制管道 (管理领地绘制, 每个玩家都独立分配一个 DrawHandle)                    | -                      |
+| `SafeTeleport`   | 安全传送系统                                                                  | -                      |
 
 !> ⚠️：`LandData` 类提供了两个 using, 分别为 `LandData_sptr` 和 `LandData_wptr`。  
 `LandData_sptr` 为共享智能指针，原型为 `std::shared_ptr<class LandData>`。  
 `LandData_wptr` 为 弱共享智能指针，原型为 `std::weak_ptr<class LandData>`。  
-当您需要保存 `LandData` 时建议使用 `LandData_wptr` 弱共享智能指针，防止循环引用。
+当您需要长期持有 `LandData` 时建议使用 `LandData_wptr` 弱共享智能指针。
