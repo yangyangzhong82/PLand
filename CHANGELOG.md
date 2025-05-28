@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 增加 使用合成器,雕纹书架,红石比较器,红石中继器,潜影盒五种方块交互权限，并修复权限判断问题 (#48)@yangyangzhong82
 - 增加 玩家破坏画、矿车、船的权限控制(#48)@yangyangzhong82
 - 增加 放置船和矿车权限 （#41）@yangyangzhong82
+- 增加 对特殊实体造成伤害 权限 @engsr6982
 
 ---
 
@@ -31,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复玩家乘骑实体权限判断的问题，现在以被乘骑实体的坐标来判断领地而非操作玩家的坐标(#50)
 - 修复无权限玩家在领地外仍然能用弹射物伤害领地内生物的问题(#50)
 - 修复领地主人无法用伤害药水伤害领地生物的问题
+
 ---
 
 ### 🧩 权限与事件逻辑优化
@@ -41,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 将活塞和液体流动修改为只对边界判断@yangyangzhong82 @engsr6982
 - 优化领地创建时对数量与范围限制的判断：允许领地管理员无视配置文件的限制创建领地 @yangyangzhong82
 - 优化权限判定,对部分方块和物品不再单纯使用类型名进行判断，使其判断更加灵活@yangyangzhong82
+- `allowAnimalDamage` 更改为 `allowPassiveDamage` 对友好、中立生物造成伤害 @engsr6982
 
 ---
 
@@ -50,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 移除已废弃的 Canvas、LandViewer、DataMenu 模块@engsr6982
 - 同步语言文件，统一命名规范@engsr6982
 - 移除 `zh_Classical.json` 语言文件 -- 千呼万唤始出来，删之 @engsr6982
+- 重命名 `PosBase`、`LandPos` 为 `LandPos`、`LandAABB` @engsr6982
 
 ## [0.7.1] - 2025-04-11
 

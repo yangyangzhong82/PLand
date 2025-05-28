@@ -11,8 +11,9 @@
     "allowWitherDestroy": "Allow Wither destruction",
     "allowPlace": "Allow placing (blocks, heads, banners, etc.)",
     "allowPlayerDamage": "Allow players to take damage",
-    "allowAnimalDamage": "Allow animals to take damage",
-    "allowMonsterDamage": "Allow monsters to take damage",
+    "allowMonsterDamage": "Allow hostile mobs to take damage",
+    "allowPassiveDamage": "Allow passive and neutral mobs to take damage",
+    "allowSpecialDamage": "Allow special entities (boats, minecarts, paintings, etc.) to take damage",
     "allowOpenChest": "Open chests (allow)",
     "allowPickupItem": "Pick up items (allow)",
     "allowThrowSnowball": "Throw snowballs (allow)",
@@ -281,5 +282,4 @@
     "您不是领地主人或管理员，无法设置传送点": "You are not the territory owner or administrator and cannot set a teleport point",
     "领地传送点已设置!": "Territory teleport point has been set!",
     "目标玩家已离线，无法继续操作!": "The target player is offline and cannot continue the operation!"
-
 }

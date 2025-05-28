@@ -94,10 +94,13 @@ inline BlockProperty operator&(BlockProperty a, BlockProperty b) {
     return static_cast<BlockProperty>(static_cast<uint64_t>(a) & static_cast<uint64_t>(b));
 }
 
+#define CANCEL_EVENT_AND_RETURN                                                                                        \
+    ev.cancel();                                                                                                       \
+    return;
+
 #define CANCEL_AND_RETURN_IF(COND)                                                                                     \
     if (COND) {                                                                                                        \
-        ev.cancel();                                                                                                   \
-        return;                                                                                                        \
+        CANCEL_EVENT_AND_RETURN                                                                                        \
     }
 
 #define CHECK_EVENT_AND_REGISTER_LISTENER(EXPRESSION, LISTENER)                                                        \
@@ -248,16 +251,22 @@ bool EventListener::setup() {
                     "[ActorHurt] Cancel damage for player: {}, allowPlayerDamage is false",
                     hurtActor.getTypeName()
                 );
-                ev.cancel();
-                return;
+                CANCEL_EVENT_AND_RETURN
             } else if (hurtActor.hasCategory(::ActorCategory::Monster) || hurtActor.hasFamily("monster")) {
                 if (!tab.allowMonsterDamage) {
                     logger->debug(
                         "[ActorHurt] Cancel damage for monster: {}, allowMonsterDamage is false",
                         hurtActor.getTypeName()
                     );
-                    ev.cancel();
-                    return;
+                    CANCEL_EVENT_AND_RETURN
+                }
+            } else if (hurtActor.hasFamily("inanimate")) {
+                if (!tab.allowSpecialDamage) {
+                    logger->debug(
+                        "[ActorHurt] Cancel damage for inanimate: {}, allowSpecialDamage is false",
+                        hurtActor.getTypeName()
+                    );
+                    CANCEL_EVENT_AND_RETURN
                 }
             } else { // 不是怪物，则视为动物
                 if (!tab.allowPassiveDamage) {
@@ -266,7 +275,7 @@ bool EventListener::setup() {
                         hurtActor.getTypeName()
                     );
                     ev.cancel();
-                    return;
+                    CANCEL_EVENT_AND_RETURN
                 }
             }
         })
@@ -859,12 +868,14 @@ bool EventListener::setup() {
 
             if (land) {
                 auto const& tab = land->getLandPermTableConst();
-                if (isPlayer) {                                   // 被攻击的是玩家
-                    CANCEL_AND_RETURN_IF(!tab.allowPlayerDamage); // 如果不允许玩家受伤，则取消
+                if (isPlayer) {
+                    CANCEL_AND_RETURN_IF(!tab.allowPlayerDamage);
                 } else if (self.hasCategory(::ActorCategory::Monster) || self.hasFamily("monster")) {
-                    CANCEL_AND_RETURN_IF(!tab.allowMonsterDamage); // 如果不允许怪物受伤，则取消
-                } else {                                           // 不是怪物，则视为动物
-                    CANCEL_AND_RETURN_IF(!tab.allowPassiveDamage); // 如果不允许动物受伤，则取消
+                    CANCEL_AND_RETURN_IF(!tab.allowMonsterDamage);
+                } else if (self.hasFamily("inanimate")) {
+                    CANCEL_AND_RETURN_IF(!tab.allowSpecialDamage);
+                } else {
+                    CANCEL_AND_RETURN_IF(!tab.allowPassiveDamage); // 不是怪物，则视为动物
                 }
             }
         })

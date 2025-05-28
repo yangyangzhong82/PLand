@@ -23,8 +23,9 @@ struct LandPermTable {
     bool allowWitherDestroy{false};       // 允许凋零破坏
     bool allowPlace{false};               // 允许放置 [x]
     bool allowPlayerDamage{false};        // 允许玩家受伤
-    bool allowAnimalDamage{false};        // 允许动物受伤
-    bool allowMonsterDamage{true};        // 允许怪物受伤
+    bool allowMonsterDamage{true};        // 允许敌对生物受伤
+    bool allowPassiveDamage{false};       // 允许友好、中立生物受伤
+    bool allowSpecialDamage{false};       // 允许对特殊实体造成伤害(船、矿车、画等)
     bool allowOpenChest{false};           // 允许打开箱子
     bool allowPickupItem{false};          // 允许拾取物品
     bool allowEndermanLeaveBlock{false};  // 允许末影人放下方块
@@ -106,7 +107,7 @@ using LandData_sptr = std::shared_ptr<class LandData>; // 共享指针
 using LandData_wptr = std::weak_ptr<class LandData>;   // 弱指针
 class LandData {
 public:
-    int                 version{15};                           // 版本号
+    int                 version{16};                           // 版本号
     LandAABB            mPos;                                  // 领地对角坐标
     LandPos             mTeleportPos;                          // 领地传送坐标
     LandID              mLandID{LandID(-1)};                   // 领地唯一ID  (由 PLand::addLand() 时分配)
