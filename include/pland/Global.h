@@ -19,6 +19,16 @@ class Player;
 
 #define LDNDAPI [[nodiscard]] LDAPI
 
+#define LD_DISALLOW_COPY(CLASS)                                                                                        \
+    CLASS(CLASS const&)            = delete;                                                                           \
+    CLASS& operator=(CLASS const&) = delete;
+
+#define LD_DISALLOW_MOVE(CLASS)                                                                                        \
+    CLASS(CLASS&&)            = delete;                                                                                \
+    CLASS& operator=(CLASS&&) = delete;
+
+#define LD_DISALLOW_COPY_AND_MOVE(CLASS) LD_DISALLOW_COPY(CLASS) LD_DISALLOW_MOVE(CLASS)
+
 
 namespace land {
 

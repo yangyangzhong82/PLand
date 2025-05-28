@@ -7,7 +7,7 @@
 #include "mod/MyMod.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
-#include "pland/LandPos.h"
+#include "pland/math/LandAABB.h"
 #include "pland/utils/JSON.h"
 #include "pland/utils/Utils.h"
 #include <algorithm>
@@ -17,6 +17,7 @@
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
+#include <stdexcept>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -52,6 +53,29 @@ void PLand::_loadPlayerSettings() {
     }
 }
 
+void PLand::_checkAndAdaptBreakingChanges(nlohmann::json& landData) {
+    constexpr int LANDDATA_NEW_POS_KEY_VERSION = 15; // 在此版本后，LandAABB 使用了新的键名
+
+    if (landData["version"].get<int>() < LANDDATA_NEW_POS_KEY_VERSION) {
+        constexpr auto LEGACY_MAX_KEY = "mMax_B";
+        constexpr auto LEGACY_MIN_KEY = "mMin_A";
+        constexpr auto NEW_MAX_KEY    = "max";
+        constexpr auto NEW_MIN_KEY    = "min";
+
+        auto& pos = landData["mPos"];
+        if (pos.contains(LEGACY_MAX_KEY)) {
+            auto legacyMax = pos[LEGACY_MAX_KEY]; // copy
+            pos.erase(LEGACY_MAX_KEY);
+            pos[NEW_MAX_KEY] = std::move(legacyMax);
+        }
+        if (pos.contains(LEGACY_MIN_KEY)) {
+            auto legacyMin = pos[LEGACY_MIN_KEY]; // copy
+            pos.erase(LEGACY_MIN_KEY);
+            pos[NEW_MIN_KEY] = std::move(legacyMin);
+        }
+    }
+}
+
 void PLand::_loadLands() {
     ll::coro::Generator<std::pair<std::string_view, std::string_view>> iter = mDB->iter();
 
@@ -63,6 +87,8 @@ void PLand::_loadLands() {
 
         auto json = JSON::parse(value);
         auto land = LandData::make();
+
+        _checkAndAdaptBreakingChanges(json);
 
         JSON::jsonToStruct(json, *land);
 

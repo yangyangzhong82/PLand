@@ -7,10 +7,10 @@
 #include "pland/Global.h"
 #include "pland/LandData.h"
 #include "pland/LandEvent.h"
-#include "pland/LandPos.h"
 #include "pland/LandSelector.h"
 #include "pland/PLand.h"
 #include "pland/PriceCalculate.h"
+#include "pland/math/LandAABB.h"
 #include "pland/utils/McUtils.h"
 #include "pland/wrapper/FormEx.h"
 #include <climits>
@@ -122,7 +122,8 @@ void BuyLandGui::impl(Player& player, Selector* selector) {
                 auto const& squareRange = Config::cfg.land.bought.squareRange;
                 if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
                     (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
-                    (is3D && (height < squareRange.minHeight || height > mc_utils::GetDimensionMaxHeight(pl.getDimension()))
+                    (is3D
+                     && (height < squareRange.minHeight || height > mc_utils::GetDimensionMaxHeight(pl.getDimension()))
                     ) // 高度必须大于最小值 && 小于世界高度 && 3D
                 ) {
                     mc_utils::sendText<mc_utils::LogLevel::Error>(
@@ -141,14 +142,14 @@ void BuyLandGui::impl(Player& player, Selector* selector) {
                 }
             }
 
-            auto lands = db.getLandAt(aabb->mMin_A, aabb->mMax_B, selector->getDimensionId());
+            auto lands = db.getLandAt(aabb->min, aabb->max, selector->getDimensionId());
             if (!lands.empty()) {
                 for (auto& land : lands) {
-                    if (LandPos::isCollision(land->mPos, *aabb)) {
+                    if (LandAABB::isCollision(land->mPos, *aabb)) {
                         mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地重叠，请重新选择"_trf(pl));
                         return;
                     }
-                    if (!LandPos::isComplisWithMinSpacing(land->mPos, *aabb, Config::cfg.land.minSpacing)) {
+                    if (!LandAABB::isComplisWithMinSpacing(land->mPos, *aabb, Config::cfg.land.minSpacing)) {
                         mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地距离过近，请重新选择"_trf(pl));
                         return;
                     }
@@ -251,7 +252,8 @@ void BuyLandGui::impl(Player& player, LandReSelector* reSelector) {
                 auto const& squareRange = Config::cfg.land.bought.squareRange;
                 if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
                     (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
-                    (is3D && (height < squareRange.minHeight || height > mc_utils::GetDimensionMaxHeight(pl.getDimension()))
+                    (is3D
+                     && (height < squareRange.minHeight || height > mc_utils::GetDimensionMaxHeight(pl.getDimension()))
                     ) // 高度必须大于最小值 && 小于世界高度 && 3D
                 ) {
                     mc_utils::sendText<mc_utils::LogLevel::Error>(
@@ -268,15 +270,15 @@ void BuyLandGui::impl(Player& player, LandReSelector* reSelector) {
             }
 
             auto& db    = PLand::getInstance();
-            auto  lands = db.getLandAt(aabb->mMin_A, aabb->mMax_B, landPtr->getLandDimid());
+            auto  lands = db.getLandAt(aabb->min, aabb->max, landPtr->getLandDimid());
             if (!lands.empty()) {
                 for (auto& land : lands) {
                     if (land->getLandID() == landPtr->getLandID()) continue; // 跳过自己
-                    if (LandPos::isCollision(land->mPos, *aabb)) {
+                    if (LandAABB::isCollision(land->mPos, *aabb)) {
                         mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地重叠，请重新选择"_trf(pl));
                         return;
                     }
-                    if (!LandPos::isComplisWithMinSpacing(land->mPos, *aabb, Config::cfg.land.minSpacing)) {
+                    if (!LandAABB::isComplisWithMinSpacing(land->mPos, *aabb, Config::cfg.land.minSpacing)) {
                         mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地距离过近，请重新选择"_trf(pl));
                         return;
                     }
@@ -392,7 +394,8 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
                 auto const& squareRange = Config::cfg.land.bought.squareRange;
                 if ((length < squareRange.min || width < squareRange.min) || // 长度和宽度必须大于最小值
                     (length > squareRange.max || width > squareRange.max) || // 长度和宽度必须小于最大值
-                    (is3D && (height < squareRange.minHeight || height > mc_utils::GetDimensionMaxHeight(pl.getDimension()))
+                    (is3D
+                     && (height < squareRange.minHeight || height > mc_utils::GetDimensionMaxHeight(pl.getDimension()))
                     ) // 高度必须大于最小值 && 小于世界高度 && 3D
                 ) {
                     mc_utils::sendText<mc_utils::LogLevel::Error>(
@@ -422,7 +425,7 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
             // 3. 碰撞检测时，要创建子领地的范围不能和任何当前父领地的子领地重叠
             // 4. 因为第3点，会导致与父领地重叠，所以需要排除父领地
 
-            if (!LandPos::isContain(parentPos, *aabb)) {
+            if (!LandAABB::isContain(parentPos, *aabb)) {
                 mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "子领地不在父领地范围内"_trf(pl));
                 return;
             }
@@ -463,11 +466,11 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
                 if (land == parentLand) continue;                          // 排除当前领地
                 if (parentLands.find(land) != parentLands.end()) continue; // 排除父领地
 
-                if (LandPos::isCollision(land->mPos, *aabb)) {
+                if (LandAABB::isCollision(land->mPos, *aabb)) {
                     mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地重叠，请重新选择"_trf(pl));
                     return;
                 }
-                if (!LandPos::isComplisWithMinSpacing(land->mPos, *aabb, Config::cfg.land.subLand.minSpacing)) {
+                if (!LandAABB::isComplisWithMinSpacing(land->mPos, *aabb, Config::cfg.land.subLand.minSpacing)) {
                     mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "领地距离过近，请重新选择"_trf(pl));
                     return;
                 }

@@ -3,7 +3,7 @@
 #include "ll/api/base/StdInt.h"
 #include "mc/world/actor/player/Player.h"
 #include "pland/LandData.h"
-#include "pland/LandPos.h"
+#include "pland/math/LandAABB.h"
 #include <memory>
 #include <unordered_map>
 
@@ -43,7 +43,7 @@ public:
     /**
      * @brief 绘制一个临时的区域
      */
-    LDNDAPI virtual UniqueDrawId draw(LandPos const& pos, DimensionType dim, const mce::Color& color) = 0;
+    LDNDAPI virtual UniqueDrawId draw(LandAABB const& pos, DimensionType dim, const mce::Color& color) = 0;
 
     /**
      * @brief 绘制领地范围

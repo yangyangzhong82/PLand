@@ -3,8 +3,8 @@
 #include "ll/api/service/PlayerInfo.h"
 #include "mod/MyMod.h"
 #include "pland/LandData.h"
-#include "pland/LandPos.h"
 #include "pland/PLand.h"
+#include "pland/math/LandAABB.h"
 #include "pland/utils/JSON.h"
 #include <algorithm>
 #include <cstddef>
@@ -120,10 +120,10 @@ LandData_sptr iLandConverter::convert(RawData::iLandData const& raw, string cons
 
     // pos
     {
-        auto& rawPosA    = raw.range.start_position;
-        auto& rawPosB    = raw.range.end_position;
-        ptr->mPos.mMin_A = PosBase{rawPosA[0], rawPosA[1], rawPosA[2]};
-        ptr->mPos.mMax_B = PosBase{rawPosB[0], rawPosB[1], rawPosB[2]};
+        auto& rawPosA = raw.range.start_position;
+        auto& rawPosB = raw.range.end_position;
+        ptr->mPos.min = LandPos{rawPosA[0], rawPosA[1], rawPosA[2]};
+        ptr->mPos.max = LandPos{rawPosB[0], rawPosB[1], rawPosB[2]};
         ptr->mPos.fix();
         ptr->mLandDimid = raw.range.dimid;
         ptr->mIs3DLand  = true; // TODO: 由于iLand没有3D数据，所以这里暂时默认为true

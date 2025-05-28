@@ -4,8 +4,9 @@
 #include "mc/world/actor/player/Player.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
-#include "pland/LandPos.h"
 #include "pland/LandSelector.h"
+#include "pland/math/LandAABB.h"
+
 
 namespace land {
 
@@ -209,7 +210,7 @@ class LandRangeChangeBeforeEvent final : public ll::event::Cancellable<ll::event
 protected:
     Player&              mPlayer;      // 操作者
     LandData_sptr const& mLandData;    // 操作的领地数据
-    LandPos const&       mNewRange;    // 新范围
+    LandAABB const&      mNewRange;    // 新范围
     int const&           mNeedPay;     // 需要支付的价格
     int const&           mRefundPrice; // 需要退的价格
 
@@ -217,7 +218,7 @@ public:
     LDAPI LandRangeChangeBeforeEvent(
         Player&              player,
         LandData_sptr const& landData,
-        LandPos const&       newRange,
+        LandAABB const&      newRange,
         int const&           needPay,
         int const&           refundPrice
     )
@@ -230,7 +231,7 @@ public:
 
     LDNDAPI Player&              getPlayer() const;
     LDNDAPI LandData_sptr const& getLandData() const;
-    LDNDAPI LandPos const&       getNewRange() const;
+    LDNDAPI LandAABB const&      getNewRange() const;
     LDNDAPI int const&           getNeedPay() const;
     LDNDAPI int const&           getRefundPrice() const;
 };
@@ -238,7 +239,7 @@ class LandRangeChangeAfterEvent final : public ll::event::Event {
 protected:
     Player&              mPlayer;      // 操作者
     LandData_sptr const& mLandData;    // 操作的领地数据
-    LandPos const&       mNewRange;    // 新范围
+    LandAABB const&      mNewRange;    // 新范围
     int const&           mNeedPay;     // 需要支付的价格
     int const&           mRefundPrice; // 需要退的价格
 
@@ -246,7 +247,7 @@ public:
     LDAPI LandRangeChangeAfterEvent(
         Player&              player,
         LandData_sptr const& landData,
-        LandPos const&       newRange,
+        LandAABB const&      newRange,
         int const&           needPay,
         int const&           refundPrice
     )
@@ -258,7 +259,7 @@ public:
 
     LDNDAPI Player&              getPlayer() const;
     LDNDAPI LandData_sptr const& getLandData() const;
-    LDNDAPI LandPos const&       getNewRange() const;
+    LDNDAPI LandAABB const&      getNewRange() const;
     LDNDAPI int const&           getNeedPay() const;
     LDNDAPI int const&           getRefundPrice() const;
 };

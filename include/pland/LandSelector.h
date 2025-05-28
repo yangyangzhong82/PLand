@@ -6,7 +6,7 @@
 #include "pland/DrawHandleManager.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
-#include "pland/LandPos.h"
+#include "pland/math/LandAABB.h"
 #include <memory>
 #include <optional>
 #include <unordered_map>
@@ -68,7 +68,7 @@ public:
     LDNDAPI std::optional<BlockPos> getPointB() const;
 
     /* 获取选区 */
-    LDNDAPI std::optional<LandPos> getAABB() const;
+    LDNDAPI std::optional<LandAABB> getAABB() const;
 
     /* 修正AABB大小端 */
     LDAPI void fixAABBMinMax();

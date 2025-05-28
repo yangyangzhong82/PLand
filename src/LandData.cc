@@ -9,7 +9,7 @@
 namespace land {
 
 // getters
-LandPos const&            LandData::getLandPos() const { return mPos; }
+LandAABB const&           LandData::getLandPos() const { return mPos; }
 LandID                    LandData::getLandID() const { return mLandID; }
 LandDimid                 LandData::getLandDimid() const { return mLandDimid; }
 LandPermTable&            LandData::getLandPermTable() { return mLandPermTable; }
@@ -35,8 +35,8 @@ bool LandData::setLandDescribe(std::string const& describe) {
     mLandDescribe = std::string(describe);
     return true;
 }
-bool LandData::_setLandPos(LandPos const& pos) {
-    mPos = LandPos(pos);
+bool LandData::_setLandPos(LandAABB const& pos) {
+    mPos = LandAABB(pos);
     return true;
 }
 bool LandData::setSalePrice(int price) {
@@ -118,17 +118,17 @@ LandData_sptr LandData::getRootLand() const {
 }
 
 bool LandData::isRadiusInLand(BlockPos const& pos, int radius) const {
-    BlockPos minPos(pos.x - radius, mIs3DLand ? pos.y - radius : mPos.mMin_A.y, pos.z - radius);
-    BlockPos maxPos(pos.x + radius, mIs3DLand ? pos.y + radius : mPos.mMax_B.y, pos.z + radius);
+    BlockPos minPos(pos.x - radius, mIs3DLand ? pos.y - radius : mPos.min.y, pos.z - radius);
+    BlockPos maxPos(pos.x + radius, mIs3DLand ? pos.y + radius : mPos.max.y, pos.z + radius);
     return isAABBInLand(minPos, maxPos);
 }
 
 bool LandData::isAABBInLand(BlockPos const& pos1, BlockPos const& pos2) const {
-    return LandPos::isCollision(
+    return LandAABB::isCollision(
         mPos,
-        LandPos{
-            PosBase{pos1.x, pos1.y, pos1.z},
-            PosBase{pos2.x, pos2.y, pos2.z}
+        LandAABB{
+            LandPos{pos1.x, pos1.y, pos1.z},
+            LandPos{pos2.x, pos2.y, pos2.z}
     }
     );
 }
@@ -149,7 +149,7 @@ bool LandData::operator==(LandData_sptr const& other) const { return mLandID == 
 
 // static
 LandData_sptr LandData::make() { return std::make_shared<LandData>(); }
-LandData_sptr LandData::make(LandPos const& pos, LandDimid dimid, bool is3D, UUIDs const& owner) {
+LandData_sptr LandData::make(LandAABB const& pos, LandDimid dimid, bool is3D, UUIDs const& owner) {
     auto ptr     = std::make_shared<LandData>();
     ptr->mLandID = LandID(-1);
     ptr->_setLandPos(pos);

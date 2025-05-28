@@ -55,6 +55,8 @@ private: //! private 方法非线程安全
     void _loadPlayerSettings();
     void _loadLands();
 
+    void _checkAndAdaptBreakingChanges(nlohmann::json& landData); // 检查数据并尝试适配版本不兼容的变更
+
     void _initLandMap();
 
     void _updateLandMap(LandData_sptr const& ptr, bool add);

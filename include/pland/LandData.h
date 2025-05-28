@@ -2,7 +2,7 @@
 #include "ll/api/base/StdInt.h"
 #include "nlohmann/json.hpp"
 #include "pland/Global.h"
-#include "pland/LandPos.h"
+#include "pland/math/LandAABB.h"
 #include <cstdint>
 #include <vector>
 
@@ -106,9 +106,9 @@ using LandData_sptr = std::shared_ptr<class LandData>; // 共享指针
 using LandData_wptr = std::weak_ptr<class LandData>;   // 弱指针
 class LandData {
 public:
-    int                 version{14};                           // 版本号
-    LandPos             mPos;                                  // 领地对角坐标
-    PosBase             mTeleportPos;                          // 领地传送坐标
+    int                 version{15};                           // 版本号
+    LandAABB            mPos;                                  // 领地对角坐标
+    LandPos             mTeleportPos;                          // 领地传送坐标
     LandID              mLandID{LandID(-1)};                   // 领地唯一ID  (由 PLand::addLand() 时分配)
     LandDimid           mLandDimid;                            // 领地所在维度
     bool                mIs3DLand;                             // 是否为3D领地
@@ -129,13 +129,13 @@ public:
 public:
     LDNDAPI static LandData_sptr make(); // 创建一个空领地数据(反射使用)
     LDNDAPI static LandData_sptr
-    make(LandPos const& pos, LandDimid dimid, bool is3D, UUIDs const& owner); // 新建领地数据
+    make(LandAABB const& pos, LandDimid dimid, bool is3D, UUIDs const& owner); // 新建领地数据
 
     // getters
-    LDNDAPI LandPos const& getLandPos() const;
-    LDNDAPI LandID         getLandID() const;
-    LDNDAPI LandDimid      getLandDimid() const;
-    LDNDAPI int            getSalePrice() const;
+    LDNDAPI LandAABB const& getLandPos() const;
+    LDNDAPI LandID          getLandID() const;
+    LDNDAPI LandDimid       getLandDimid() const;
+    LDNDAPI int             getSalePrice() const;
 
     LDNDAPI LandPermTable&       getLandPermTable();
     LDNDAPI LandPermTable const& getLandPermTableConst() const;
@@ -154,7 +154,7 @@ public:
 
     LDAPI bool setLandName(std::string const& name);
     LDAPI bool setLandDescribe(std::string const& describe);
-    LDAPI bool _setLandPos(LandPos const& pos); // private
+    LDAPI bool _setLandPos(LandAABB const& pos); // private
 
     LDAPI bool addLandMember(UUIDs const& uuid);
     LDAPI bool removeLandMember(UUIDs const& uuid);

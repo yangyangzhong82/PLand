@@ -9,8 +9,8 @@
 #include "mc/world/level/Level.h"
 #include "pland/Config.h"
 #include "pland/LandData.h"
-#include "pland/LandPos.h"
 #include "pland/PLand.h"
+#include "pland/math/LandAABB.h"
 #include <memory>
 
 
@@ -39,16 +39,16 @@ public:
     explicit DarwHandleImpl() : DrawHandle(), mGeometryGroup(bsci::GeometryGroup::createDefault()) {}
 
     // 辅助函数
-    AABB fixAABB(PosBase const& min, PosBase const& max) {
+    AABB fixAABB(LandPos const& min, LandPos const& max) {
         return AABB{
             Vec3{min.x + 0.08, min.y + 0.08, min.z + 0.08},
             Vec3{max.x + 0.98, max.y + 0.98, max.z + 0.98}
         };
     }
-    AABB fixAABB(LandPos const& aabb) { return fixAABB(aabb.mMin_A, aabb.mMax_B); }
+    AABB fixAABB(LandAABB const& aabb) { return fixAABB(aabb.min, aabb.max); }
 
 
-    UniqueDrawId draw(LandPos const& pos, DimensionType dim, const mce::Color& color) override {
+    UniqueDrawId draw(LandAABB const& pos, DimensionType dim, const mce::Color& color) override {
         auto result = mGeometryGroup->box(dim, fixAABB(pos), color);
         return std::make_unique<DrawIdImpl>(result);
     }

@@ -53,9 +53,9 @@ std::optional<BlockPos> Selector::getPointA() const { return mPointA; }
 
 std::optional<BlockPos> Selector::getPointB() const { return mPointB; }
 
-std::optional<LandPos> Selector::getAABB() const {
+std::optional<LandAABB> Selector::getAABB() const {
     if (mPointA.has_value() && mPointB.has_value()) {
-        auto aabb = LandPos::make(mPointA.value(), mPointB.value());
+        auto aabb = LandAABB::make(mPointA.value(), mPointB.value());
         aabb.fix();
         return aabb;
     }

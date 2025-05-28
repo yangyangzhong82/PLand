@@ -51,12 +51,12 @@ LandID  LandOwnerChangeAfterEvent::getLandID() const { return mLandID; }
 
 Player&              LandRangeChangeBeforeEvent::getPlayer() const { return mPlayer; }
 LandData_sptr const& LandRangeChangeBeforeEvent::getLandData() const { return mLandData; }
-LandPos const&       LandRangeChangeBeforeEvent::getNewRange() const { return mNewRange; }
+LandAABB const&      LandRangeChangeBeforeEvent::getNewRange() const { return mNewRange; }
 int const&           LandRangeChangeBeforeEvent::getNeedPay() const { return mNeedPay; }
 int const&           LandRangeChangeBeforeEvent::getRefundPrice() const { return mRefundPrice; }
 Player&              LandRangeChangeAfterEvent::getPlayer() const { return mPlayer; }
 LandData_sptr const& LandRangeChangeAfterEvent::getLandData() const { return mLandData; }
-LandPos const&       LandRangeChangeAfterEvent::getNewRange() const { return mNewRange; }
+LandAABB const&      LandRangeChangeAfterEvent::getNewRange() const { return mNewRange; }
 int const&           LandRangeChangeAfterEvent::getNeedPay() const { return mNeedPay; }
 int const&           LandRangeChangeAfterEvent::getRefundPrice() const { return mRefundPrice; }
 

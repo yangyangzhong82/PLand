@@ -16,13 +16,13 @@
 #include "pland/Global.h"
 #include "pland/LandData.h"
 #include "pland/LandEvent.h"
-#include "pland/LandPos.h"
 #include "pland/LandSelector.h"
 #include "pland/PLand.h"
 #include "pland/PriceCalculate.h"
 #include "pland/SafeTeleport.h"
 #include "pland/gui/CommonUtilGui.hpp"
 #include "pland/gui/LandManageGui.h"
+#include "pland/math/LandAABB.h"
 #include "pland/utils/JSON.h"
 #include "pland/utils/McUtils.h"
 #include "pland/utils/Utils.h"
@@ -107,8 +107,8 @@ void SelectorChangeYGui::impl(Player& player, std::string const& exception) {
                 auto& aabb = parentLandData->getLandPos();
                 fm.appendLabel("当前为子领地模式，子领地的Y轴范围不能超过父领地。\n父领地Y轴范围: {} ~ {}"_trf(
                     player,
-                    aabb.mMin_A.y,
-                    aabb.mMax_B.y
+                    aabb.min.y,
+                    aabb.max.y
                 ));
             }
         }
@@ -149,7 +149,7 @@ void SelectorChangeYGui::impl(Player& player, std::string const& exception) {
                     }
 
                     auto& aabb = parentLandData->getLandPos();
-                    if (startY < aabb.mMin_A.y || endY > aabb.mMax_B.y) {
+                    if (startY < aabb.min.y || endY > aabb.max.y) {
                         SelectorChangeYGui::impl(pl, "请输入正确的Y轴范围, 子领地的Y轴范围不能超过父领地"_trf(pl));
                         return;
                     }
@@ -354,7 +354,7 @@ void LandTeleportGui::run(Player& player, LandID id) {
     }
 
     if (land->mTeleportPos.isZero()) {
-        SafeTeleport::getInstance().teleportTo(player, land->mPos.mMin_A, land->getLandDimid());
+        SafeTeleport::getInstance().teleportTo(player, land->mPos.min, land->getLandDimid());
         return;
     }
 

@@ -1,5 +1,5 @@
 #include "pland/PriceCalculate.h"
-#include "pland/LandPos.h"
+#include "pland/math/LandAABB.h"
 
 
 #pragma warning(disable : 4702)
@@ -18,7 +18,7 @@ decltype(auto) PriceCalculate::Variable::operator[](T&& key) {
     return mImpl[std::forward<T>(key)];
 }
 
-PriceCalculate::Variable PriceCalculate::Variable::make(LandPos const& landPos) {
+PriceCalculate::Variable PriceCalculate::Variable::make(LandAABB const& landPos) {
     PriceCalculate::Variable result;
     result["height"] = landPos.getHeight();
     result["width"]  = landPos.getWidth();
