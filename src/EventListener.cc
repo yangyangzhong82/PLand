@@ -175,7 +175,10 @@ static const std::unordered_map<std::string_view, bool LandPermTable::*> BlockFu
     {"minecraft:unpowered_comparator",        &LandPermTable::useComparator}, //  比较器
     {  "minecraft:powered_comparator",        &LandPermTable::useComparator}, //  比较器
     {  "minecraft:unpowered_repeater",          &LandPermTable::useRepeater}, //  中继器
-    {    "minecraft:powered_repeater",          &LandPermTable::useRepeater}  //  中继器
+    {    "minecraft:powered_repeater",          &LandPermTable::useRepeater}, //  中继器
+    {            "minecraft:bee_nest",           &LandPermTable::useBeeNest}, //  蜂巢
+    {             "minecraft:beehive",           &LandPermTable::useBeeNest}, //
+    {               "minecraft:vault",             &LandPermTable::useVault}  //  蜂箱
 };
 
 
