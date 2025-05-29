@@ -472,6 +472,41 @@ bool EventListener::setup() {
                         logger->debug("[InteractBlock] Item Cancel: minecraft:is_minecart tag, placeMinecart is false");
                         itemCancel = true;
                     }
+                if (itemVftable == BucketItem::$vftable()) {
+                    if (!tab.useBucket) {
+                        logger->debug("[InteractBlock] Item Cancel: BucketItem, useBucket is false");
+                        itemCancel = true;
+                    }
+                } else if (itemVftable == HatchetItem::$vftable()) {
+                    if (!tab.allowAxePeeled) {
+                        logger->debug("[InteractBlock] Item Cancel: HatchetItem, allowAxePeeled is false");
+                        itemCancel = true;
+                    }
+                } else if (itemVftable == HoeItem::$vftable()) {
+                    if (!tab.useHoe) {
+                        logger->debug("[InteractBlock] Item Cancel: HoeItem, useHoe is false");
+                        itemCancel = true;
+                    }
+                } else if (itemVftable == ShovelItem::$vftable()) {
+                    if (!tab.useShovel) {
+                        logger->debug("[InteractBlock] Item Cancel: ShovelItem, useShovel is false");
+                        itemCancel = true;
+                    }
+                } else if (actualItem->hasTag(HashedString("minecraft:boat"))) {
+                    if (!tab.placeBoat) {
+                        logger->debug("[InteractBlock] Item Cancel: minecraft:boat tag, placeBoat is false");
+                        itemCancel = true;
+                    }
+                } else if (actualItem->hasTag(HashedString("minecraft:boats"))) {
+                    if (!tab.placeBoat) {
+                        logger->debug("[InteractBlock] Item Cancel: minecraft:boats tag, placeBoat is false");
+                        itemCancel = true;
+                    }
+                } else if (actualItem->hasTag(HashedString("minecraft:is_minecart"))) {
+                    if (!tab.placeMinecart) {
+                        logger->debug("[InteractBlock] Item Cancel: minecraft:is_minecart tag, placeMinecart is false");
+                        itemCancel = true;
+                    }
                 } else {
                     auto it = ItemSpecificPermissionMap.find(itemTypeNameForMap);
                     if (it != ItemSpecificPermissionMap.end()) {
@@ -519,6 +554,7 @@ bool EventListener::setup() {
                 }
             }
             CANCEL_AND_RETURN_IF(itemCancel);
+            logger->debug("[InteractBlock] Item check passed.");
             logger->debug("[InteractBlock] Item check passed.");
 
             if (block) { // 判空
@@ -628,6 +664,7 @@ bool EventListener::setup() {
                     }
                 }
                 CANCEL_AND_RETURN_IF(blockCancel);
+                logger->debug("[InteractBlock] Block check passed.");
                 logger->debug("[InteractBlock] Block check passed.");
             }
         });
@@ -816,6 +853,7 @@ bool EventListener::setup() {
             }
 
             auto const& typeName = ev.target().getTypeName();
+            auto        land     = db->getLandAt(target.getPosition(), target.getDimensionId());
             auto        land     = db->getLandAt(target.getPosition(), target.getDimensionId());
             if (PreCheck(land)) return; // land not found
             // 特殊处理：
