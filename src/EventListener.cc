@@ -151,7 +151,8 @@ static const std::unordered_map<std::string_view, bool LandPermTable::*> BlockSp
     {                   "minecraft:lectern",           &LandPermTable::useLectern}, // 使用讲台
     {                  "minecraft:cauldron",          &LandPermTable::useCauldron}, // 使用炼药锅
     {            "minecraft:respawn_anchor",     &LandPermTable::useRespawnAnchor}, // 使用重生锚
-    {                "minecraft:flower_pot",        &LandPermTable::editFlowerPot}  // 编辑花盆
+    {                "minecraft:flower_pot",        &LandPermTable::editFlowerPot}, // 编辑花盆
+    {          "minecraft:sweet_berry_bush",         &LandPermTable::allowDestroy}, // 收集甜浆果
 };
 
 static const std::unordered_map<std::string_view, bool LandPermTable::*> BlockFunctionalPermissionMap = {

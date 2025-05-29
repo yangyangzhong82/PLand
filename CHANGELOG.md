@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复无权限玩家在领地外仍然能用弹射物伤害领地内生物的问题(#50)
 - 修复领地主人无法用伤害药水伤害领地生物的问题
 - 修复河豚可对领地生物造成伤害 #68 @engsr6982
+- 修复甜浆果丛可被交互 #63 @engsr6982
 
 ---
 
