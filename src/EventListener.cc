@@ -850,33 +850,27 @@ bool EventListener::setup() {
         Config::cfg.listeners.MobHurtEffectBeforeEvent,
         bus->emplaceListener<ila::mc::MobHurtEffectBeforeEvent>([db, logger](ila::mc::MobHurtEffectBeforeEvent& ev) {
             logger->debug("[MobHurtEffect] mob: {}", ev.self().getTypeName());
-            auto& self   = ev.self();
-            auto  source = ev.source();
-            if (!source) {
-                return; // 没有伤害来源
+            auto&      hurtActor         = ev.self();
+            bool const hurtActorIsPlayer = hurtActor.isPlayer();
+
+            auto land = db->getLandAt(hurtActor.getPosition(), hurtActor.getDimensionId());
+            if (!land) return;
+
+            // 放行来自有权限的玩家伤害
+            if (auto source = ev.source(); source && source->isPlayer()) {
+                auto& player = static_cast<Player&>(source.value());
+                if (PreCheck(land, player.getUuid().asString())) return; // land not found
             }
-            bool const isPlayer = source->isPlayer();
-            if (!isPlayer) {
-                return; // 不是玩家
-            }
 
-            auto land         = db->getLandAt(self.getPosition(), self.getDimensionId());
-            auto SourcePlayer = source->getWeakEntity().tryUnwrap<Player>();
-            auto uuid         = SourcePlayer.has_value() ? SourcePlayer->getUuid().asString() : "";
-
-            if (PreCheck(land, uuid)) return; // land not found
-
-            if (land) {
-                auto const& tab = land->getLandPermTableConst();
-                if (isPlayer) {
-                    CANCEL_AND_RETURN_IF(!tab.allowPlayerDamage);
-                } else if (self.hasCategory(::ActorCategory::Monster) || self.hasFamily("monster")) {
-                    CANCEL_AND_RETURN_IF(!tab.allowMonsterDamage);
-                } else if (self.hasFamily("inanimate")) {
-                    CANCEL_AND_RETURN_IF(!tab.allowSpecialDamage);
-                } else {
-                    CANCEL_AND_RETURN_IF(!tab.allowPassiveDamage); // 不是怪物，则视为动物
-                }
+            auto const& tab = land->getLandPermTable();
+            if (hurtActorIsPlayer) {
+                CANCEL_AND_RETURN_IF(!tab.allowPlayerDamage);
+            } else if (hurtActor.hasCategory(::ActorCategory::Monster) || hurtActor.hasFamily("monster")) {
+                CANCEL_AND_RETURN_IF(!tab.allowMonsterDamage);
+            } else if (hurtActor.hasFamily("inanimate")) {
+                CANCEL_AND_RETURN_IF(!tab.allowSpecialDamage);
+            } else {
+                CANCEL_AND_RETURN_IF(!tab.allowPassiveDamage); // 不是怪物，则视为动物
             }
         })
     )
