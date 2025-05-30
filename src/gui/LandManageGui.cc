@@ -177,7 +177,7 @@ void LandManageGui::DeleteLandGui::recursionCalculationRefoundPrice(int& refundP
     }
 }
 
-#define _DeleteLandGui_DefaultImpl_Macro(FN)                                                                           \
+#define DELETE_LAND_GUI_REMOVE_DEFAULT_LAND_IMPL(FN)                                                                   \
     int       price = PriceCalculate::calculateRefundsPrice(ptr->mOriginalBuyPrice, Config::cfg.land.refundRate);      \
     ModalForm fm(                                                                                                      \
         PLUGIN_NAME + " | 确认删除?"_trf(player),                                                                      \
@@ -220,70 +220,53 @@ void LandManageGui::DeleteLandGui::recursionCalculationRefoundPrice(int& refundP
         }                                                                                                              \
     });
 
-void LandManageGui::DeleteLandGui::_deleteOrdinaryLandImpl(Player& player, LandData_sptr const& ptr) {
-    _DeleteLandGui_DefaultImpl_Macro(PLand::getInstance().removeOrdinaryLand);
-}
-void LandManageGui::DeleteLandGui::_deleteSubLandImpl(Player& player, LandData_sptr const& ptr) {
-    _DeleteLandGui_DefaultImpl_Macro(PLand::getInstance().removeSubLand);
-}
-#undef _DeleteLandGui_DefaultImpl_Macro
-
-
-// 代码重复
-void LandManageGui::DeleteLandGui::_handleRemoveLandAndSubLandsCallback(Player& pl, LandData_sptr const& ptr) {
-    int refundPrice = 0;
-    recursionCalculationRefoundPrice(refundPrice, ptr);
-
-    std::vector<LandID>       landIdsToRemove;
-    std::stack<LandData_sptr> stack;
-    if (ptr) {
-        stack.push(ptr);
-        while (!stack.empty()) {
-            LandData_sptr current = stack.top();
-            stack.pop();
-            if (current) {
-                landIdsToRemove.push_back(current->getLandID());
-                if (current->hasSubLand()) {
-                    for (auto& subLand : current->getSubLands()) {
-                        if (subLand) stack.push(subLand);
-                    }
-                }
-            }
-        }
+#define DELETE_LAND_GUI_REMOVE_LAND_AND_SUB_LANDS_IMPL(pl, ptr)                                                        \
+    int refundPrice = 0;                                                                                               \
+    recursionCalculationRefoundPrice(refundPrice, ptr);                                                                \
+    std::vector<LandID>       landIdsToRemove;                                                                         \
+    std::stack<LandData_sptr> stack;                                                                                   \
+    if (ptr) {                                                                                                         \
+        stack.push(ptr);                                                                                               \
+        while (!stack.empty()) {                                                                                       \
+            LandData_sptr current = stack.top();                                                                       \
+            stack.pop();                                                                                               \
+            if (current) {                                                                                             \
+                landIdsToRemove.push_back(current->getLandID());                                                       \
+                if (current->hasSubLand()) {                                                                           \
+                    for (auto& subLand : current->getSubLands()) {                                                     \
+                        if (subLand) stack.push(subLand);                                                              \
+                    }                                                                                                  \
+                }                                                                                                      \
+            }                                                                                                          \
+        }                                                                                                              \
+    }                                                                                                                  \
+    PlayerDeleteLandBeforeEvent ev(pl, ptr ? ptr->getLandID() : -1, refundPrice);                                      \
+    ll::event::EventBus::getInstance().publish(ev);                                                                    \
+    if (ev.isCancelled()) {                                                                                            \
+        return;                                                                                                        \
+    }                                                                                                                  \
+    auto& economy = EconomySystem::getInstance();                                                                      \
+    if (!economy.add(pl, refundPrice)) {                                                                               \
+        mc_utils::sendText(pl, "经济系统异常，操作失败"_trf(pl));                                                      \
+        return;                                                                                                        \
+    }                                                                                                                  \
+    auto mainLandId = ptr ? ptr->getLandID() : -1;                                                                     \
+    auto result     = PLand::getInstance().removeLandAndSubLands(ptr);                                                 \
+    if (result.first) {                                                                                                \
+        /* Remove draw for all collected IDs */                                                                        \
+        auto handle = DrawHandleManager::getInstance().getOrCreateHandle(pl);                                          \
+        for (const auto& idToRemove : landIdsToRemove) {                                                               \
+            handle->remove(idToRemove);                                                                                \
+        }                                                                                                              \
+        PlayerDeleteLandAfterEvent evAfter(pl, mainLandId);                                                            \
+        ll::event::EventBus::getInstance().publish(evAfter);                                                           \
+        mc_utils::sendText(pl, "删除领地成功!"_trf(pl));                                                               \
+    } else {                                                                                                           \
+        economy.reduce(pl, refundPrice);                                                                               \
+        mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.second));            \
     }
 
-
-    PlayerDeleteLandBeforeEvent ev(pl, ptr ? ptr->getLandID() : -1, refundPrice);
-    ll::event::EventBus::getInstance().publish(ev);
-    if (ev.isCancelled()) {
-        return;
-    }
-
-    auto& economy = EconomySystem::getInstance();
-    if (!economy.add(pl, refundPrice)) {
-        mc_utils::sendText(pl, "经济系统异常，操作失败"_trf(pl));
-        return;
-    }
-
-    auto mainLandId = ptr ? ptr->getLandID() : -1; // Store main ID for event, handle potential null ptr
-    auto result     = PLand::getInstance().removeLandAndSubLands(ptr);
-    if (result.first) {
-        /* Remove draw for all collected IDs */
-        auto handle = DrawHandleManager::getInstance().getOrCreateHandle(pl);
-        for (const auto& idToRemove : landIdsToRemove) {
-            handle->remove(idToRemove);
-        }
-        /* --- */
-        PlayerDeleteLandAfterEvent evAfter(pl, mainLandId); // Use stored main ID
-        ll::event::EventBus::getInstance().publish(evAfter);
-        mc_utils::sendText(pl, "删除领地成功!"_trf(pl));
-
-    } else {
-        economy.reduce(pl, refundPrice);
-        mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.second));
-    }
-}
-#define _handleRemoveLandCallbackMacro(pl, ptr, fn)                                                                    \
+#define DELETE_LAND_GUI_REMOVE_LAND_AND_PROMOTE_SUB_LANDS_IMPL(pl, ptr, fn)                                            \
     int refundPrice = PriceCalculate::calculateRefundsPrice(ptr->mOriginalBuyPrice, Config::cfg.land.refundRate);      \
     PlayerDeleteLandBeforeEvent ev(pl, ptr->getLandID(), refundPrice);                                                 \
     ll::event::EventBus::getInstance().publish(ev);                                                                    \
@@ -308,6 +291,14 @@ void LandManageGui::DeleteLandGui::_handleRemoveLandAndSubLandsCallback(Player& 
         mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.second));            \
     }
 
+void LandManageGui::DeleteLandGui::_deleteOrdinaryLandImpl(Player& player, LandData_sptr const& ptr) {
+    DELETE_LAND_GUI_REMOVE_DEFAULT_LAND_IMPL(PLand::getInstance().removeOrdinaryLand);
+}
+void LandManageGui::DeleteLandGui::_deleteSubLandImpl(Player& player, LandData_sptr const& ptr) {
+    DELETE_LAND_GUI_REMOVE_DEFAULT_LAND_IMPL(PLand::getInstance().removeSubLand);
+}
+#undef DELETE_LAND_GUI_REMOVE_DEFAULT_LAND_IMPL
+
 void LandManageGui::DeleteLandGui::_deleteParentLandImpl(Player& player, LandData_sptr const& ptr) {
     auto fm = SimpleFormEx::create<LandManageGui, BackButtonPos::Lower>(ptr->getLandID());
     fm.setTitle(PLUGIN_NAME + "| 删除领地 & 父领地"_trf(player));
@@ -316,10 +307,14 @@ void LandManageGui::DeleteLandGui::_deleteParentLandImpl(Player& player, LandDat
     );
 
     fm.appendButton("删除当前领地和子领地"_trf(player), [ptr](Player& pl) {
-        _handleRemoveLandAndSubLandsCallback(pl, ptr);
+        DELETE_LAND_GUI_REMOVE_LAND_AND_SUB_LANDS_IMPL(pl, ptr);
     });
     fm.appendButton("删除当前领地并提升子领地为父领地"_trf(player), [ptr](Player& pl) {
-        _handleRemoveLandCallbackMacro(pl, ptr, PLand::getInstance().removeLandAndPromoteSubLands);
+        DELETE_LAND_GUI_REMOVE_LAND_AND_PROMOTE_SUB_LANDS_IMPL(
+            pl,
+            ptr,
+            PLand::getInstance().removeLandAndPromoteSubLands
+        );
     });
 
     fm.sendTo(player);
@@ -332,15 +327,21 @@ void LandManageGui::DeleteLandGui::_deleteMixLandImpl(Player& player, LandData_s
     );
 
     fm.appendButton("删除当前领地和子领地"_trf(player), [ptr](Player& pl) {
-        _handleRemoveLandAndSubLandsCallback(pl, ptr);
+        DELETE_LAND_GUI_REMOVE_LAND_AND_SUB_LANDS_IMPL(pl, ptr);
     });
     fm.appendButton("删除当前领地并移交子领地给父领地"_trf(player), [ptr](Player& pl) {
-        _handleRemoveLandCallbackMacro(pl, ptr, PLand::getInstance().removeLandAndTransferSubLands);
+        DELETE_LAND_GUI_REMOVE_LAND_AND_PROMOTE_SUB_LANDS_IMPL(
+            pl,
+            ptr,
+            PLand::getInstance().removeLandAndTransferSubLands
+        );
     });
 
     fm.sendTo(player);
 }
-#undef _handleRemoveLandCallbackMacro
+#undef DELETE_LAND_GUI_REMOVE_LAND_AND_PROMOTE_SUB_LANDS_IMPL
+#undef DELETE_LAND_GUI_REMOVE_LAND_AND_SUB_LANDS_IMPL
+
 
 void LandManageGui::EditLandNameGui::impl(Player& player, LandData_sptr const& ptr) {
     EditStringUtilGui::impl(
