@@ -88,6 +88,7 @@
     "placeMinecart": "Установить_MINECART",
     "placeBoat": "Установитьлодку",
     "allowProjectileCreate": "Выпуск снарядов",
+    "allowBlockFall": "Разрешить падение гравитационных блоков",
     "Unnamed territories": "Безымянные участки",
     "No description": "Нет описания",
     "此命令仅限 {} 使用!": "Эта команда доступна только для {}!",

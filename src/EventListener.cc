@@ -1021,17 +1021,15 @@ bool EventListener::setup() {
 
             auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
             if (land) {
-                if (land->getLandPos().isAboveLand(ev.pos())) {
-                    logger->debug("[BlockFall] Block fall above land, cancelled for land: {}", land->getLandName());
-                    ev.cancel();
-                    return;
-                }
-            }
-            // 如果方块掉落位置在领地内，且领地不允许方块掉落，则拦截
-            if (PreCheck(land)) return; // land not found
+                auto const& tab = land->getLandPermTableConst();
+                // 不允许方块掉落
+                CANCEL_AND_RETURN_IF(!tab.allowBlockFall);
 
-            if (land && !land->getLandPermTableConst().allowBlockFall) {
-                ev.cancel();
+                // 位于领地之外（上方）的方块下落，且领地不允许方块下落，则拦截
+                if (land->getLandPos().isAboveLand(ev.pos()) && !tab.allowBlockFall) {
+                    logger->debug("[BlockFall] Block fall above land, cancelled for land: {}", land->getLandName());
+                    CANCEL_EVENT_AND_RETURN
+                }
             }
         });
     });
