@@ -1,7 +1,7 @@
 #include "pland/DataConverter.h"
 #include "fmt/ostream.h"
 #include "ll/api/service/PlayerInfo.h"
-#include "mod/MyMod.h"
+#include "mod/ModEntry.h"
 #include "pland/LandData.h"
 #include "pland/PLand.h"
 #include "pland/math/LandAABB.h"
@@ -211,7 +211,7 @@ bool iLandConverter::execute() {
         return false;
     }
 
-    auto& logger = my_mod::MyMod::getInstance().getSelf().getLogger();
+    auto& logger = mod::ModEntry::getInstance().getSelf().getLogger();
     // 反射
     mRelationShip = reflection<RawRelationShip>(*rawRelationShipJSON);
     mData         = reflection<RawData>(*rawDataJSON);

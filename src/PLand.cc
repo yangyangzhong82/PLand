@@ -4,7 +4,7 @@
 #include "ll/api/i18n/I18n.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
-#include "mod/MyMod.h"
+#include "mod/ModEntry.h"
 #include "pland/Global.h"
 #include "pland/LandData.h"
 #include "pland/math/LandAABB.h"
@@ -99,7 +99,7 @@ void PLand::_loadLands() {
 
         mLandCache.emplace(land->getLandID(), std::move(land));
     }
-    auto& logger = my_mod::MyMod::getInstance().getSelf().getLogger();
+    auto& logger = mod::ModEntry::getInstance().getSelf().getLogger();
     logger.info("已加载 {} 位操作员", mLandOperators.size());
     logger.info("已加载 {} 块领地数据", mLandCache.size());
 }
@@ -116,7 +116,7 @@ void PLand::_initLandMap() {
             chunkLandVec.insert(land->getLandID());
         }
     }
-    my_mod::MyMod::getInstance().getSelf().getLogger().info("初始化领地缓存系统完成");
+    mod::ModEntry::getInstance().getSelf().getLogger().info("初始化领地缓存系统完成");
 }
 
 void PLand::_updateLandMap(LandData_sptr const& ptr, bool add) {
@@ -158,7 +158,7 @@ Result<bool> PLand::_removeLand(LandData_sptr const& ptr) {
 namespace land {
 
 void PLand::init() {
-    auto dir = my_mod::MyMod::getInstance().getSelf().getDataDir() / DB_DIR_NAME();
+    auto dir = mod::ModEntry::getInstance().getSelf().getDataDir() / DB_DIR_NAME();
 
     if (!mDB) {
         mDB = std::make_unique<ll::data::KeyValueDB>(dir);
@@ -183,9 +183,9 @@ void PLand::init() {
             lastSaveTime = std::time(nullptr); // 更新时间
 
             if (!mThreadStopFlag) {
-                my_mod::MyMod::getInstance().getSelf().getLogger().debug("[Thread] Saving land data...");
+                mod::ModEntry::getInstance().getSelf().getLogger().debug("[Thread] Saving land data...");
                 this->save();
-                my_mod::MyMod::getInstance().getSelf().getLogger().debug("[Thread] Land data saved.");
+                mod::ModEntry::getInstance().getSelf().getLogger().debug("[Thread] Land data saved.");
             } else break;
         }
     });
@@ -287,7 +287,7 @@ bool PLand::addLand(LandData_sptr land) {
 
     auto result = mLandCache.emplace(land->mLandID, land);
     if (!result.second) {
-        my_mod::MyMod::getInstance().getSelf().getLogger().warn("添加领地失败, ID: {}", land->mLandID);
+        mod::ModEntry::getInstance().getSelf().getLogger().warn("添加领地失败, ID: {}", land->mLandID);
         return false;
     }
 

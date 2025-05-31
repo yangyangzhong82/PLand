@@ -25,7 +25,7 @@
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/chunk/LevelChunk.h"
 #include "mc/world/level/dimension/Dimension.h"
-#include "mod/MyMod.h"
+#include "mod/ModEntry.h"
 #include "pland/Config.h"
 #include "pland/DataConverter.h"
 #include "pland/DrawHandleManager.h"
@@ -369,7 +369,7 @@ static auto const SetLanguage = [](CommandOrigin const& ori, CommandOutput& out)
         PlayerSettings::SYSTEM_LOCALE_CODE()
     };
     if (langs.size() == 2) {
-        fs::path const& langDir = my_mod::MyMod::getInstance().getSelf().getLangDir();
+        fs::path const& langDir = mod::ModEntry::getInstance().getSelf().getLangDir();
         for (auto const& lang : fs::directory_iterator(langDir)) {
             if (lang.path().extension() == ".json") {
                 langs.push_back(lang.path().stem().string());

@@ -34,7 +34,7 @@
 #include "mc/world/phys/HitResult.h"
 
 
-#include "mod/MyMod.h"
+#include "mod/ModEntry.h"
 #include "pland/Config.h"
 #include "pland/DrawHandleManager.h"
 #include "pland/Global.h"
@@ -176,7 +176,7 @@ static const std::unordered_map<std::string_view, bool LandPermTable::*> BlockFu
 EventListener::EventListener() {
     auto* db     = &PLand::getInstance();
     auto* bus    = &ll::event::EventBus::getInstance();
-    auto* logger = &my_mod::MyMod::getInstance().getSelf().getLogger();
+    auto* logger = &mod::ModEntry::getInstance().getSelf().getLogger();
 
     mListenerPtrs = {
         bus->emplaceListener<ll::event::PlayerJoinEvent>([db, logger](ll::event::PlayerJoinEvent& ev) {

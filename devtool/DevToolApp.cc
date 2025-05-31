@@ -1,5 +1,5 @@
 #include "DevToolApp.h"
-#include "mod/MyMod.h"
+#include "mod/ModEntry.h"
 #include <GL/glew.h>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -23,7 +23,7 @@ void DevToolApp::show() const {
     if (glfwWindow_) {
         glfwShowWindow(glfwWindow_);
     } else {
-        my_mod::MyMod::getInstance().getSelf().getLogger().error("DevTools window not initialized");
+        mod::ModEntry::getInstance().getSelf().getLogger().error("DevTools window not initialized");
     }
 }
 
@@ -87,15 +87,13 @@ void DevToolApp::checkAndUpdateScale() {
         prevScale   = xScale;
         ImGuiIO& io = ImGui::GetIO();
 
-        auto fontPath = my_mod::MyMod::getInstance().getSelf().getDataDir() / "fonts" / "font.ttf";
+        auto fontPath = mod::ModEntry::getInstance().getSelf().getDataDir() / "fonts" / "font.ttf";
         if (!std::filesystem::exists(fontPath)) {
-            this->appendError(
-                fmt::format(
-                    "由于字体文件 ( {} ) 不存在\n这可能导致部分模块字体显示异常\n\n建议下载 maple-font 字体的 "
-                    "Normal-Ligature CN 版本\n将 \"MapleMonoNormal-CN-Regular.ttf\" 重命名为 font.ttf 放置在上述路径下",
-                    fontPath.string()
-                )
-            );
+            this->appendError(fmt::format(
+                "由于字体文件 ( {} ) 不存在\n这可能导致部分模块字体显示异常\n\n建议下载 maple-font 字体的 "
+                "Normal-Ligature CN 版本\n将 \"MapleMonoNormal-CN-Regular.ttf\" 重命名为 font.ttf 放置在上述路径下",
+                fontPath.string()
+            ));
             fontPath = "C:/Windows/Fonts/msyh.ttc";
         }
 
@@ -137,7 +135,7 @@ void DevToolApp::initImGuiAndOpenGlWithGLFW() {
         float        xScale, yScale;
         GLFWmonitor* monitor = glfwGetPrimaryMonitor(); // 获取主显示器
         if (!monitor) {
-            my_mod::MyMod::getInstance().getSelf().getLogger().error("Failed to get primary monitor");
+            mod::ModEntry::getInstance().getSelf().getLogger().error("Failed to get primary monitor");
             return;
         }
         glfwGetMonitorContentScale(monitor, &xScale, &yScale); // 获取主显示器缩放比例
@@ -149,7 +147,7 @@ void DevToolApp::initImGuiAndOpenGlWithGLFW() {
             nullptr
         );
         if (!this->glfwWindow_) {
-            my_mod::MyMod::getInstance().getSelf().getLogger().error("Failed to create GLFW window");
+            mod::ModEntry::getInstance().getSelf().getLogger().error("Failed to create GLFW window");
             return;
         }
 
@@ -158,7 +156,7 @@ void DevToolApp::initImGuiAndOpenGlWithGLFW() {
         glfwSwapInterval(1);                                                         // 设置垂直同步
 
         if (glewInit() != GLEW_OK) {
-            my_mod::MyMod::getInstance().getSelf().getLogger().error("Failed to initialize GLEW");
+            mod::ModEntry::getInstance().getSelf().getLogger().error("Failed to initialize GLEW");
 
             glfwDestroyWindow(this->glfwWindow_);
             glfwTerminate(); // 终止GLFW
@@ -259,7 +257,7 @@ void DevToolApp::postTick() const {
 namespace internals {
 
 void handleGlfwError(int error, const char* description) {
-    my_mod::MyMod::getInstance().getSelf().getLogger().error("GLFW Error: {}: {}", error, description);
+    mod::ModEntry::getInstance().getSelf().getLogger().error("GLFW Error: {}: {}", error, description);
 }
 
 void handleWindowClose(GLFWwindow* window) {

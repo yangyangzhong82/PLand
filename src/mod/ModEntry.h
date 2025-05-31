@@ -4,14 +4,14 @@
 #include "pland/EventListener.h"
 #include <memory>
 
-namespace my_mod {
+namespace mod {
 
-class MyMod {
+class ModEntry {
 
 public:
-    static MyMod& getInstance();
+    static ModEntry& getInstance();
 
-    MyMod() : mSelf(*ll::mod::NativeMod::current()) {}
+    ModEntry() : mSelf(*ll::mod::NativeMod::current()) {}
 
     [[nodiscard]] ll::mod::NativeMod& getSelf() const { return mSelf; }
 
@@ -33,4 +33,4 @@ private:
     std::unique_ptr<land::EventListener> mEventListener;
 };
 
-} // namespace my_mod
+} // namespace mod

@@ -9,10 +9,10 @@
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/ChunkPos.h"
 #include "mc/world/level/block/Block.h"
-#include "mod/MyMod.h"
+#include "mod/ModEntry.h"
 #include "pland/Config.h"
 #include "pland/Global.h"
-#include "pland/PLand.h" 
+#include "pland/PLand.h"
 #include "pland/utils/McUtils.h"
 #include <algorithm>
 #include <concurrentqueue.h>
@@ -83,7 +83,7 @@ private:
     inline void findPosImpl(TaskPtr& task) {
         static const std::vector<string> dangerousBlocks = {"minecraft:lava", "minecraft:flowing_lava"};
 
-        auto& logger      = my_mod::MyMod::getInstance().getSelf().getLogger();
+        auto& logger      = mod::ModEntry::getInstance().getSelf().getLogger();
         auto& targetPos   = task->targetPos_;
         auto& dimension   = task->player_->getDimension();
         auto& blockSource = task->player_->getDimensionBlockSource();
@@ -231,7 +231,7 @@ private:
             } catch (...) {
                 queueMap_.erase(task->uuid_);
                 iter = queue_.erase(iter);
-                my_mod::MyMod::getInstance().getSelf().getLogger().error("传送任务处理失败，任务ID: {}", task->id_);
+                mod::ModEntry::getInstance().getSelf().getLogger().error("传送任务处理失败，任务ID: {}", task->id_);
             }
             ++iter;
         }

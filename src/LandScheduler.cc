@@ -10,7 +10,7 @@
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/ChunkPos.h"
 #include "mc/world/level/Level.h"
-#include "mod/MyMod.h"
+#include "mod/ModEntry.h"
 #include "pland/Config.h"
 #include "pland/Global.h"
 #include "pland/LandEvent.h"
@@ -85,7 +85,7 @@ bool LandScheduler::setup() {
         }
     }).launch(ll::thread::ServerThreadExecutor::getDefault());
 
-    auto* logger = &my_mod::MyMod::getInstance().getSelf().getLogger();
+    auto* logger = &mod::ModEntry::getInstance().getSelf().getLogger();
 
     // tip
     auto* infos          = &ll::service::PlayerInfo::getInstance();

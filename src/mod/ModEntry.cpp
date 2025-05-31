@@ -1,4 +1,4 @@
-#include "mod/MyMod.h"
+#include "mod/ModEntry.h"
 
 #include <memory>
 
@@ -24,14 +24,14 @@
 #include "DevToolAppManager.h"
 #endif
 
-namespace my_mod {
+namespace mod {
 
-MyMod& MyMod::getInstance() {
-    static MyMod instance;
+ModEntry& ModEntry::getInstance() {
+    static ModEntry instance;
     return instance;
 }
 
-bool MyMod::load() {
+bool ModEntry::load() {
     auto& logger = getSelf().getLogger();
     logger.info(R"(  _____   _                        _ )");
     logger.info(R"( |  __ \ | |                      | |)");
@@ -68,7 +68,7 @@ bool MyMod::load() {
     return true;
 }
 
-bool MyMod::enable() {
+bool ModEntry::enable() {
     land::LandCommand::setup();
     land::LandScheduler::setup();
 
@@ -85,7 +85,7 @@ bool MyMod::enable() {
     return true;
 }
 
-bool MyMod::disable() {
+bool ModEntry::disable() {
 #ifdef LD_DEVTOOL
     if (land::Config::cfg.internal.devTools) devtool::DevToolAppManager::getInstance().destroyApp();
 #endif
@@ -109,9 +109,9 @@ bool MyMod::disable() {
     return true;
 }
 
-bool MyMod::unload() { return true; }
+bool ModEntry::unload() { return true; }
 
 
-} // namespace my_mod
+} // namespace mod
 
-LL_REGISTER_MOD(my_mod::MyMod, my_mod::MyMod::getInstance());
+LL_REGISTER_MOD(mod::ModEntry, mod::ModEntry::getInstance());
