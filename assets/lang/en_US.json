@@ -140,7 +140,7 @@
     "领地重叠，请重新选择": "Plot overlap. Reselect.",
     "领地距离过近，请重新选择": "Plots too close. Reselect.",
     "购买领地成功": "Plot purchased successfully.",
-    "购买领地失败": "Failed to purchase plot.",
+    "购买领地失败，原因: {}": "Failed to purchase plot.reason:{}",
     "暂存订单": "Save Draft",
     "放弃订单": "Discard Draft",
     "| 购买领地 & 重新选区": "| Purchase & Reselect",

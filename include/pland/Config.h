@@ -3,6 +3,7 @@
 #include "ll/api/io/LogLevel.h"
 #include "pland/math/LandPos.h"
 #include <vector>
+#include "pland/math/LandAABB.h" 
 
 
 namespace land {
@@ -11,9 +12,8 @@ enum class EconomyKit : int { LegacyMoney, ScoreBoard };
 
 // 禁止创建领地的范围结构体
 struct ForbiddenRange {
-    LandPos min;         // 最小坐标
-    LandPos max;         // 最大坐标
-    int     dimensionId; // 维度ID
+    LandAABB minMax;     // 领地坐标范围
+    int      dimensionId; // 维度ID
 };
 
 struct Config {

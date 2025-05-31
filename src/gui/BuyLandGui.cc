@@ -152,7 +152,7 @@ void BuyLandGui::impl(Player& player, Selector* selector) {
             if (!db.isOperator(pl.getUuid().asString())) {
                 for (auto const& forbiddenRange : Config::cfg.land.bought.forbiddenRanges) {
                     if (forbiddenRange.dimensionId == selector->getDimensionId()
-                        && LandAABB::isCollision(LandAABB(forbiddenRange.min, forbiddenRange.max), *aabb)) {
+                        && LandAABB::isCollision(forbiddenRange.minMax, *aabb)) { // 将坐标换成AABB
                         mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "此区域禁止创建领地，请重新选择"_trf(pl));
                         return;
                     }
@@ -301,7 +301,7 @@ void BuyLandGui::impl(Player& player, LandReSelector* reSelector) {
             if (!PLand::getInstance().isOperator(pl.getUuid().asString())) {
                 for (auto const& forbiddenRange : Config::cfg.land.bought.forbiddenRanges) {
                     if (forbiddenRange.dimensionId == landPtr->getLandDimid()
-                        && LandAABB::isCollision(LandAABB(forbiddenRange.min, forbiddenRange.max), *aabb)) {
+                        && LandAABB::isCollision(forbiddenRange.minMax, *aabb)) { // 将坐标换成AABB
                         mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "此区域禁止修改领地范围，请重新选择"_trf(pl));
                         return;
                     }
@@ -474,7 +474,7 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
             if (!db.isOperator(pl.getUuid().asString())) {
                 for (auto const& forbiddenRange : Config::cfg.land.bought.forbiddenRanges) {
                     if (forbiddenRange.dimensionId == subSelector->getDimensionId()
-                        && LandAABB::isCollision(LandAABB(forbiddenRange.min, forbiddenRange.max), *aabb)) {
+                        && LandAABB::isCollision(forbiddenRange.minMax, *aabb)) { // 将坐标换成AABB
                         mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "此区域禁止创建子领地，请重新选择"_trf(pl));
                         return;
                     }
