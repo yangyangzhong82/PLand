@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 增加 玩家破坏画、矿车、船的权限控制(#48)@yangyangzhong82
 - 增加 放置船和矿车权限 （#41）@yangyangzhong82
 - 增加 对特殊实体造成伤害 权限 @engsr6982
+- 增加试炼宝库和蜂巢蜂箱的权限控制 #62 #64 @yangyangzhong82
+- `PriceCalculate` 支持调用随机数 @engsr6982
 
 ---
 
@@ -34,10 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 修复领地主人无法用伤害药水伤害领地生物的问题 @yangyangzhong82
 - 修复河豚可对领地生物造成伤害 #68 @engsr6982
 - 修复甜浆果丛可被交互 #63 @engsr6982
-- 增加试炼宝库和蜂巢蜂箱的权限控制 #62 #64 @yangyangzhong82
+- 修复 `pland set <a/b>` 命令在未开启选区时访问空指针引发异常 @engsr6982
+
 ---
 
-### 🧩 权限与事件逻辑优化
+### 🧩 权限与逻辑优化
 
 - 修改生物判断逻辑，将非 monster 类型统一视为动物,避免某些生物没有归类导致判断问题 (#35) @yangyangzhong82
 - 优化弹射物权限判定流程，将除了钓鱼竿之外的弹射物权限全部合并至发射弹射物权限中@yangyangzhong82
@@ -46,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 优化领地创建时对数量与范围限制的判断：允许领地管理员无视配置文件的限制创建领地 @yangyangzhong82
 - 优化权限判定,对部分方块和物品不再单纯使用类型名进行判断，使其判断更加灵活@yangyangzhong82
 - `allowAnimalDamage` 更改为 `allowPassiveDamage` 对友好、中立生物造成伤害 @engsr6982
+- 重构 `EventListener`、`LandScheduler` 资源管理，采用 RAII 机制 @engsr6982
 
 ---
 

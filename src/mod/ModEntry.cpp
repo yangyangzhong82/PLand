@@ -1,4 +1,4 @@
-#include "mod/MyMod.h"
+#include "mod/ModEntry.h"
 
 #include <memory>
 
@@ -24,14 +24,14 @@
 #include "DevToolAppManager.h"
 #endif
 
-namespace my_mod {
+namespace mod {
 
-MyMod& MyMod::getInstance() {
-    static MyMod instance;
+ModEntry& ModEntry::getInstance() {
+    static ModEntry instance;
     return instance;
 }
 
-bool MyMod::load() {
+bool ModEntry::load() {
     auto& logger = getSelf().getLogger();
     logger.info(R"(  _____   _                        _ )");
     logger.info(R"( |  __ \ | |                      | |)");
@@ -41,22 +41,23 @@ bool MyMod::load() {
     logger.info(R"( |_|     |______|\__,_||_| |_| \__,_|)");
     logger.info(R"(                                     )");
     logger.info("Loading...");
-    logger.info("Version: {}", PLAND_VERSION_STRING);
+
+    if (PLAND_VERSION_SNAPSHOT) {
+        logger.warn("Version: {}", PLAND_VERSION_STRING);
+        logger.warn("您当前正在使用开发快照版本，此版本可能某些功能异常、损坏、甚至导致崩溃，请勿在生产环境中使用。");
+        logger.warn("You are using a development snapshot version, this version may have some abnormal, broken or even "
+                    "crash functions, please do not use it in production environment.");
+    } else {
+        logger.info("Version: {}", PLAND_VERSION_STRING);
+    }
 
     if (auto res = ll::i18n::getInstance().load(getSelf().getLangDir()); !res) {
         logger.error("Load language file failed, plugin will use default language.");
         res.error().log(logger);
     }
 
-    if (PLAND_VERSION_SNAPSHOT) {
-        logger.warn("您当前正在使用开发快照版本，此版本可能某些功能异常、损坏、甚至导致崩溃，请勿在生产环境中使用。");
-        logger.warn("You are using a development snapshot version, this version may have some abnormal, broken or even "
-                    "crash functions, please do not use it in production environment.");
-    }
-
-
     land::Config::tryLoad();
-    logger.setLevel(land::Config::cfg.logLevel); // set console log level
+    logger.setLevel(land::Config::cfg.logLevel);
 
     land::PLand::getInstance().init();
 
@@ -68,10 +69,12 @@ bool MyMod::load() {
     return true;
 }
 
-bool MyMod::enable() {
+bool ModEntry::enable() {
     land::LandCommand::setup();
-    land::LandScheduler::setup();
-    land::EventListener::setup();
+
+    this->mLandScheduler = std::make_unique<land::LandScheduler>();
+    this->mEventListener = std::make_unique<land::EventListener>();
+
 
 #ifdef LD_TEST
     test::SetupEventListener();
@@ -84,7 +87,7 @@ bool MyMod::enable() {
     return true;
 }
 
-bool MyMod::disable() {
+bool ModEntry::disable() {
 #ifdef LD_DEVTOOL
     if (land::Config::cfg.internal.devTools) devtool::DevToolAppManager::getInstance().destroyApp();
 #endif
@@ -101,15 +104,16 @@ bool MyMod::disable() {
 
     logger.debug("cleaning up...");
     land::SelectorManager::getInstance().cleanup();
-    land::LandScheduler::release();
-    land::EventListener::release();
+
+    this->mLandScheduler.reset();
+    mEventListener.reset();
 
     return true;
 }
 
-bool MyMod::unload() { return true; }
+bool ModEntry::unload() { return true; }
 
 
-} // namespace my_mod
+} // namespace mod
 
-LL_REGISTER_MOD(my_mod::MyMod, my_mod::MyMod::getInstance());
+LL_REGISTER_MOD(mod::ModEntry, mod::ModEntry::getInstance());

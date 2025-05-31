@@ -1,6 +1,6 @@
 #include "LandCacheViewer.h"
 #include "ll/api/service/PlayerInfo.h"
-#include "mod/MyMod.h"
+#include "mod/ModEntry.h"
 #include "pland/PLand.h"
 
 #include <imgui_internal.h>
@@ -42,7 +42,7 @@ void LandCacheViewerWindow::handleEditLandData(land::LandData_sptr land) {
 }
 void LandCacheViewerWindow::handleExportLandData(land::LandData_sptr land) {
     namespace fs = std::filesystem;
-    auto dir     = my_mod::MyMod::getInstance().getSelf().getModDir() / "devtool_exports";
+    auto dir     = mod::ModEntry::getInstance().getSelf().getModDir() / "devtool_exports";
     if (!fs::exists(dir)) {
         fs::create_directory(dir);
     }
@@ -247,7 +247,7 @@ void LandDataEditor::renderMenuElement() {
                 land->load(json);
             } catch (...) {
                 land->load(backup);
-                my_mod::MyMod::getInstance().getSelf().getLogger().error("Failed to parse json");
+                mod::ModEntry::getInstance().getSelf().getLogger().error("Failed to parse json");
             }
         }
         if (ImGui::IsItemHovered()) {

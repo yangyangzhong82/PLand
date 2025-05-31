@@ -44,8 +44,11 @@ double PriceCalculate::eval(string const& code, Variable const& variables) {
 
     for (auto const& [key, value] : variables.get()) {
         auto& t = *const_cast<double*>(&value);
-        symbols.add_variable(key, t);
+        symbols.add_constant(key, t);
     }
+
+    symbols.add_function("random_num", &internals::random_num);
+    symbols.add_function("random_num_range", &internals::random_num_range);
 
     // 解析表达式
     exprtk::expression<double> expr;
@@ -70,6 +73,25 @@ int PriceCalculate::calculateRefundsPrice(double originalPrice, double refundRat
     // refundRate为1时表示全额退款，为0.9时表示退还90%
     return (int)(originalPrice * refundRate);
 }
+
+
+namespace internals {
+
+double random_num() {
+    static std::random_device               rd;
+    static std::mt19937                     gen(rd());
+    static std::uniform_real_distribution<> dis(0.0, 1.0);
+    return dis(gen);
+}
+
+double random_num_range(double min, double max) {
+    static std::random_device        rd;
+    static std::mt19937              gen(rd());
+    std::uniform_real_distribution<> dis(min, max);
+    return dis(gen);
+}
+
+} // namespace internals
 
 
 } // namespace land

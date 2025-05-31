@@ -9,7 +9,7 @@
 #include "ll/api/service/Bedrock.h"
 #include "ll/api/service/PlayerInfo.h"
 #include "mc/world/actor/player/Player.h"
-#include "mod/MyMod.h"
+#include "mod/ModEntry.h"
 #include "pland/Config.h"
 #include "pland/DrawHandleManager.h"
 #include "pland/EconomySystem.h"
@@ -162,7 +162,7 @@ void SelectorChangeYGui::impl(Player& player, std::string const& exception) {
                 mc_utils::sendText(pl, "Y轴范围已修改为 {} ~ {}"_trf(pl, startY, endY));
             } catch (...) {
                 mc_utils::sendText<mc_utils::LogLevel::Fatal>(pl, "插件内部错误, 请联系开发者"_trf(pl));
-                my_mod::MyMod::getInstance().getSelf().getLogger().error(
+                mod::ModEntry::getInstance().getSelf().getLogger().error(
                     "An exception is caught in {} and user {} enters data: {}, {}",
                     __FUNCTION__,
                     pl.getRealName(),
@@ -236,7 +236,7 @@ void EditLandMemberGui::impl(Player& player, LandData_sptr ptr) {
     for (auto& member : ptr->getLandMembers()) {
         auto i = infos.fromUuid(UUIDm::fromString(member));
         if (!i) {
-            my_mod::MyMod::getInstance().getSelf().getLogger().warn("Failed to get player info of {}", member);
+            mod::ModEntry::getInstance().getSelf().getLogger().warn("Failed to get player info of {}", member);
         }
 
         fm.appendButton(i.has_value() ? i->name : member, [member, ptr](Player& self) {
@@ -313,7 +313,7 @@ void EditLandMemberGui::RemoveMemberGui::impl(Player& player, LandData_sptr ptr,
 
     auto info = ll::service::PlayerInfo::getInstance().fromUuid(UUIDm::fromString(member));
     if (!info) {
-        my_mod::MyMod::getInstance().getSelf().getLogger().warn("Failed to get player info of {}", member);
+        mod::ModEntry::getInstance().getSelf().getLogger().warn("Failed to get player info of {}", member);
     }
 
     ModalForm fm(

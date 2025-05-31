@@ -1,23 +1,26 @@
 #pragma once
+#include "ll/api/event/ListenerBase.h"
 #include "pland/Global.h"
-#include <unordered_set>
+#include <memory>
 
 
 namespace land {
 
 
+/**
+ * @brief EventListener
+ * 领地事件监听器集合，RAII 管理事件监听器的注册和注销。
+ */
 class EventListener {
+    std::vector<ll::event::ListenerPtr> mListenerPtrs;
+
+    inline void RegisterListenerIf(bool need, std::function<ll::event::ListenerPtr()> const& factory);
+
 public:
-    EventListener()                                = delete;
-    EventListener(const EventListener&)            = delete;
-    EventListener& operator=(const EventListener&) = delete;
+    LD_DISALLOW_COPY(EventListener);
 
-    LDAPI static bool setup();
-
-    LDAPI static bool release();
-
-    LDAPI static std::unordered_set<string> InteractItemHashMap;
-    LDAPI static std::unordered_set<string> InteractBlockHashMap;
+    LDAPI explicit EventListener();
+    LDAPI ~EventListener();
 };
 
 

@@ -34,7 +34,7 @@
 #include "mc/world/phys/HitResult.h"
 
 
-#include "mod/MyMod.h"
+#include "mod/ModEntry.h"
 #include "pland/Config.h"
 #include "pland/DrawHandleManager.h"
 #include "pland/Global.h"
@@ -105,19 +105,10 @@ inline BlockProperty operator&(BlockProperty a, BlockProperty b) {
 
 
 namespace land {
-inline std::vector<ll::event::ListenerPtr> ListenerPtrs; // 事件监听器列表
-inline void RegisterListenerIf(bool need, std::function<ll::event::ListenerPtr()> const& factory) {
-    if (need) {
-        auto listenerPtr = factory();
-        ListenerPtrs.push_back(std::move(listenerPtr));
-    }
-}
-
-
-inline bool PreCheck(LandData_sptr const& ptr, UUIDs const& uuid = "", bool ignoreOperator = false) {
-    if (!ptr ||                                                       // 无领地
-        (!ignoreOperator && PLand::getInstance().isOperator(uuid)) || // 管理员
-        (ptr->getPermType(uuid) != LandPermType::Guest)               // 主人/成员
+inline bool PreCheck(LandData_sptr const& ptr, UUIDs const& uuid = "") {
+    if (!ptr ||                                         // 无领地
+        (PLand::getInstance().isOperator(uuid)) ||      // 管理员
+        (ptr->getPermType(uuid) != LandPermType::Guest) // 主人/成员
     ) {
         return true;
     }
@@ -182,12 +173,12 @@ static const std::unordered_map<std::string_view, bool LandPermTable::*> BlockFu
 };
 
 
-bool EventListener::setup() {
+EventListener::EventListener() {
     auto* db     = &PLand::getInstance();
     auto* bus    = &ll::event::EventBus::getInstance();
-    auto* logger = &my_mod::MyMod::getInstance().getSelf().getLogger();
+    auto* logger = &mod::ModEntry::getInstance().getSelf().getLogger();
 
-    ListenerPtrs = {
+    mListenerPtrs = {
         bus->emplaceListener<ll::event::PlayerJoinEvent>([db, logger](ll::event::PlayerJoinEvent& ev) {
             if (ev.self().isSimulatedPlayer()) return;
             if (!db->hasPlayerSettings(ev.self().getUuid().asString())) {
@@ -215,10 +206,10 @@ bool EventListener::setup() {
             auto  uuidStr = uuid.asString();
 
             GlobalPlayerLocaleCodeCached.erase(uuidStr);
-            LandScheduler::mDimidMap.erase(uuid);
-            LandScheduler::mLandidMap.erase(uuid);
             SelectorManager::getInstance().cancel(player);
             DrawHandleManager::getInstance().removeHandle(player);
+            Require<LandScheduler>()->mLandidMap.erase(uuid);
+            Require<LandScheduler>()->mDimidMap.erase(uuid);
         }),
     };
 
@@ -1021,17 +1012,15 @@ bool EventListener::setup() {
 
             auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
             if (land) {
-                if (land->getLandPos().isAboveLand(ev.pos())) {
-                    logger->debug("[BlockFall] Block fall above land, cancelled for land: {}", land->getLandName());
-                    ev.cancel();
-                    return;
-                }
-            }
-            // 如果方块掉落位置在领地内，且领地不允许方块掉落，则拦截
-            if (PreCheck(land)) return; // land not found
+                auto const& tab = land->getLandPermTableConst();
+                // 不允许方块掉落
+                CANCEL_AND_RETURN_IF(!tab.allowBlockFall);
 
-            if (land && !land->getLandPermTableConst().allowBlockFall) {
-                ev.cancel();
+                // 位于领地之外（上方）的方块下落，且领地不允许方块下落，则拦截
+                if (land->getLandPos().isAboveLand(ev.pos()) && !tab.allowBlockFall) {
+                    logger->debug("[BlockFall] Block fall above land, cancelled for land: {}", land->getLandName());
+                    CANCEL_EVENT_AND_RETURN
+                }
             }
         });
     });
@@ -1182,21 +1171,22 @@ bool EventListener::setup() {
             }
         );
     });
-
-
-    return true;
 }
 #undef CANCEL_AND_RETURN_IF
 
-
-bool EventListener::release() {
+EventListener::~EventListener() {
     auto& bus = ll::event::EventBus::getInstance();
-
-    for (auto& l : ListenerPtrs) {
-        bus.removeListener(l);
+    for (auto& ptr : mListenerPtrs) {
+        bus.removeListener(ptr);
     }
+}
 
-    return true;
+
+void EventListener::RegisterListenerIf(bool need, std::function<ll::event::ListenerPtr()> const& factory) {
+    if (need) {
+        auto listenerPtr = factory();
+        mListenerPtrs.push_back(std::move(listenerPtr));
+    }
 }
 
 

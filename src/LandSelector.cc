@@ -9,7 +9,7 @@
 #include "mc/network/packet/SetTitlePacket.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/world/item/ItemStack.h"
-#include "mod/MyMod.h"
+#include "mod/ModEntry.h"
 #include "pland/Config.h"
 #include "pland/DrawHandleManager.h"
 #include "pland/GUI.h"

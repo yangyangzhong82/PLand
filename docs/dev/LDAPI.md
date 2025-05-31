@@ -33,3 +33,21 @@
 `LandData_sptr` 为共享智能指针，原型为 `std::shared_ptr<class LandData>`。  
 `LandData_wptr` 为 弱共享智能指针，原型为 `std::weak_ptr<class LandData>`。  
 当您需要长期持有 `LandData` 时建议使用 `LandData_wptr` 弱共享智能指针。
+
+## RAII 资源
+
+插件中一些资源采用了 RAII 资源管理，这些资源您不应该构造、析构，它们的生命周期由 **PLand** 的 `ModEntry` 管理。
+
+当您有特殊需要，需要访问这些资源时，您可以使用 `Require<T>` 模板类。
+
+```cpp
+#include "pland/Require.h"
+
+void foo() {
+    land::Require<land::LandScheduler>()->doSomething();
+}
+```
+
+`Require<T>` 重载了 `operator->`，它会自动从 PLand 的 ModEntry 中获取 `T` 类型的资源指针并返回。
+
+!> 需要注意的是，当资源没有初始化时，访问它会抛出 `std::runtime_error`，您需要自行捕获。

@@ -1,7 +1,7 @@
 #include "pland/LandEvent.h"
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/ListenerBase.h"
-#include "mod/MyMod.h"
+#include "mod/ModEntry.h"
 
 #include "LandEventTest.h"
 
@@ -25,7 +25,7 @@ ll::event::ListenerPtr mLandRangeChangeAfterEvent;
 
 void SetupEventListener() {
     auto& bus    = ll::event::EventBus::getInstance();
-    auto  logger = &my_mod::MyMod::getInstance().getSelf().getLogger();
+    auto  logger = &mod::ModEntry::getInstance().getSelf().getLogger();
 
     // 创建领地事件
     mPlayerAskCreateLandBeforeEvent =

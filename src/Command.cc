@@ -25,7 +25,7 @@
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/chunk/LevelChunk.h"
 #include "mc/world/level/dimension/Dimension.h"
-#include "mod/MyMod.h"
+#include "mod/ModEntry.h"
 #include "pland/Config.h"
 #include "pland/DataConverter.h"
 #include "pland/DrawHandleManager.h"
@@ -226,7 +226,14 @@ static auto const Set = [](CommandOrigin const& ori, CommandOutput& out, SetPara
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player   = *static_cast<Player*>(ori.getEntity());
     auto  selector = SelectorManager::getInstance().get(player);
-    auto  pos      = player.getFeetBlockPos();
+    if (!selector) {
+        mc_utils::sendText<mc_utils::LogLevel::Error>(
+            out,
+            "您还没有开启领地选区，请先使用 /pland new 命令"_trf(player)
+        );
+        return;
+    }
+    auto pos = player.getFeetBlockPos();
 
     if (param.type == SetType::A) {
         selector->selectPointA(pos);
@@ -362,7 +369,7 @@ static auto const SetLanguage = [](CommandOrigin const& ori, CommandOutput& out)
         PlayerSettings::SYSTEM_LOCALE_CODE()
     };
     if (langs.size() == 2) {
-        fs::path const& langDir = my_mod::MyMod::getInstance().getSelf().getLangDir();
+        fs::path const& langDir = mod::ModEntry::getInstance().getSelf().getLangDir();
         for (auto const& lang : fs::directory_iterator(langDir)) {
             if (lang.path().extension() == ".json") {
                 langs.push_back(lang.path().stem().string());
