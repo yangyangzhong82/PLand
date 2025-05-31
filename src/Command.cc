@@ -226,7 +226,14 @@ static auto const Set = [](CommandOrigin const& ori, CommandOutput& out, SetPara
     CHECK_TYPE(ori, out, CommandOriginType::Player);
     auto& player   = *static_cast<Player*>(ori.getEntity());
     auto  selector = SelectorManager::getInstance().get(player);
-    auto  pos      = player.getFeetBlockPos();
+    if (!selector) {
+        mc_utils::sendText<mc_utils::LogLevel::Error>(
+            out,
+            "您还没有开启开启领地选区，请先使用 /pland new 命令"_trf(player)
+        );
+        return;
+    }
+    auto pos = player.getFeetBlockPos();
 
     if (param.type == SetType::A) {
         selector->selectPointA(pos);
