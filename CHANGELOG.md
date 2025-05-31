@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 增加 放置船和矿车权限 （#41）@yangyangzhong82
 - 增加 对特殊实体造成伤害 权限 @engsr6982
 - 增加试炼宝库和蜂巢蜂箱的权限控制 #62 #64 @yangyangzhong82
+- `PriceCalculate` 支持调用随机数 @engsr6982
 
 ---
 
