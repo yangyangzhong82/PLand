@@ -101,7 +101,7 @@
     "{} 已经被移除管理员": "{} has been removed as an admin.",
     "{} 不是管理员，无需移除": "{} is not an admin. No need to remove.",
     "已选择点{}": "Point {} selected",
-    "您还没有开启开启领地选区，请先使用 /pland new 命令": "You have not started a plot selection. Use /pland new first.",
+    "您还没有开启领地选区，请先使用 /pland new 命令": "You have not started a plot selection. Use /pland new first.",
     "已取消新建领地": "New plot creation canceled",
     "领地系统配置已重新加载": "Plot system configuration reloaded",
     "领地系统配置加载失败，请检查配置文件": "Failed to load plot system config. Check config files.",

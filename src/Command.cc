@@ -229,7 +229,7 @@ static auto const Set = [](CommandOrigin const& ori, CommandOutput& out, SetPara
     if (!selector) {
         mc_utils::sendText<mc_utils::LogLevel::Error>(
             out,
-            "您还没有开启开启领地选区，请先使用 /pland new 命令"_trf(player)
+            "您还没有开启领地选区，请先使用 /pland new 命令"_trf(player)
         );
         return;
     }
