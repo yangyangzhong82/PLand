@@ -252,8 +252,10 @@ void LandManageGui::DeleteLandGui::recursionCalculationRefoundPrice(int& refundP
     }                                                                                                                  \
     auto mainLandId = ptr ? ptr->getLandID() : -1;                                                                     \
     auto result     = PLand::getInstance().removeLandAndSubLands(ptr);                                                 \
+
     if (result.has_value() && result.value()) {                                                                        \
         /* Remove draw for all collected IDs */                                                                        \
+
         auto handle = DrawHandleManager::getInstance().getOrCreateHandle(pl);                                          \
         for (const auto& idToRemove : landIdsToRemove) {                                                               \
             handle->remove(idToRemove);                                                                                \
