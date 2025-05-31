@@ -1,6 +1,8 @@
 #pragma once
 
 #include "ll/api/mod/NativeMod.h"
+#include "pland/EventListener.h"
+#include <memory>
 
 namespace my_mod {
 
@@ -9,7 +11,6 @@ class MyMod {
 public:
     static MyMod& getInstance();
 
-    // MyMod(ll::mod::NativeMod& self) : mSelf(self) {}
     MyMod() : mSelf(*ll::mod::NativeMod::current()) {}
 
     [[nodiscard]] ll::mod::NativeMod& getSelf() const { return mSelf; }
@@ -23,12 +24,13 @@ public:
     /// @return True if the mod is disabled successfully.
     bool disable();
 
-    // TODO: Implement this method if you need to unload the mod.
-    // /// @return True if the mod is unloaded successfully.
+    /// @return True if the mod is unloaded successfully.
     bool unload();
 
 private:
     ll::mod::NativeMod& mSelf;
+
+    std::unique_ptr<land::EventListener> mEventListener;
 };
 
 } // namespace my_mod

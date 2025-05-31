@@ -71,7 +71,8 @@ bool MyMod::load() {
 bool MyMod::enable() {
     land::LandCommand::setup();
     land::LandScheduler::setup();
-    land::EventListener::setup();
+
+    this->mEventListener = std::make_unique<land::EventListener>();
 
 #ifdef LD_TEST
     test::SetupEventListener();
@@ -102,7 +103,8 @@ bool MyMod::disable() {
     logger.debug("cleaning up...");
     land::SelectorManager::getInstance().cleanup();
     land::LandScheduler::release();
-    land::EventListener::release();
+
+    mEventListener.reset();
 
     return true;
 }

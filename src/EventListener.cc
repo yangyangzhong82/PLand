@@ -105,19 +105,10 @@ inline BlockProperty operator&(BlockProperty a, BlockProperty b) {
 
 
 namespace land {
-inline std::vector<ll::event::ListenerPtr> ListenerPtrs; // 事件监听器列表
-inline void RegisterListenerIf(bool need, std::function<ll::event::ListenerPtr()> const& factory) {
-    if (need) {
-        auto listenerPtr = factory();
-        ListenerPtrs.push_back(std::move(listenerPtr));
-    }
-}
-
-
-inline bool PreCheck(LandData_sptr const& ptr, UUIDs const& uuid = "", bool ignoreOperator = false) {
-    if (!ptr ||                                                       // 无领地
-        (!ignoreOperator && PLand::getInstance().isOperator(uuid)) || // 管理员
-        (ptr->getPermType(uuid) != LandPermType::Guest)               // 主人/成员
+inline bool PreCheck(LandData_sptr const& ptr, UUIDs const& uuid = "") {
+    if (!ptr ||                                         // 无领地
+        (PLand::getInstance().isOperator(uuid)) ||      // 管理员
+        (ptr->getPermType(uuid) != LandPermType::Guest) // 主人/成员
     ) {
         return true;
     }
@@ -182,12 +173,12 @@ static const std::unordered_map<std::string_view, bool LandPermTable::*> BlockFu
 };
 
 
-bool EventListener::setup() {
+EventListener::EventListener() {
     auto* db     = &PLand::getInstance();
     auto* bus    = &ll::event::EventBus::getInstance();
     auto* logger = &my_mod::MyMod::getInstance().getSelf().getLogger();
 
-    ListenerPtrs = {
+    mListenerPtrs = {
         bus->emplaceListener<ll::event::PlayerJoinEvent>([db, logger](ll::event::PlayerJoinEvent& ev) {
             if (ev.self().isSimulatedPlayer()) return;
             if (!db->hasPlayerSettings(ev.self().getUuid().asString())) {
@@ -1180,21 +1171,22 @@ bool EventListener::setup() {
             }
         );
     });
-
-
-    return true;
 }
 #undef CANCEL_AND_RETURN_IF
 
-
-bool EventListener::release() {
+EventListener::~EventListener() {
     auto& bus = ll::event::EventBus::getInstance();
-
-    for (auto& l : ListenerPtrs) {
-        bus.removeListener(l);
+    for (auto& ptr : mListenerPtrs) {
+        bus.removeListener(ptr);
     }
+}
 
-    return true;
+
+void EventListener::RegisterListenerIf(bool need, std::function<ll::event::ListenerPtr()> const& factory) {
+    if (need) {
+        auto listenerPtr = factory();
+        mListenerPtrs.push_back(std::move(listenerPtr));
+    }
 }
 
 
