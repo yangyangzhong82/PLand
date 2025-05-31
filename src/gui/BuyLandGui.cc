@@ -142,6 +142,17 @@ void BuyLandGui::impl(Player& player, Selector* selector) {
                 }
             }
 
+            // 检查是否在禁止区域内 (领地管理员跳过检查)
+            if (!db.isOperator(pl.getUuid().asString())) {
+                for (auto const& forbiddenRange : Config::cfg.land.bought.forbiddenRanges) {
+                    if (forbiddenRange.dimensionId == selector->getDimensionId()
+                        && LandAABB::isCollision(LandAABB(forbiddenRange.min, forbiddenRange.max), *aabb)) {
+                        mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "此区域禁止创建领地，请重新选择"_trf(pl));
+                        return;
+                    }
+                }
+            }
+
             auto lands = db.getLandAt(aabb->min, aabb->max, selector->getDimensionId());
             if (!lands.empty()) {
                 for (auto& land : lands) {
@@ -162,8 +173,9 @@ void BuyLandGui::impl(Player& player, Selector* selector) {
                 return;
             }
 
-            auto landPtr = selector->newLandData();
-            if (db.addLand(landPtr)) {
+            LandData_sptr landPtr = selector->newLandData();
+            auto addLandResult = db.addLand(landPtr);
+            if (addLandResult.has_value() && addLandResult.value()) {
                 landPtr->mOriginalBuyPrice = discountedPrice; // 保存购买价格
                 mc_utils::sendText<mc_utils::LogLevel::Info>(pl, "购买领地成功"_trf(pl));
 
@@ -173,7 +185,10 @@ void BuyLandGui::impl(Player& player, Selector* selector) {
                 SelectorManager::getInstance().cancel(pl);
 
             } else {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "购买领地失败"_trf(pl));
+                mc_utils::sendText<mc_utils::LogLevel::Error>(
+                    pl,
+                    "购买领地失败，原因: {}"_trf(pl, addLandResult.error())
+                );
                 economy.add(pl, discountedPrice); // 补回经济
             }
         }
@@ -266,6 +281,17 @@ void BuyLandGui::impl(Player& player, LandReSelector* reSelector) {
                         )
                     );
                     return;
+                }
+            }
+
+            // 检查是否在禁止区域内 (领地管理员跳过检查)
+            if (!PLand::getInstance().isOperator(pl.getUuid().asString())) {
+                for (auto const& forbiddenRange : Config::cfg.land.bought.forbiddenRanges) {
+                    if (forbiddenRange.dimensionId == landPtr->getLandDimid()
+                        && LandAABB::isCollision(LandAABB(forbiddenRange.min, forbiddenRange.max), *aabb)) {
+                        mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "此区域禁止修改领地范围，请重新选择"_trf(pl));
+                        return;
+                    }
                 }
             }
 
@@ -425,6 +451,17 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
             // 3. 碰撞检测时，要创建子领地的范围不能和任何当前父领地的子领地重叠
             // 4. 因为第3点，会导致与父领地重叠，所以需要排除父领地
 
+            // 检查是否在禁止区域内 (领地管理员跳过检查)
+            if (!db.isOperator(pl.getUuid().asString())) {
+                for (auto const& forbiddenRange : Config::cfg.land.bought.forbiddenRanges) {
+                    if (forbiddenRange.dimensionId == subSelector->getDimensionId()
+                        && LandAABB::isCollision(LandAABB(forbiddenRange.min, forbiddenRange.max), *aabb)) {
+                        mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "此区域禁止创建子领地，请重新选择"_trf(pl));
+                        return;
+                    }
+                }
+            }
+
             if (!LandAABB::isContain(parentPos, *aabb)) {
                 mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "子领地不在父领地范围内"_trf(pl));
                 return;
@@ -483,8 +520,9 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
             }
 
             // 创建领地
-            auto landPtr = subSelector->newLandData();
-            if (db.addLand(landPtr)) {
+            LandData_sptr landPtr = subSelector->newLandData();
+            auto addLandResult = db.addLand(landPtr);
+            if (addLandResult.has_value() && addLandResult.value()) {
                 SelectorManager::getInstance().cancel(pl);
 
                 landPtr->mOriginalBuyPrice = discountedPrice;            // 保存购买价格
@@ -497,7 +535,10 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
                 mc_utils::sendText<mc_utils::LogLevel::Info>(pl, "购买领地成功"_trf(pl));
 
             } else {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "购买领地失败"_trf(pl));
+                mc_utils::sendText<mc_utils::LogLevel::Error>(
+                    pl,
+                    "购买领地失败，原因: {}"_trf(pl, addLandResult.error())
+                );
                 economy.add(pl, discountedPrice); // 补回经济
             }
         }

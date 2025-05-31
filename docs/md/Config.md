@@ -56,6 +56,25 @@
       "allowDimensions": [
         // 允许圈地的维度
         0, 1, 2
+      ],
+      "forbiddenRanges": [
+        // 禁止创建领地的区域，领地管理员可以绕过此限制
+        // min: 最小坐标
+        // max: 最大坐标
+        // dimensionId: 维度ID (0: 主世界, 1: 下界, 2: 末地)
+        {
+          "min": {
+            "x": -100,
+            "y": 0,
+            "z": -100
+          },
+          "max": {
+            "x": 100,
+            "y": 255,
+            "z": 100
+          },
+          "dimensionId": 0
+        }
       ]
     }
   },
@@ -95,7 +114,13 @@
     "SculkSpreadBeforeEvent": true, // 诡秘蔓延事件
     "PlayerEditSignBeforeEvent": true, // 玩家编辑告示牌事件
     "SpawnedMobEvent": true, // 生物生成事件(怪物和动物)
-    "SculkCatalystAbsorbExperienceBeforeEvent": false // 幽匿催化体吸收经验事件
+    "SculkCatalystAbsorbExperienceBeforeEvent": false, // 幽匿催化体吸收经验事件
+    "PlayerInteractEntityBeforeEvent": true, // 实体交互事件
+    "BlockFallBeforeEvent": true, // 方块下落事件
+    "ActorDestroyBlockEvent": true, // 实体破坏方块事件
+    "EndermanLeaveBlockEvent": true, // 末影人搬走方块
+    "EndermanTakeBlockEvent": true, // 末影人放下方块
+    "DragonEggBlockTeleportBeforeEvent": true // 龙蛋传送事件
   },
   "internal": {
     "devTools": false // 是否启用开发工具，启用前请确保您的机器有具有显示器，否则初始化时会引发错误、甚至崩溃。

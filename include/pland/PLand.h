@@ -90,7 +90,7 @@ public:
 
     LDNDAPI bool hasLand(LandID id) const;
 
-    LDAPI bool addLand(LandData_sptr land);
+    LDAPI Result<bool> addLand(LandData_sptr land);
 
     LDAPI void refreshLandRange(LandData_sptr const& ptr); // 刷新领地范围 (_refreshLandRange)
 

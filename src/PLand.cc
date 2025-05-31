@@ -265,9 +265,9 @@ bool PLand::hasLand(LandID id) const {
     std::shared_lock<std::shared_mutex> lock(mMutex);
     return mLandCache.find(id) != mLandCache.end();
 }
-bool PLand::addLand(LandData_sptr land) {
+Result<bool> PLand::addLand(LandData_sptr land) {
     if (!land || land->mLandID != LandID(-1)) {
-        return false;
+        return std::unexpected("领地数据无效或已分配ID");
     }
 
     LandID id = getNextLandID();
@@ -279,7 +279,7 @@ bool PLand::addLand(LandData_sptr land) {
             }
         }
         if (hasLand(id)) {
-            return false; // ID 冲突
+            return std::unexpected("无法分配新的领地ID，ID冲突"); // ID 冲突
         }
     }
     land->mLandID = id;
@@ -289,7 +289,7 @@ bool PLand::addLand(LandData_sptr land) {
     auto result = mLandCache.emplace(land->mLandID, land);
     if (!result.second) {
         mod::ModEntry::getInstance().getSelf().getLogger().warn("添加领地失败, ID: {}", land->mLandID);
-        return false;
+        return std::unexpected("添加领地到缓存失败");
     }
 
     _updateLandMap(land, true);

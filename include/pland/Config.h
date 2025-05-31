@@ -1,6 +1,7 @@
 #pragma once
 #include "Global.h"
 #include "ll/api/io/LogLevel.h"
+#include "pland/math/LandPos.h" 
 #include <vector>
 
 
@@ -8,8 +9,15 @@ namespace land {
 
 enum class EconomyKit : int { LegacyMoney, ScoreBoard };
 
+// 禁止创建领地的范围结构体
+struct ForbiddenRange {
+    LandPos min;        // 最小坐标
+    LandPos max;        // 最大坐标
+    int     dimensionId; // 维度ID
+};
+
 struct Config {
-    int              version{14};
+    int              version{15};
     ll::io::LogLevel logLevel{ll::io::LogLevel::Info};
 
     struct {
@@ -61,7 +69,8 @@ struct Config {
                 int minHeight{1}; // 最小领地高度
             } squareRange;
 
-            std::vector<LandDimid> allowDimensions{0, 1, 2}; // 允许的领地维度
+            std::vector<LandDimid>      allowDimensions{0, 1, 2}; // 允许的领地维度
+            std::vector<ForbiddenRange> forbiddenRanges;          // 禁止创建领地的区域
         } bought;
     } land;
 
