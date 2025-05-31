@@ -14,6 +14,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <ctime>
+#include <expected>
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
@@ -141,15 +142,15 @@ LandID PLand::getNextLandID() { return mNextLandID++; }
 Result<bool> PLand::_removeLand(LandData_sptr const& ptr) {
     _updateLandMap(ptr, false); // 擦除映射表
     if (!mLandCache.erase(ptr->getLandID())) {
-        return {false, "erase cache failed!"};
+        return std::unexpected("erase cache failed!");
     }
 
     if (!this->mDB->del(std::to_string(ptr->getLandID()))) {
         mLandCache.emplace(ptr->getLandID(), ptr); // rollback
         _updateLandMap(ptr, true);
-        return {false, "del db failed!"};
+        return std::unexpected("del db failed!");
     }
-    return {true, std::nullopt};
+    return true;
 }
 
 } // namespace land
@@ -310,11 +311,16 @@ bool PLand::removeLand(LandID landId) {
         return false;
     }
     lock.unlock();
-    return removeOrdinaryLand(landIter->second).first;
+
+    auto result = removeOrdinaryLand(landIter->second);
+    if (!result.has_value()) {
+        return false; // 移除失败
+    }
+    return true;
 }
 Result<bool> PLand::removeOrdinaryLand(LandData_sptr const& ptr) {
     if (!ptr->isOrdinaryLand()) {
-        return {false, "not a ordinary land!"};
+        return std::unexpected("not a ordinary land!");
     }
 
     std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
@@ -322,12 +328,12 @@ Result<bool> PLand::removeOrdinaryLand(LandData_sptr const& ptr) {
 }
 Result<bool> PLand::removeSubLand(LandData_sptr const& ptr) {
     if (!ptr->isSubLand()) {
-        return {false, "not a sub land!"};
+        return std::unexpected("not a sub land!");
     }
 
     auto parent = ptr->getParentLand();
     if (!parent) {
-        return {false, "parent land not found!"};
+        return std::unexpected("parent land not found!");
     }
 
     std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
@@ -336,7 +342,7 @@ Result<bool> PLand::removeSubLand(LandData_sptr const& ptr) {
     std::erase_if(parent->mSubLandIDs, [&](LandID const& id) { return id == ptr->getLandID(); });
 
     auto result = _removeLand(ptr);
-    if (!result.first) {
+    if (!result.has_value()) {
         parent->mSubLandIDs.push_back(ptr->getLandID()); // 恢复父领地的子领地列表
     }
 
@@ -344,7 +350,7 @@ Result<bool> PLand::removeSubLand(LandData_sptr const& ptr) {
 }
 Result<bool> PLand::removeLandAndSubLands(LandData_sptr const& ptr) {
     if (!ptr->isParentLand() && !ptr->isMixLand()) {
-        return {false, "only parent land and mix land can remove sub lands!"};
+        return std::unexpected("only parent land and mix land can remove sub lands!");
     }
 
     auto currentId = ptr->getLandID();
@@ -373,7 +379,7 @@ Result<bool> PLand::removeLandAndSubLands(LandData_sptr const& ptr) {
         }
 
         auto result = _removeLand(current);
-        if (result.first) {
+        if (result.has_value()) {
             removedLands.push_back(current);
         } else {
             // rollback
@@ -384,15 +390,14 @@ Result<bool> PLand::removeLandAndSubLands(LandData_sptr const& ptr) {
             if (parent) {
                 parent->mSubLandIDs.push_back(currentId); // 恢复父领地的子领地列表
             }
-            return {false, "remove land or sub land failed!"};
+            return std::unexpected("remove land or sub land failed!");
         }
     }
-
-    return {true, std::nullopt};
+    return true;
 }
 Result<bool> PLand::removeLandAndPromoteSubLands(LandData_sptr const& ptr) {
     if (!ptr->isParentLand()) {
-        return {false, "only root land's sub land can be promoted!"};
+        return std::unexpected("only root land's sub land can be promoted!");
     }
 
 
@@ -405,7 +410,7 @@ Result<bool> PLand::removeLandAndPromoteSubLands(LandData_sptr const& ptr) {
     }
 
     auto result = _removeLand(ptr);
-    if (!result.first) {
+    if (!result.has_value()) {
         // rollback
         auto currentId = ptr->getLandID();
         for (auto& subLand : subLands) {
@@ -416,12 +421,12 @@ Result<bool> PLand::removeLandAndPromoteSubLands(LandData_sptr const& ptr) {
 }
 Result<bool> PLand::removeLandAndTransferSubLands(LandData_sptr const& ptr) {
     if (!ptr->isMixLand()) {
-        return {false, "only mix land's sub land can be transferred!"};
+        return std::unexpected("only mix land's sub land can be transferred!");
     }
 
     auto parent = ptr->getParentLand();
     if (!parent) {
-        return {false, "parent land not found!"};
+        return std::unexpected("parent land not found!");
     }
     auto parentID = parent->getLandID();
     auto subLands = ptr->getSubLands();
@@ -437,7 +442,7 @@ Result<bool> PLand::removeLandAndTransferSubLands(LandData_sptr const& ptr) {
     std::erase_if(parent->mSubLandIDs, [&](LandID const& id) { return id == ptr->getLandID(); });
 
     auto result = _removeLand(ptr);
-    if (!result.first) {
+    if (!result.has_value()) {
         // rollback
         auto currentId = ptr->getLandID();
         for (auto& subLand : subLands) {
