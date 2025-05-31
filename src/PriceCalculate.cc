@@ -18,23 +18,25 @@ decltype(auto) PriceCalculate::Variable::operator[](T&& key) {
     return mImpl[std::forward<T>(key)];
 }
 
-PriceCalculate::Variable PriceCalculate::Variable::make(LandAABB const& landPos) {
+PriceCalculate::Variable PriceCalculate::Variable::make(LandAABB const& landPos, int dimensionId) {
     PriceCalculate::Variable result;
-    result["height"] = landPos.getHeight();
-    result["width"]  = landPos.getWidth();
-    result["depth"]  = landPos.getDepth();
-    result["square"] = landPos.getSquare();
-    result["volume"] = landPos.getVolume();
+    result["height"]      = landPos.getHeight();
+    result["width"]       = landPos.getWidth();
+    result["depth"]       = landPos.getDepth();
+    result["square"]      = landPos.getSquare();
+    result["volume"]      = landPos.getVolume();
+    result["dimensionId"] = (double)dimensionId; // 添加维度ID
     return result;
 }
 
-PriceCalculate::Variable PriceCalculate::Variable::make(int height, int width, int depth) {
+PriceCalculate::Variable PriceCalculate::Variable::make(int height, int width, int depth, int dimensionId) {
     PriceCalculate::Variable result;
-    result["height"] = height;
-    result["width"]  = width;
-    result["depth"]  = depth;
-    result["square"] = width * depth;
-    result["volume"] = height * width * depth;
+    result["height"]      = height;
+    result["width"]       = width;
+    result["depth"]       = depth;
+    result["square"]      = width * depth;
+    result["volume"]      = height * width * depth;
+    result["dimensionId"] = (double)dimensionId; // 添加维度ID
     return result;
 }
 

@@ -67,11 +67,17 @@ void BuyLandGui::impl(Player& player, Selector* selector) {
     int const width  = aabb->getWidth();
     int const height = aabb->getHeight();
 
-    auto   _variables    = PriceCalculate::Variable::make(*aabb);
+    auto   _variables    = PriceCalculate::Variable::make(*aabb, selector->getDimensionId()); // 传入维度ID
     double originalPrice = PriceCalculate::eval(
         is3D ? Config::cfg.land.bought.threeDimensionl.calculate : Config::cfg.land.bought.twoDimensionl.calculate,
         _variables
     );
+
+    // 应用维度价格系数
+    auto it = Config::cfg.land.bought.dimensionPriceCoefficients.find(std::to_string(selector->getDimensionId()));
+    if (it != Config::cfg.land.bought.dimensionPriceCoefficients.end()) {
+        originalPrice *= it->second;
+    }
     int discountedPrice = PriceCalculate::calculateDiscountPrice(originalPrice, Config::cfg.land.discountRate);
     if (!Config::cfg.economy.enabled) discountedPrice = 0; // 免费
 
@@ -142,6 +148,17 @@ void BuyLandGui::impl(Player& player, Selector* selector) {
                 }
             }
 
+            // 检查是否在禁止区域内 (领地管理员跳过检查)
+            if (!db.isOperator(pl.getUuid().asString())) {
+                for (auto const& forbiddenRange : Config::cfg.land.bought.forbiddenRanges) {
+                    if (forbiddenRange.dimensionId == selector->getDimensionId()
+                        && LandAABB::isCollision(forbiddenRange.aabb, *aabb)) { // 将坐标换成AABB
+                        mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "此区域禁止创建领地，请重新选择"_trf(pl));
+                        return;
+                    }
+                }
+            }
+
             auto lands = db.getLandAt(aabb->min, aabb->max, selector->getDimensionId());
             if (!lands.empty()) {
                 for (auto& land : lands) {
@@ -162,8 +179,9 @@ void BuyLandGui::impl(Player& player, Selector* selector) {
                 return;
             }
 
-            auto landPtr = selector->newLandData();
-            if (db.addLand(landPtr)) {
+            LandData_sptr landPtr       = selector->newLandData();
+            auto          addLandResult = db.addLand(landPtr);
+            if (addLandResult.has_value() && addLandResult.value()) {
                 landPtr->mOriginalBuyPrice = discountedPrice; // 保存购买价格
                 mc_utils::sendText<mc_utils::LogLevel::Info>(pl, "购买领地成功"_trf(pl));
 
@@ -173,7 +191,10 @@ void BuyLandGui::impl(Player& player, Selector* selector) {
                 SelectorManager::getInstance().cancel(pl);
 
             } else {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "购买领地失败"_trf(pl));
+                mc_utils::sendText<mc_utils::LogLevel::Error>(
+                    pl,
+                    "购买领地失败，原因: {}"_trf(pl, addLandResult.error())
+                );
                 economy.add(pl, discountedPrice); // 补回经济
             }
         }
@@ -196,15 +217,22 @@ void BuyLandGui::impl(Player& player, LandReSelector* reSelector) {
     int const width  = aabb->getWidth();
     int const height = aabb->getHeight();
 
-    auto       landPtr         = reSelector->getLandData();
-    int const& originalPrice   = landPtr->mOriginalBuyPrice;             // 原始购买价格
-    int const  discountedPrice = PriceCalculate::calculateDiscountPrice( // 新范围购买价格
-        PriceCalculate::eval(
-            is3D ? Config::cfg.land.bought.threeDimensionl.calculate : Config::cfg.land.bought.twoDimensionl.calculate,
-            PriceCalculate::Variable::make(*aabb)
-        ),
-        Config::cfg.land.discountRate
+    auto       landPtr       = reSelector->getLandData();
+    int const& originalPrice = landPtr->mOriginalBuyPrice;                                     // 原始购买价格
+    auto       _variables    = PriceCalculate::Variable::make(*aabb, landPtr->getLandDimid()); // 传入维度ID
+    double     newRangePrice = PriceCalculate::eval(
+        is3D ? Config::cfg.land.bought.threeDimensionl.calculate : Config::cfg.land.bought.twoDimensionl.calculate,
+        _variables
     );
+
+    // 应用维度价格系数
+    auto it = Config::cfg.land.bought.dimensionPriceCoefficients.find(std::to_string(landPtr->getLandDimid()));
+    if (it != Config::cfg.land.bought.dimensionPriceCoefficients.end()) {
+        newRangePrice *= it->second;
+    }
+
+    int const discountedPrice =
+        PriceCalculate::calculateDiscountPrice(newRangePrice, Config::cfg.land.discountRate); // 新范围购买价格
 
     // 计算需补差价 & 退还差价
     int needPay = discountedPrice - originalPrice; // 需补差价
@@ -266,6 +294,17 @@ void BuyLandGui::impl(Player& player, LandReSelector* reSelector) {
                         )
                     );
                     return;
+                }
+            }
+
+            // 检查是否在禁止区域内 (领地管理员跳过检查)
+            if (!PLand::getInstance().isOperator(pl.getUuid().asString())) {
+                for (auto const& forbiddenRange : Config::cfg.land.bought.forbiddenRanges) {
+                    if (forbiddenRange.dimensionId == landPtr->getLandDimid()
+                        && LandAABB::isCollision(forbiddenRange.aabb, *aabb)) { // 将坐标换成AABB
+                        mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "此区域禁止修改领地范围，请重新选择"_trf(pl));
+                        return;
+                    }
                 }
             }
 
@@ -331,9 +370,15 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
     int const width  = aabb->getWidth();
     int const height = aabb->getHeight();
 
-    auto   _variables      = PriceCalculate::Variable::make(*aabb);
-    double originalPrice   = PriceCalculate::eval(Config::cfg.land.subLand.calculate, _variables);
-    int    discountedPrice = PriceCalculate::calculateDiscountPrice(originalPrice, Config::cfg.land.discountRate);
+    auto   _variables    = PriceCalculate::Variable::make(*aabb, subSelector->getDimensionId()); // 传入维度ID
+    double originalPrice = PriceCalculate::eval(Config::cfg.land.subLand.calculate, _variables);
+
+    // 应用维度价格系数
+    auto it = Config::cfg.land.bought.dimensionPriceCoefficients.find(std::to_string(subSelector->getDimensionId()));
+    if (it != Config::cfg.land.bought.dimensionPriceCoefficients.end()) {
+        originalPrice *= it->second;
+    }
+    int discountedPrice = PriceCalculate::calculateDiscountPrice(originalPrice, Config::cfg.land.discountRate);
     if (!Config::cfg.economy.enabled) discountedPrice = 0; // 免费
 
     if (volume >= INT_MAX || originalPrice < 0 || discountedPrice < 0) {
@@ -425,6 +470,17 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
             // 3. 碰撞检测时，要创建子领地的范围不能和任何当前父领地的子领地重叠
             // 4. 因为第3点，会导致与父领地重叠，所以需要排除父领地
 
+            // 检查是否在禁止区域内 (领地管理员跳过检查)
+            if (!db.isOperator(pl.getUuid().asString())) {
+                for (auto const& forbiddenRange : Config::cfg.land.bought.forbiddenRanges) {
+                    if (forbiddenRange.dimensionId == subSelector->getDimensionId()
+                        && LandAABB::isCollision(forbiddenRange.aabb, *aabb)) { // 将坐标换成AABB
+                        mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "此区域禁止创建子领地，请重新选择"_trf(pl));
+                        return;
+                    }
+                }
+            }
+
             if (!LandAABB::isContain(parentPos, *aabb)) {
                 mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "子领地不在父领地范围内"_trf(pl));
                 return;
@@ -483,8 +539,9 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
             }
 
             // 创建领地
-            auto landPtr = subSelector->newLandData();
-            if (db.addLand(landPtr)) {
+            LandData_sptr landPtr       = subSelector->newLandData();
+            auto          addLandResult = db.addLand(landPtr);
+            if (addLandResult.has_value() && addLandResult.value()) {
                 SelectorManager::getInstance().cancel(pl);
 
                 landPtr->mOriginalBuyPrice = discountedPrice;            // 保存购买价格
@@ -497,7 +554,10 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
                 mc_utils::sendText<mc_utils::LogLevel::Info>(pl, "购买领地成功"_trf(pl));
 
             } else {
-                mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "购买领地失败"_trf(pl));
+                mc_utils::sendText<mc_utils::LogLevel::Error>(
+                    pl,
+                    "购买领地失败，原因: {}"_trf(pl, addLandResult.error())
+                );
                 economy.add(pl, discountedPrice); // 补回经济
             }
         }

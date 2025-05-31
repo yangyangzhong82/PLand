@@ -140,7 +140,7 @@
     "领地重叠，请重新选择": "Plot overlap. Reselect.",
     "领地距离过近，请重新选择": "Plots too close. Reselect.",
     "购买领地成功": "Plot purchased successfully.",
-    "购买领地失败": "Failed to purchase plot.",
+    "购买领地失败，原因: {}": "Failed to purchase plot.reason:{}",
     "暂存订单": "Save Draft",
     "放弃订单": "Discard Draft",
     "| 购买领地 & 重新选区": "| Purchase & Reselect",
@@ -284,5 +284,8 @@
     "您当前不在该领地内，无法设置传送点": "You are currently not in this territory and cannot set a teleport point",
     "您不是领地主人或管理员，无法设置传送点": "You are not the territory owner or administrator and cannot set a teleport point",
     "领地传送点已设置!": "Territory teleport point has been set!",
-    "目标玩家已离线，无法继续操作!": "The target player is offline and cannot continue the operation!"
+    "目标玩家已离线，无法继续操作!": "The target player is offline and cannot continue the operation!",
+    "此区域禁止创建领地，请重新选择": "This area is forbidden for plot creation. Please reselect.",
+    "此区域禁止修改领地范围，请重新选择": "This area is forbidden for plot modification. Please reselect.",
+    "此区域禁止创建子领地，请重新选择": "This area is forbidden for sub-plot creation. Please reselect."
 }

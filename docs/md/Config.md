@@ -8,7 +8,7 @@
 
 ```json
 {
-  "version": 2, // 配置文件版本，请勿修改
+  "version": 15, // 配置文件版本，请勿修改
   "logLevel": "Info", // 日志等级 Off / Fatal / Error / Warn / Info / Debug / Trace
   "economy": {
     "enabled": true, // 是否启用经济系统
@@ -56,7 +56,35 @@
       "allowDimensions": [
         // 允许圈地的维度
         0, 1, 2
-      ]
+      ],
+      "forbiddenRanges": [
+        // 禁止创建领地的区域，领地管理员可以绕过此限制
+        // min: 最小坐标
+        // max: 最大坐标
+        // dimensionId: 维度ID (0: 主世界, 1: 下界, 2: 末地)
+        {
+          "aabb": {
+            "min": {
+              "x": -100,
+              "y": 0,
+              "z": -100
+            },
+            "max": {
+              "x": 100,
+              "y": 255,
+              "z": 100
+            }
+          },
+          "dimensionId": 0
+        }
+      ],
+      "dimensionPriceCoefficients": {
+        // 维度价格系数，用于根据维度ID调整领地价格。键是维度ID的字符串形式，值是对应的价格系数。
+        // 例如，"0": 1.0 表示主世界价格系数为1.0（原价），"1": 1.2 表示下界价格为1.2倍。
+        "0": 1.0,
+        "1": 1.2,
+        "2": 1.5
+      }
     }
   },
   "selector": {
@@ -95,7 +123,13 @@
     "SculkSpreadBeforeEvent": true, // 诡秘蔓延事件
     "PlayerEditSignBeforeEvent": true, // 玩家编辑告示牌事件
     "SpawnedMobEvent": true, // 生物生成事件(怪物和动物)
-    "SculkCatalystAbsorbExperienceBeforeEvent": false // 幽匿催化体吸收经验事件
+    "SculkCatalystAbsorbExperienceBeforeEvent": false, // 幽匿催化体吸收经验事件
+    "PlayerInteractEntityBeforeEvent": true, // 实体交互事件
+    "BlockFallBeforeEvent": true, // 方块下落事件
+    "ActorDestroyBlockEvent": true, // 实体破坏方块事件
+    "EndermanLeaveBlockEvent": true, // 末影人搬走方块
+    "EndermanTakeBlockEvent": true, // 末影人放下方块
+    "DragonEggBlockTeleportBeforeEvent": true // 龙蛋传送事件
   },
   "internal": {
     "devTools": false // 是否启用开发工具，启用前请确保您的机器有具有显示器，否则初始化时会引发错误、甚至崩溃。
@@ -107,13 +141,14 @@
 
 ?> PLand 的 `Calculate` 实现使用了 [`exprtk`](https://github.com/ArashPartow/exprtk) 库，因此你可以使用 [`exprtk`](https://github.com/ArashPartow/exprtk) 库所支持的所有函数和运算符。
 
-|   变量   |     描述     |
-| :------: | :----------: |
-| `height` |   领地高度   |
-| `width`  |   领地宽度   |
-| `depth`  | 领地深度(长) |
-| `square` |   领地面积   |
-| `volume` |   领地体积   |
+|     变量      |     描述     |
+| :-----------: | :----------: |
+|   `height`    |   领地高度   |
+|    `width`    |   领地宽度   |
+|    `depth`    | 领地深度(长) |
+|   `square`    |   领地面积   |
+|   `volume`    |   领地体积   |
+| `dimensionId` |   维度 ID    |
 
 除此之外，价格表达式还支持调用随机数。
 
