@@ -67,11 +67,17 @@ void BuyLandGui::impl(Player& player, Selector* selector) {
     int const width  = aabb->getWidth();
     int const height = aabb->getHeight();
 
-    auto   _variables    = PriceCalculate::Variable::make(*aabb);
+    auto   _variables    = PriceCalculate::Variable::make(*aabb, selector->getDimensionId()); // 传入维度ID
     double originalPrice = PriceCalculate::eval(
         is3D ? Config::cfg.land.bought.threeDimensionl.calculate : Config::cfg.land.bought.twoDimensionl.calculate,
         _variables
     );
+
+    // 应用维度价格系数
+    auto it = Config::cfg.land.bought.dimensionPriceCoefficients.find(std::to_string(selector->getDimensionId()));
+    if (it != Config::cfg.land.bought.dimensionPriceCoefficients.end()) {
+        originalPrice *= it->second;
+    }
     int discountedPrice = PriceCalculate::calculateDiscountPrice(originalPrice, Config::cfg.land.discountRate);
     if (!Config::cfg.economy.enabled) discountedPrice = 0; // 免费
 
@@ -211,15 +217,22 @@ void BuyLandGui::impl(Player& player, LandReSelector* reSelector) {
     int const width  = aabb->getWidth();
     int const height = aabb->getHeight();
 
-    auto       landPtr         = reSelector->getLandData();
-    int const& originalPrice   = landPtr->mOriginalBuyPrice;             // 原始购买价格
-    int const  discountedPrice = PriceCalculate::calculateDiscountPrice( // 新范围购买价格
-        PriceCalculate::eval(
-            is3D ? Config::cfg.land.bought.threeDimensionl.calculate : Config::cfg.land.bought.twoDimensionl.calculate,
-            PriceCalculate::Variable::make(*aabb)
-        ),
-        Config::cfg.land.discountRate
+    auto       landPtr       = reSelector->getLandData();
+    int const& originalPrice = landPtr->mOriginalBuyPrice;                                     // 原始购买价格
+    auto       _variables    = PriceCalculate::Variable::make(*aabb, landPtr->getLandDimid()); // 传入维度ID
+    double     newRangePrice = PriceCalculate::eval(
+        is3D ? Config::cfg.land.bought.threeDimensionl.calculate : Config::cfg.land.bought.twoDimensionl.calculate,
+        _variables
     );
+
+    // 应用维度价格系数
+    auto it = Config::cfg.land.bought.dimensionPriceCoefficients.find(std::to_string(landPtr->getLandDimid()));
+    if (it != Config::cfg.land.bought.dimensionPriceCoefficients.end()) {
+        newRangePrice *= it->second;
+    }
+
+    int const discountedPrice =
+        PriceCalculate::calculateDiscountPrice(newRangePrice, Config::cfg.land.discountRate); // 新范围购买价格
 
     // 计算需补差价 & 退还差价
     int needPay = discountedPrice - originalPrice; // 需补差价
@@ -357,9 +370,15 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
     int const width  = aabb->getWidth();
     int const height = aabb->getHeight();
 
-    auto   _variables      = PriceCalculate::Variable::make(*aabb);
-    double originalPrice   = PriceCalculate::eval(Config::cfg.land.subLand.calculate, _variables);
-    int    discountedPrice = PriceCalculate::calculateDiscountPrice(originalPrice, Config::cfg.land.discountRate);
+    auto   _variables    = PriceCalculate::Variable::make(*aabb, subSelector->getDimensionId()); // 传入维度ID
+    double originalPrice = PriceCalculate::eval(Config::cfg.land.subLand.calculate, _variables);
+
+    // 应用维度价格系数
+    auto it = Config::cfg.land.bought.dimensionPriceCoefficients.find(std::to_string(subSelector->getDimensionId()));
+    if (it != Config::cfg.land.bought.dimensionPriceCoefficients.end()) {
+        originalPrice *= it->second;
+    }
+    int discountedPrice = PriceCalculate::calculateDiscountPrice(originalPrice, Config::cfg.land.discountRate);
     if (!Config::cfg.economy.enabled) discountedPrice = 0; // 免费
 
     if (volume >= INT_MAX || originalPrice < 0 || discountedPrice < 0) {

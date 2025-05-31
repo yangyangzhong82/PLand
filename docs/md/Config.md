@@ -8,7 +8,7 @@
 
 ```json
 {
-  "version": 2, // 配置文件版本，请勿修改
+  "version": 15, // 配置文件版本，请勿修改
   "logLevel": "Info", // 日志等级 Off / Fatal / Error / Warn / Info / Debug / Trace
   "economy": {
     "enabled": true, // 是否启用经济系统
@@ -75,7 +75,14 @@
           },
           "dimensionId": 0
         }
-      ]
+      ],
+      "dimensionPriceCoefficients": {
+        // 维度价格系数，用于根据维度ID调整领地价格。键是维度ID的字符串形式，值是对应的价格系数。
+        // 例如，"0": 1.0 表示主世界价格系数为1.0（原价），"1": 1.2 表示下界价格为1.2倍。
+        "0": 1.0,
+        "1": 1.2,
+        "2": 1.5
+      }
     }
   },
   "selector": {
@@ -139,6 +146,7 @@
 | `depth`  | 领地深度(长) |
 | `square` |   领地面积   |
 | `volume` |   领地体积   |
+| `dimensionId` | 维度ID |
 
 除此之外，价格表达式还支持调用随机数。
 

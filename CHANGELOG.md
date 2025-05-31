@@ -22,7 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 增加 对特殊实体造成伤害 权限 @engsr6982
 - 增加试炼宝库和蜂巢蜂箱的权限控制 #62 #64 @yangyangzhong82
 - `PriceCalculate` 支持调用随机数 @engsr6982
-- 增加配置选项控制`forbiddenRanges` ，用于禁止普通玩家在某个区域创建领地 #37 @yangyangzhong82
+-  增加配置选项控制`forbiddenRanges` ，用于禁止普通玩家在某个区域创建领地 #37 @yangyangzhong82
+-  增加配置选项控制`dimensionPriceCoefficients` ，用于自定义每个维度的价格系数，默认为1.0 @yangyangzhong82
 ---
 
 ### 🐛 问题修复

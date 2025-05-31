@@ -29,8 +29,8 @@ public:
         template <typename T>
         LDNDAPI decltype(auto) operator[](T&& key);
 
-        LDNDAPI static Variable make(LandAABB const& landPos);
-        LDNDAPI static Variable make(int height, int width, int depth);
+        LDNDAPI static Variable make(LandAABB const& landPos, int dimensionId);
+        LDNDAPI static Variable make(int height, int width, int depth, int dimensionId);
     };
 
 public:

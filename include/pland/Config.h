@@ -1,7 +1,7 @@
 #pragma once
 #include "Global.h"
 #include "ll/api/io/LogLevel.h"
-#include "pland/math/LandPos.h" 
+#include "pland/math/LandPos.h"
 #include <vector>
 
 
@@ -11,8 +11,8 @@ enum class EconomyKit : int { LegacyMoney, ScoreBoard };
 
 // 禁止创建领地的范围结构体
 struct ForbiddenRange {
-    LandPos min;        // 最小坐标
-    LandPos max;        // 最大坐标
+    LandPos min;         // 最小坐标
+    LandPos max;         // 最大坐标
     int     dimensionId; // 维度ID
 };
 
@@ -71,6 +71,7 @@ struct Config {
 
             std::vector<LandDimid>      allowDimensions{0, 1, 2}; // 允许的领地维度
             std::vector<ForbiddenRange> forbiddenRanges;          // 禁止创建领地的区域
+            std::map<std::string, double> dimensionPriceCoefficients; // 维度价格系数，例如维度id的1 是1.2倍 2是1.5倍
         } bought;
     } land;
 
@@ -106,12 +107,12 @@ struct Config {
         bool PlayerEditSignBeforeEvent{true};                 // 玩家编辑告示牌事件
         bool SpawnedMobEvent{true};                           // 生物生成事件(怪物和动物)
         bool SculkCatalystAbsorbExperienceBeforeEvent{false}; // 幽匿催化体吸收经验事件
-        bool PlayerInteractEntityBeforeEvent{true}; // 实体交互事件
-        bool BlockFallBeforeEvent{true};                 // 方块下落事件
-        bool ActorDestroyBlockEvent{true}; // 实体破坏方块事件
-        bool EndermanLeaveBlockEvent{true}; // 末影人搬走方块
-        bool EndermanTakeBlockEvent{true};  // 末影人放下方块
-        bool DragonEggBlockTeleportBeforeEvent{true}; // 龙蛋传送事件
+        bool PlayerInteractEntityBeforeEvent{true};           // 实体交互事件
+        bool BlockFallBeforeEvent{true};                      // 方块下落事件
+        bool ActorDestroyBlockEvent{true};                    // 实体破坏方块事件
+        bool EndermanLeaveBlockEvent{true};                   // 末影人搬走方块
+        bool EndermanTakeBlockEvent{true};                    // 末影人放下方块
+        bool DragonEggBlockTeleportBeforeEvent{true};         // 龙蛋传送事件
     } listeners;
 
     struct {
