@@ -216,7 +216,7 @@ void LandManageGui::DeleteLandGui::recursionCalculationRefoundPrice(int& refundP
             mc_utils::sendText(pl, "删除领地成功!"_trf(pl));                                                           \
         } else {                                                                                                       \
             economy.reduce(pl, price);                                                                                 \
-            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.error()));        \
+            mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.error()));       \
         }                                                                                                              \
     });
 
@@ -263,7 +263,7 @@ void LandManageGui::DeleteLandGui::recursionCalculationRefoundPrice(int& refundP
         mc_utils::sendText(pl, "删除领地成功!"_trf(pl));                                                               \
     } else {                                                                                                           \
         economy.reduce(pl, refundPrice);                                                                               \
-        mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.error()));            \
+        mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.error()));           \
     }
 
 #define DELETE_LAND_GUI_REMOVE_LAND_AND_PROMOTE_SUB_LANDS_IMPL(pl, ptr, fn)                                            \
@@ -288,7 +288,7 @@ void LandManageGui::DeleteLandGui::recursionCalculationRefoundPrice(int& refundP
         mc_utils::sendText(pl, "删除领地成功!"_trf(pl));                                                               \
     } else {                                                                                                           \
         economy.reduce(pl, refundPrice);                                                                               \
-        mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.error()));            \
+        mc_utils::sendText<mc_utils::LogLevel::Error>(pl, "删除领地失败，原因: {}"_trf(pl, result.error()));           \
     }
 
 void LandManageGui::DeleteLandGui::_deleteOrdinaryLandImpl(Player& player, LandData_sptr const& ptr) {

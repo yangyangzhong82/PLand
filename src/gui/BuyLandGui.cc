@@ -173,8 +173,8 @@ void BuyLandGui::impl(Player& player, Selector* selector) {
                 return;
             }
 
-            LandData_sptr landPtr = selector->newLandData();
-            auto addLandResult = db.addLand(landPtr);
+            LandData_sptr landPtr       = selector->newLandData();
+            auto          addLandResult = db.addLand(landPtr);
             if (addLandResult.has_value() && addLandResult.value()) {
                 landPtr->mOriginalBuyPrice = discountedPrice; // 保存购买价格
                 mc_utils::sendText<mc_utils::LogLevel::Info>(pl, "购买领地成功"_trf(pl));
@@ -520,8 +520,8 @@ void BuyLandGui::impl(Player& player, SubLandSelector* subSelector) {
             }
 
             // 创建领地
-            LandData_sptr landPtr = subSelector->newLandData();
-            auto addLandResult = db.addLand(landPtr);
+            LandData_sptr landPtr       = subSelector->newLandData();
+            auto          addLandResult = db.addLand(landPtr);
             if (addLandResult.has_value() && addLandResult.value()) {
                 SelectorManager::getInstance().cancel(pl);
 
