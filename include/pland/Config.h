@@ -1,9 +1,9 @@
 #pragma once
 #include "Global.h"
 #include "ll/api/io/LogLevel.h"
+#include "pland/math/LandAABB.h"
 #include "pland/math/LandPos.h"
 #include <vector>
-#include "pland/math/LandAABB.h" 
 
 
 namespace land {
@@ -12,7 +12,7 @@ enum class EconomyKit : int { LegacyMoney, ScoreBoard };
 
 // 禁止创建领地的范围结构体
 struct ForbiddenRange {
-    LandAABB minMax;     // 领地坐标范围
+    LandAABB aabb;        // 领地坐标范围
     int      dimensionId; // 维度ID
 };
 
@@ -69,8 +69,8 @@ struct Config {
                 int minHeight{1}; // 最小领地高度
             } squareRange;
 
-            std::vector<LandDimid>      allowDimensions{0, 1, 2}; // 允许的领地维度
-            std::vector<ForbiddenRange> forbiddenRanges;          // 禁止创建领地的区域
+            std::vector<LandDimid>        allowDimensions{0, 1, 2};   // 允许的领地维度
+            std::vector<ForbiddenRange>   forbiddenRanges;            // 禁止创建领地的区域
             std::map<std::string, double> dimensionPriceCoefficients; // 维度价格系数，例如维度id的1 是1.2倍 2是1.5倍
         } bought;
     } land;

@@ -63,15 +63,17 @@
         // max: 最大坐标
         // dimensionId: 维度ID (0: 主世界, 1: 下界, 2: 末地)
         {
-          "min": {
-            "x": -100,
-            "y": 0,
-            "z": -100
-          },
-          "max": {
-            "x": 100,
-            "y": 255,
-            "z": 100
+          "aabb": {
+            "min": {
+              "x": -100,
+              "y": 0,
+              "z": -100
+            },
+            "max": {
+              "x": 100,
+              "y": 255,
+              "z": 100
+            }
           },
           "dimensionId": 0
         }
@@ -139,14 +141,14 @@
 
 ?> PLand 的 `Calculate` 实现使用了 [`exprtk`](https://github.com/ArashPartow/exprtk) 库，因此你可以使用 [`exprtk`](https://github.com/ArashPartow/exprtk) 库所支持的所有函数和运算符。
 
-|   变量   |     描述     |
-| :------: | :----------: |
-| `height` |   领地高度   |
-| `width`  |   领地宽度   |
-| `depth`  | 领地深度(长) |
-| `square` |   领地面积   |
-| `volume` |   领地体积   |
-| `dimensionId` | 维度ID |
+|     变量      |     描述     |
+| :-----------: | :----------: |
+|   `height`    |   领地高度   |
+|    `width`    |   领地宽度   |
+|    `depth`    | 领地深度(长) |
+|   `square`    |   领地面积   |
+|   `volume`    |   领地体积   |
+| `dimensionId` |   维度 ID    |
 
 除此之外，价格表达式还支持调用随机数。
 
