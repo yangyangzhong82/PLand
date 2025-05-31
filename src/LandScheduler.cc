@@ -15,28 +15,31 @@
 #include "pland/Global.h"
 #include "pland/LandEvent.h"
 #include "pland/PLand.h"
+#include "pland/Require.h"
 #include <cstdio>
+#include <stdexcept>
 
 
 namespace land {
 
-ll::event::ListenerPtr mPlayerEnterListener; // 玩家进入领地监听器
+LandScheduler* Require<LandScheduler>::operator->() {
+    auto res = mod::ModEntry::getInstance().mLandScheduler.get();
+    if (!res) [[unlikely]] {
+        throw std::runtime_error(LD_ERR_RAII_RESOURCE_EMPTY(LandScheduler));
+    }
+    return res;
+}
 
-std::unordered_map<UUIDm, LandDimid> LandScheduler::mDimidMap;  // 玩家当前所在维度信息
-std::unordered_map<UUIDm, LandID>    LandScheduler::mLandidMap; // 玩家当前所在领地ID信息
-
-
-bool LandScheduler::setup() {
+LandScheduler::LandScheduler() {
     auto* bus = &ll::event::EventBus::getInstance();
+    auto* db  = &PLand::getInstance();
 
-    // repeat task
-    ll::coro::keepThis([bus]() -> ll::coro::CoroTask<> {
-        while (GlobalRepeatCoroTaskRunning) {
+    ll::coro::keepThis([bus, db, this]() -> ll::coro::CoroTask<> {
+        while (GlobalRepeatCoroTaskRunning.load()) {
             co_await 5_tick;
-            if (!GlobalRepeatCoroTaskRunning) co_return;
-            ll::service::getLevel()->forEachPlayer([bus](Player& player) {
+            if (!GlobalRepeatCoroTaskRunning.load()) co_return;
+            ll::service::getLevel()->forEachPlayer([bus, db, this](Player& player) {
                 if (player.isSimulatedPlayer()) return true; // 模拟玩家不处理
-                auto& db   = PLand::getInstance();
                 auto& uuid = player.getUuid();
 
                 auto& curPos = player.getPosition(); // 获取玩家当前位置
@@ -46,7 +49,7 @@ bool LandScheduler::setup() {
 
                 auto& lastLandID = LandScheduler::mLandidMap[uuid]; // 获取玩家上一次所在的领地ID
 
-                auto   land      = db.getLandAt(curPos, curDimid);
+                auto   land      = db->getLandAt(curPos, curDimid);
                 LandID curLandID = land ? land->getLandID() : -1; // 如果没有领地,设置为-1
 
                 // 处理维度变化
@@ -54,9 +57,6 @@ bool LandScheduler::setup() {
                     if (lastLandID != (LandID)-1) {
                         auto ev = PlayerLeaveLandEvent(player, lastLandID);
                         bus->publish(ev); // 离开上一个维度的领地
-#ifdef DEBUG
-                        printf("(dim) player %s leave land %llu\n", player.getRealName().c_str(), lastLandID);
-#endif
                     }
                     lastDimid = curDimid;
                 }
@@ -66,16 +66,10 @@ bool LandScheduler::setup() {
                     if (lastLandID != (LandID)-1) {
                         auto ev = PlayerLeaveLandEvent(player, lastLandID);
                         bus->publish(ev); // 离开上一个领地
-#ifdef DEBUG
-                        printf("player %s leave land %llu\n", player.getRealName().c_str(), lastLandID);
-#endif
                     }
                     if (curLandID != (LandID)-1) {
                         auto ev = PlayerEnterLandEvent(player, curLandID);
                         bus->publish(ev); // 进入新领地
-#ifdef DEBUG
-                        printf("player %s enter land %llu\n", player.getRealName().c_str(), curLandID);
-#endif
                     }
                     lastLandID = curLandID;
                 }
@@ -88,51 +82,50 @@ bool LandScheduler::setup() {
     auto* logger = &mod::ModEntry::getInstance().getSelf().getLogger();
 
     // tip
-    auto* infos          = &ll::service::PlayerInfo::getInstance();
-    auto* db             = &PLand::getInstance();
-    mPlayerEnterListener = bus->emplaceListener<PlayerEnterLandEvent>([logger, infos, db](PlayerEnterLandEvent& ev) {
-        logger->debug("Player {} enter land {}", ev.getPlayer().getRealName(), ev.getLandID());
-        if (!Config::cfg.land.tip.enterTip) {
-            return;
-        }
-
-        auto& player = ev.getPlayer();
-        if (auto settings = db->getPlayerSettings(player.getUuid().asString());
-            settings && !settings->showEnterLandTitle) {
-            return; // 如果玩家设置不显示进入领地提示,则不显示
-        }
-
-        LandID landid = ev.getLandID();
-
-        LandData_sptr land = db->getLand(landid);
-        if (!land) {
-            return;
-        }
-
-        SetTitlePacket title(SetTitlePacket::TitleType::Title);
-        SetTitlePacket subTitle(SetTitlePacket::TitleType::Subtitle);
-
-        if (land->isLandOwner(player.getUuid().asString())) {
-            title.mTitleText    = land->getLandName();
-            subTitle.mTitleText = "欢迎回来"_trf(player);
-        } else {
-            auto owner = land->getLandOwner();
-            auto info  = infos->fromUuid(mce::UUID::fromString(owner));
-            if (!info.has_value()) {
-                logger->warn("Failed to get the name of player \"{}\", please check the PlayerInfo status.", owner);
+    auto* infos = &ll::service::PlayerInfo::getInstance();
+    mPlayerEnterLandListener =
+        bus->emplaceListener<PlayerEnterLandEvent>([logger, infos, db, this](PlayerEnterLandEvent& ev) {
+            logger->debug("Player {} enter land {}", ev.getPlayer().getRealName(), ev.getLandID());
+            if (!Config::cfg.land.tip.enterTip) {
+                return;
             }
 
-            title.mTitleText    = "Welcome to"_trf(player);
-            subTitle.mTitleText = land->getLandName();
-        }
+            auto& player = ev.getPlayer();
+            if (auto settings = db->getPlayerSettings(player.getUuid().asString());
+                settings && !settings->showEnterLandTitle) {
+                return; // 如果玩家设置不显示进入领地提示,则不显示
+            }
 
-        title.sendTo(player);
-        subTitle.sendTo(player);
-    });
+            LandID landid = ev.getLandID();
+
+            LandData_sptr land = db->getLand(landid);
+            if (!land) {
+                return;
+            }
+
+            SetTitlePacket title(SetTitlePacket::TitleType::Title);
+            SetTitlePacket subTitle(SetTitlePacket::TitleType::Subtitle);
+
+            if (land->isLandOwner(player.getUuid().asString())) {
+                title.mTitleText    = land->getLandName();
+                subTitle.mTitleText = "欢迎回来"_trf(player);
+            } else {
+                auto owner = land->getLandOwner();
+                auto info  = infos->fromUuid(mce::UUID::fromString(owner));
+                if (!info.has_value()) {
+                    logger->warn("Failed to get the name of player \"{}\", please check the PlayerInfo status.", owner);
+                }
+
+                title.mTitleText    = "Welcome to"_trf(player);
+                subTitle.mTitleText = land->getLandName();
+            }
+
+            title.sendTo(player);
+            subTitle.sendTo(player);
+        });
 
     if (Config::cfg.land.tip.bottomContinuedTip) {
-        // repeat task
-        ll::coro::keepThis([logger, infos, db]() -> ll::coro::CoroTask<> {
+        ll::coro::keepThis([infos, db, this]() -> ll::coro::CoroTask<> {
             while (GlobalRepeatCoroTaskRunning) {
                 co_await (Config::cfg.land.tip.bottomTipFrequency * 20_tick);
                 if (!GlobalRepeatCoroTaskRunning) co_return;
@@ -177,15 +170,11 @@ bool LandScheduler::setup() {
             }
         }).launch(ll::thread::ServerThreadExecutor::getDefault());
     }
-
-    return true;
 }
 
-bool LandScheduler::release() {
+LandScheduler::~LandScheduler() {
     auto& bus = ll::event::EventBus::getInstance();
-    bus.removeListener(mPlayerEnterListener);
-
-    return true;
+    bus.removeListener(mPlayerEnterLandListener);
 }
 
 

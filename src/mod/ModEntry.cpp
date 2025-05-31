@@ -41,22 +41,23 @@ bool ModEntry::load() {
     logger.info(R"( |_|     |______|\__,_||_| |_| \__,_|)");
     logger.info(R"(                                     )");
     logger.info("Loading...");
-    logger.info("Version: {}", PLAND_VERSION_STRING);
+
+    if (PLAND_VERSION_SNAPSHOT) {
+        logger.warn("Version: {}", PLAND_VERSION_STRING);
+        logger.warn("您当前正在使用开发快照版本，此版本可能某些功能异常、损坏、甚至导致崩溃，请勿在生产环境中使用。");
+        logger.warn("You are using a development snapshot version, this version may have some abnormal, broken or even "
+                    "crash functions, please do not use it in production environment.");
+    } else {
+        logger.info("Version: {}", PLAND_VERSION_STRING);
+    }
 
     if (auto res = ll::i18n::getInstance().load(getSelf().getLangDir()); !res) {
         logger.error("Load language file failed, plugin will use default language.");
         res.error().log(logger);
     }
 
-    if (PLAND_VERSION_SNAPSHOT) {
-        logger.warn("您当前正在使用开发快照版本，此版本可能某些功能异常、损坏、甚至导致崩溃，请勿在生产环境中使用。");
-        logger.warn("You are using a development snapshot version, this version may have some abnormal, broken or even "
-                    "crash functions, please do not use it in production environment.");
-    }
-
-
     land::Config::tryLoad();
-    logger.setLevel(land::Config::cfg.logLevel); // set console log level
+    logger.setLevel(land::Config::cfg.logLevel);
 
     land::PLand::getInstance().init();
 
@@ -70,9 +71,10 @@ bool ModEntry::load() {
 
 bool ModEntry::enable() {
     land::LandCommand::setup();
-    land::LandScheduler::setup();
 
+    this->mLandScheduler = std::make_unique<land::LandScheduler>();
     this->mEventListener = std::make_unique<land::EventListener>();
+
 
 #ifdef LD_TEST
     test::SetupEventListener();
@@ -102,8 +104,8 @@ bool ModEntry::disable() {
 
     logger.debug("cleaning up...");
     land::SelectorManager::getInstance().cleanup();
-    land::LandScheduler::release();
 
+    this->mLandScheduler.reset();
     mEventListener.reset();
 
     return true;

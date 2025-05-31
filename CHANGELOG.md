@@ -48,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 优化领地创建时对数量与范围限制的判断：允许领地管理员无视配置文件的限制创建领地 @yangyangzhong82
 - 优化权限判定,对部分方块和物品不再单纯使用类型名进行判断，使其判断更加灵活@yangyangzhong82
 - `allowAnimalDamage` 更改为 `allowPassiveDamage` 对友好、中立生物造成伤害 @engsr6982
-- 重构 `EventListener` 资源管理，采用 RAII 机制 @engsr6982
+- 重构 `EventListener`、`LandScheduler` 资源管理，采用 RAII 机制 @engsr6982
 
 ---
 

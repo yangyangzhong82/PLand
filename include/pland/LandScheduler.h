@@ -1,26 +1,32 @@
 #pragma once
+#include "ll/api/event/ListenerBase.h"
 #include "pland/Global.h"
+#include "pland/Require.h"
 #include <unordered_map>
 
 
 namespace land {
 
 
+/**
+ * @brief 领地调度器
+ * 处理玩家进出领地事件、以及标题提示等
+ * 该类使用 RAII 管理资源，由 pland 的 ModEntry 持有
+ */
 class LandScheduler {
 public:
-    LandScheduler()                                = delete;
-    LandScheduler(LandScheduler&&)                 = delete;
-    LandScheduler(const LandScheduler&)            = delete;
-    LandScheduler& operator=(LandScheduler&&)      = delete;
-    LandScheduler& operator=(const LandScheduler&) = delete;
+    std::unordered_map<UUIDm, LandDimid> mDimidMap;
+    std::unordered_map<UUIDm, LandID>    mLandidMap;
+    ll::event::ListenerPtr               mPlayerEnterLandListener;
 
-    LDAPI static std::unordered_map<UUIDm, LandDimid> mDimidMap;
-    LDAPI static std::unordered_map<UUIDm, LandID>    mLandidMap;
+    LD_DISALLOW_COPY(LandScheduler);
 
-
-    LDAPI static bool setup();   // setup the scheduler
-    LDAPI static bool release(); // release the scheduler
+    LDAPI explicit LandScheduler();
+    LDAPI ~LandScheduler();
 };
+
+
+LD_DECLARE_REQUIRE(LandScheduler);
 
 
 } // namespace land

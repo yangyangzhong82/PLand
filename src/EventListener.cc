@@ -206,10 +206,10 @@ EventListener::EventListener() {
             auto  uuidStr = uuid.asString();
 
             GlobalPlayerLocaleCodeCached.erase(uuidStr);
-            LandScheduler::mDimidMap.erase(uuid);
-            LandScheduler::mLandidMap.erase(uuid);
             SelectorManager::getInstance().cancel(player);
             DrawHandleManager::getInstance().removeHandle(player);
+            Require<LandScheduler>()->mLandidMap.erase(uuid);
+            Require<LandScheduler>()->mDimidMap.erase(uuid);
         }),
     };
 
