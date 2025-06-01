@@ -21,6 +21,7 @@
 |    SDK     | 完整 SDK 接口支持，易用  |  ✅  |
 |    性能    |      C++ 编写，高效      |  ✅  |
 |  价格公式  |    自定义公式计算价格    |  ✅  |
+|  禁止区域  | 禁止在划定区域内创建领地 |  ✅  |
 |  DevTools  |   开发者工具，方便调试   |  ✅  |
 
 > 更多内容，请移步文档站：https://engsr6982.github.io/PLand/
@@ -38,7 +39,7 @@
 |          LeviLamina          |           https://github.com/LiteLDev/LeviLamina            |
 |            exprtk            |            https://github.com/ArashPartow/exprtk            |
 |         LegacyMoney          |           https://github.com/LiteLDev/LegacyMoney           |
-|      iListenAttentively      | https://github.com/MiracleForest/iListenAttentively-Release |
+|   iListenAttentively(闭源)   | https://github.com/MiracleForest/iListenAttentively-Release |
 | BedrockServerClientInterface |   https://github.com/OEOTYAN/BedrockServerClientInterface   |
 |            ImGui             |              https://github.com/ocornut/imgui               |
 |             glew             |             https://github.com/nigels-com/glew              |
