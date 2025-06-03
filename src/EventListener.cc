@@ -106,7 +106,8 @@ inline BlockProperty operator&(BlockProperty a, BlockProperty b) {
 
 namespace land {
 
-inline bool PreCheck(LandData_sptr const& ptr, UUIDs const& uuid = "") {
+inline bool PreCheckLandExistsAndPermission(LandData_sptr const& ptr, UUIDs const& uuid = "") {
+
     if (!ptr ||                                         // 无领地
         (PLand::getInstance().isOperator(uuid)) ||      // 管理员
         (ptr->getPermType(uuid) != LandPermType::Guest) // 主人/成员
@@ -241,13 +242,13 @@ EventListener::EventListener() {
             );
 
             auto land = db->getLandAt(hurtActor.getPosition(), hurtActor.getDimensionId());
-            if (PreCheck(land)) return;
+            if (PreCheckLandExistsAndPermission(land)) return;
 
             if (isPlayerDamage) {
                 if (auto souPlayer = hurtActor.getLevel().getPlayer(damageSource.getEntityUniqueID())) {
                     if ((damageCause == SharedTypes::Legacy::ActorDamageCause::EntityAttack
                          || damageCause == SharedTypes::Legacy::ActorDamageCause::Projectile)
-                        && PreCheck(land, souPlayer->getUuid().asString())) {
+                        && PreCheckLandExistsAndPermission(land, souPlayer->getUuid().asString())) {
                         return;
                     }
                 }
@@ -305,7 +306,7 @@ EventListener::EventListener() {
                 logger->debug("[DestroyBlock] {}", blockPos.toString());
 
                 auto land = db->getLandAt(blockPos, player.getDimensionId());
-                if (PreCheck(land, player.getUuid().asString())) {
+                if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) {
                     return;
                 }
 
@@ -328,7 +329,7 @@ EventListener::EventListener() {
                 logger->debug("[PlaceingBlock] {}", blockPos.toString());
 
                 auto land = db->getLandAt(blockPos, player.getDimensionId());
-                if (PreCheck(land, player.getUuid().asString())) {
+                if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) {
                     return;
                 }
 
@@ -350,7 +351,7 @@ EventListener::EventListener() {
             logger->debug("[ActorDestroyBlock] Actor: {}, Pos: {}", actor.getTypeName(), blockPos.toString());
 
             auto land = db->getLandAt(blockPos, actor.getDimensionId());
-            if (PreCheck(land)) return; // land not found
+            if (PreCheckLandExistsAndPermission(land)) return; // land not found
 
 
             auto& tab = land->getLandPermTableConst();
@@ -371,7 +372,7 @@ EventListener::EventListener() {
                 logger->debug("[EndermanLeave] Actor: {}, Pos: {}", actor.getTypeName(), blockPos.toString());
 
                 auto land = db->getLandAt(blockPos, actor.getDimensionId());
-                if (PreCheck(land)) return; // land not found
+                if (PreCheckLandExistsAndPermission(land)) return; // land not found
 
 
                 auto& tab = land->getLandPermTableConst();
@@ -393,7 +394,7 @@ EventListener::EventListener() {
                 logger->debug("[EndermanLeave] Actor: {}, Pos: {}", actor.getTypeName(), blockPos.toString());
 
                 auto land = db->getLandAt(blockPos, actor.getDimensionId());
-                if (PreCheck(land)) return; // land not found
+                if (PreCheckLandExistsAndPermission(land)) return; // land not found
 
 
                 auto& tab = land->getLandPermTableConst();
@@ -430,7 +431,7 @@ EventListener::EventListener() {
             );
 
             auto land = db->getLandAt(pos, player.getDimensionId());
-            if (PreCheck(land, player.getUuid().asString())) {
+            if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) {
                 logger->debug(
                     "[InteractBlock] PreCheck returned true. Player: {}, Land: {}",
                     player.getUuid().asString(),
@@ -658,7 +659,7 @@ EventListener::EventListener() {
                 logger->debug("[交互实体] name: {}", ev.self().getRealName());
                 auto& entity = ev.target();
                 auto  land   = db->getLandAt(entity.getPosition(), ev.self().getDimensionId());
-                if (PreCheck(land, ev.self().getUuid().asString())) return;
+                if (PreCheckLandExistsAndPermission(land, ev.self().getUuid().asString())) return;
 
                 if (land->getLandPermTableConst().allowInteractEntity) return;
 
@@ -672,7 +673,7 @@ EventListener::EventListener() {
             auto& pos = ev.pos();
 
             auto land = db->getLandAt(pos, ev.blockSource().getDimensionId());
-            if (PreCheck(land)) {
+            if (PreCheckLandExistsAndPermission(land)) {
                 return;
             }
 
@@ -693,7 +694,7 @@ EventListener::EventListener() {
             logger->debug("[AttackEntity] Entity: {}, Pos: {}", mob.getTypeName(), pos.toString());
 
             auto land = db->getLandAt(pos, player.getDimensionId());
-            if (PreCheck(land, player.getUuid().asString())) {
+            if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) {
                 return;
             }
 
@@ -719,7 +720,7 @@ EventListener::EventListener() {
             logger->debug("[PickUpItem] Item: {}, Pos: {}", ev.itemActor().getTypeName(), pos.toString());
 
             auto land = db->getLandAt(pos, player.getDimensionId());
-            if (PreCheck(land, player.getUuid().asString())) {
+            if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) {
                 return;
             }
 
@@ -741,7 +742,7 @@ EventListener::EventListener() {
             logger->debug("[SpawnedMob] {}", pos.toString());
 
             auto land = db->getLandAt(pos, mob->getDimensionId());
-            if (PreCheck(land)) {
+            if (PreCheckLandExistsAndPermission(land)) {
                 return;
             }
 
@@ -771,7 +772,7 @@ EventListener::EventListener() {
                 logger->debug("[AttackBlock] {}", pos.toString());
 
                 auto land = db->getLandAt(pos, self.getDimensionId());
-                if (PreCheck(land, self.getUuid().asString())) return; // land not found
+                if (PreCheckLandExistsAndPermission(land, self.getUuid().asString())) return; // land not found
 
                 auto const& blockTypeName = self.getDimensionBlockSourceConst().getBlock(pos).getTypeName();
                 CANCEL_AND_RETURN_IF(
@@ -789,7 +790,7 @@ EventListener::EventListener() {
                 logger->debug("[ArmorStandSwapItem]: executed");
 
                 auto land = db->getLandAt(ev.self().getPosition(), player.getDimensionId());
-                if (PreCheck(land, player.getUuid().asString())) {
+                if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) {
                     return;
                 }
 
@@ -808,7 +809,7 @@ EventListener::EventListener() {
                 logger->debug("[PlayerDropItem]: executed");
 
                 auto land = db->getLandAt(player.getPosition(), player.getDimensionId());
-                if (PreCheck(land, player.getUuid().asString())) {
+                if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) {
                     return;
                 }
 
@@ -836,7 +837,7 @@ EventListener::EventListener() {
 
             auto const& typeName = ev.target().getTypeName();
             auto        land     = db->getLandAt(target.getPosition(), target.getDimensionId());
-            if (PreCheck(land)) return; // land not found
+            if (PreCheckLandExistsAndPermission(land)) return; // land not found
             // 特殊处理：
             if (land) {
                 auto& tab = land->getLandPermTableConst();
@@ -849,7 +850,7 @@ EventListener::EventListener() {
 
             if (passenger.isPlayer()) {
                 auto player = passenger.getWeakEntity().tryUnwrap<Player>();
-                if (player.has_value() && PreCheck(land, player->getUuid().asString())) {
+                if (player.has_value() && PreCheckLandExistsAndPermission(land, player->getUuid().asString())) {
                     return;
                 }
             }
@@ -881,7 +882,7 @@ EventListener::EventListener() {
             logger->debug("[FarmDecay] Pos: {}", ev.pos().toString());
 
             auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
-            if (PreCheck(land)) return; // land not found
+            if (PreCheckLandExistsAndPermission(land)) return; // land not found
             if (land) {
                 if (land->getLandPermTableConst().allowFarmDecay) return;
             }
@@ -891,21 +892,22 @@ EventListener::EventListener() {
     });
 
     RegisterListenerIf(Config::cfg.listeners.MobHurtEffectBeforeEvent, [&]() {
-        return bus->emplaceListener<ila::mc::MobHurtEffectBeforeEvent>(
-            [db, logger, this](ila::mc::MobHurtEffectBeforeEvent& ev) {
-                auto&      hurtActor         = ev.self();
-                auto const hurtActorTypeName = hurtActor.getTypeName();
-                logger->debug("[MobHurtEffect] mob: {}", hurtActorTypeName);
-                bool const hurtActorIsPlayer = hurtActor.isPlayer();
 
-                auto land = db->getLandAt(hurtActor.getPosition(), hurtActor.getDimensionId());
-                if (!land) return;
+        return bus->emplaceListener<ila::mc::MobHurtEffectBeforeEvent>([db,
+                                                                        logger](ila::mc::MobHurtEffectBeforeEvent& ev) {
+            logger->debug("[MobHurtEffect] mob: {}", ev.self().getTypeName());
+            auto&      hurtActor         = ev.self();
+            bool const hurtActorIsPlayer = hurtActor.isPlayer();
 
-                // 放行来自有权限的玩家伤害
-                if (auto source = ev.source(); source && source->isPlayer()) {
-                    auto& player = static_cast<Player&>(source.value());
-                    if (PreCheck(land, player.getUuid().asString())) return; // land not found
-                }
+            auto land = db->getLandAt(hurtActor.getPosition(), hurtActor.getDimensionId());
+            if (!land) return;
+
+            // 放行来自有权限的玩家伤害
+            if (auto source = ev.source(); source && source->isPlayer()) {
+                auto& player = static_cast<Player&>(source.value());
+                if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) return; // land not found
+            }
+
 
                 auto const& tab = land->getLandPermTable();
                 if (hurtActorIsPlayer) {
@@ -953,7 +955,7 @@ EventListener::EventListener() {
                 logger->debug("[PlayerUseItemFrame] pos: {}", ev.blockPos().toString());
 
                 auto land = db->getLandAt(ev.blockPos(), ev.self().getDimensionId());
-                if (PreCheck(land, ev.self().getUuid().asString())) return;
+                if (PreCheckLandExistsAndPermission(land, ev.self().getUuid().asString())) return;
 
                 if (land->getLandPermTableConst().useItemFrame) return;
 
@@ -969,13 +971,13 @@ EventListener::EventListener() {
 
                 auto land = db->getLandAt(ev.pos(), ev.self().getDimensionId());
                 if (land && land->getLandPermTableConst().usePressurePlate) return;
-                if (PreCheck(land)) return; // land not found
+                if (PreCheckLandExistsAndPermission(land)) return; // land not found
 
                 auto& entity = ev.self();
                 if (entity.isPlayer()) {
                     auto pl = entity.getWeakEntity().tryUnwrap<Player>();
                     if (pl.has_value()) {
-                        if (PreCheck(land, pl->getUuid().asString())) return;
+                        if (PreCheckLandExistsAndPermission(land, pl->getUuid().asString())) return;
                     }
                 }
 
@@ -996,13 +998,13 @@ EventListener::EventListener() {
                     return;
                 }
                 auto land = db->getLandAt(self.getPosition(), self.getDimensionId());
-                if (PreCheck(land)) return; // land not found
+                if (PreCheckLandExistsAndPermission(land)) return; // land not found
 
                 if (self.getOwnerEntityType() == ActorType::Player) {
                     // 由玩家所创建的实体
                     if (mob->isPlayer()) {
                         auto pl = mob->getWeakEntity().tryUnwrap<Player>();
-                        if (pl.has_value() && PreCheck(land, pl->getUuid().asString())) return;
+                        if (pl.has_value() && PreCheckLandExistsAndPermission(land, pl->getUuid().asString())) return;
                     }
                 }
 
@@ -1028,7 +1030,7 @@ EventListener::EventListener() {
                 // logger->debug("[RedstoneUpdate] Pos: {}", ev.Pos().toString());
 
                 auto land = db->getLandAt(ev.pos(), ev.blockSource().getDimensionId());
-                if (PreCheck(land)) return; // land not found
+                if (PreCheckLandExistsAndPermission(land)) return; // land not found
                 if (land) {
                     if (land->getLandPermTableConst().allowRedstoneUpdate) return;
                 }
@@ -1174,7 +1176,7 @@ EventListener::EventListener() {
                 logger->debug("[PlayerEditSign] {} -> {}", player.getRealName(), pos.toString());
 
                 auto land = db->getLandAt(pos, player.getDimensionId());
-                if (PreCheck(land, player.getUuid().asString())) {
+                if (PreCheckLandExistsAndPermission(land, player.getUuid().asString())) {
                     return;
                 }
 
