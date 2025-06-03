@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2025-6-?
+
+### 🐛 问题修复
+
+- 修复 xmake 打包语言文件路径错误问题 @engsr6982
+
 ## [0.8.1] - 2025-06-1
 
 ### 🐛 问题修复
