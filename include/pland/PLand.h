@@ -55,6 +55,7 @@ private: //! private 方法非线程安全
     void _loadPlayerSettings();
     void _loadLands();
 
+    void _openDBAndCheckVersion();
     void _checkAndAdaptBreakingChanges(nlohmann::json& landData); // 检查数据并尝试适配版本不兼容的变更
 
     void _initLandMap();
@@ -153,6 +154,7 @@ public:
     static string DB_DIR_NAME();
     static string DB_KEY_OPERATORS();
     static string DB_KEY_PLAYER_SETTINGS();
+    static string DB_KEY_VERSION();
 };
 
 

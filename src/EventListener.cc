@@ -580,6 +580,13 @@ EventListener::EventListener() {
                         logger->debug("[InteractBlock] Block Cancel: FenceGate, useFenceGate is false");
                         blockCancel = true;
                     }
+                } else if (legacyBlock.isFenceBlock()) {
+                    if (!tab.allowInteractEntity) {
+                        // 往栅栏上挂拴绳
+                        // TODO: 精确判定手上是否有拴住的实体
+                        logger->debug("[InteractBlock] Block Cancel: Fence, allowInteractEntity is false");
+                        blockCancel = true;
+                    }
                 } else if (legacyBlock.mIsTrapdoor) {
                     if (!tab.useTrapdoor) {
                         logger->debug("[InteractBlock] Block Cancel: Trapdoor, useTrapdoor is false");

@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <ctime>
 #include <expected>
+#include <filesystem>
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
@@ -54,6 +55,65 @@ void PLand::_loadPlayerSettings() {
     }
 }
 
+void PLand::_openDBAndCheckVersion() {
+    auto&       self    = mod::ModEntry::getInstance().getSelf();
+    auto&       logger  = self.getLogger();
+    auto const& dataDir = self.getDataDir();
+    auto const  dbDir   = dataDir / DB_DIR_NAME();
+
+    auto backup = [&]() {
+        auto const backupDir =
+            dataDir
+            / ("backup_db_" + std::to_string(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
+        fs::copy(dbDir, backupDir, fs::copy_options::recursive | fs::copy_options::overwrite_existing);
+    };
+
+    if (!mDB) {
+        mDB = std::make_unique<ll::data::KeyValueDB>(dbDir);
+    }
+
+    auto const dbVersionKey = DB_KEY_VERSION();
+    if (!mDB->has(dbVersionKey)) {
+        mDB->set(dbVersionKey, "-1"); // 设置版本号
+    }
+
+    auto version = std::stoi(*mDB->get(dbVersionKey));
+    if (version != LandDataVersion) {
+        if (version > LandDataVersion) {
+            logger.fatal(
+                "数据库版本过高，当前版本: {}, 期望版本: {}。为了保证数据安全，插件拒绝加载！",
+                version,
+                LandDataVersion
+            );
+            logger.fatal(
+                "The database version is too high, current version: {}, expected version: {}. In order to "
+                "keep the data safe, the plugin refuses to load!",
+                version,
+                LandDataVersion
+            );
+            throw std::runtime_error("The database versions do not match");
+
+        } else if (version < LandDataVersion) {
+            logger.warn(
+                "数据库版本过低，当前版本: {}, 期望版本: {}，插件将尝试备份并升级数据库...",
+                version,
+                LandDataVersion
+            );
+            logger.warn(
+                "The database version is too low, the current version: {}, the expected version: {}, the "
+                "plugin will try to back up and upgrade the database...",
+                version,
+                LandDataVersion
+            );
+            mDB.reset();
+            backup();
+            mDB = std::make_unique<ll::data::KeyValueDB>(dbDir);
+            mDB->set(dbVersionKey, std::to_string(LandDataVersion)); // 更新版本号
+            // 这里只需要修改版本号以及备份，其它兼容转换操作将在 _checkAndAdaptBreakingChanges 中进行
+        }
+    }
+}
+
 void PLand::_checkAndAdaptBreakingChanges(nlohmann::json& landData) {
     constexpr int LANDDATA_NEW_POS_KEY_VERSION = 15; // 在此版本后，LandAABB 使用了新的键名
 
@@ -82,9 +142,10 @@ void PLand::_loadLands() {
 
     auto operatorKey      = DB_KEY_OPERATORS();
     auto playerSettingKey = DB_KEY_PLAYER_SETTINGS();
+    auto versionKey       = DB_KEY_VERSION();
 
     for (auto [key, value] : iter) {
-        if (key == operatorKey || key == playerSettingKey) continue;
+        if (key == operatorKey || key == playerSettingKey || key == versionKey) continue;
 
         auto json = JSON::parse(value);
         auto land = LandData::make();
@@ -159,11 +220,7 @@ Result<bool> PLand::_removeLand(LandData_sptr const& ptr) {
 namespace land {
 
 void PLand::init() {
-    auto dir = mod::ModEntry::getInstance().getSelf().getDataDir() / DB_DIR_NAME();
-
-    if (!mDB) {
-        mDB = std::make_unique<ll::data::KeyValueDB>(dir);
-    }
+    _openDBAndCheckVersion();
 
     std::unique_lock<std::shared_mutex> lock(mMutex); // 获取锁
 
@@ -252,7 +309,7 @@ PlayerSettings* PLand::getPlayerSettings(UUIDs const& uuid) {
 }
 bool PLand::setPlayerSettings(UUIDs const& uuid, PlayerSettings settings) {
     std::unique_lock<std::shared_mutex> lock(mMutex);
-    mPlayerSettings[uuid] = settings;
+    mPlayerSettings[uuid] = std::move(settings);
     return true;
 }
 bool PLand::hasPlayerSettings(UUIDs const& uuid) const {
@@ -713,4 +770,5 @@ std::pair<int, int> PLand::DecodeChunkID(ChunkID id) {
 string PLand::DB_DIR_NAME() { return "db"; }
 string PLand::DB_KEY_OPERATORS() { return "operators"; }
 string PLand::DB_KEY_PLAYER_SETTINGS() { return "player_settings"; }
+string PLand::DB_KEY_VERSION() { return "__version__"; }
 } // namespace land
