@@ -61,6 +61,8 @@ void PLand::_openDBAndCheckVersion() {
     auto const& dataDir = self.getDataDir();
     auto const  dbDir   = dataDir / DB_DIR_NAME();
 
+    bool const isNewCreatedDB = !fs::exists(dbDir); // 是否是新建的数据库
+
     auto backup = [&]() {
         auto const backupDir =
             dataDir
@@ -74,7 +76,11 @@ void PLand::_openDBAndCheckVersion() {
 
     auto const dbVersionKey = DB_KEY_VERSION();
     if (!mDB->has(dbVersionKey)) {
-        mDB->set(dbVersionKey, "-1"); // 设置版本号
+        if (isNewCreatedDB) {
+            mDB->set(dbVersionKey, std::to_string(LandDataVersion)); // 设置初始版本号
+        } else {
+            mDB->set(dbVersionKey, "-1"); // 数据库存在，但没有版本号，表示是旧版数据库(0.8.1之前)
+        }
     }
 
     auto version = std::stoi(*mDB->get(dbVersionKey));
