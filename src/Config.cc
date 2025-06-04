@@ -18,7 +18,7 @@ bool Config::tryLoad() {
 
     bool status = ll::config::loadConfig(Config::cfg, dir);
 
-    return status ? status : tryUpdate();
+    return status ? status : trySave();
 }
 
 bool Config::trySave() {
@@ -29,7 +29,6 @@ bool Config::trySave() {
     return status;
 }
 
-bool Config::tryUpdate() { return trySave(); }
 
 Config Config::cfg; // static
 
