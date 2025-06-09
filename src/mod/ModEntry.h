@@ -28,6 +28,8 @@ public:
     /// @return True if the mod is unloaded successfully.
     bool unload();
 
+    void onConfigReload();
+
 private:
     ll::mod::NativeMod& mSelf;
 

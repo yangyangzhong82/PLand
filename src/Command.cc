@@ -262,6 +262,7 @@ static auto const Buy = [](CommandOrigin const& ori, CommandOutput& out) {
 static auto const Reload = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::DedicatedServer);
     if (Config::tryLoad()) {
+        mod::ModEntry::getInstance().onConfigReload();
         mc_utils::sendText(out, "领地系统配置已重新加载"_tr());
     } else {
         mc_utils::sendText(out, "领地系统配置加载失败，请检查配置文件"_tr());

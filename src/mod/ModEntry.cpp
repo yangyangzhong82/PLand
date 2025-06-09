@@ -113,6 +113,21 @@ bool ModEntry::disable() {
 
 bool ModEntry::unload() { return true; }
 
+void ModEntry::onConfigReload() {
+    auto& logger = getSelf().getLogger();
+    logger.trace("Reloading event listener...");
+    try {
+        mEventListener.reset();
+        logger.trace("Event listener reset, creating new instance...");
+        mEventListener = std::make_unique<land::EventListener>();
+        logger.trace("Event listener reloaded successfully.");
+    } catch (std::exception const& e) {
+        getSelf().getLogger().error("Failed to reload event listener: {}", e.what());
+    } catch (...) {
+        getSelf().getLogger().error("Failed to reload event listener: unknown error");
+    }
+}
+
 
 } // namespace mod
 
