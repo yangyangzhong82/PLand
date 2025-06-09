@@ -15,6 +15,7 @@
 #include "pland/LandSelector.h"
 #include "pland/PLand.h"
 #include "pland/Version.h"
+#include "ll/api/Versions.h" 
 
 #ifdef LD_TEST
 #include "LandEventTest.h"
@@ -49,6 +50,21 @@ bool ModEntry::load() {
                     "crash functions, please do not use it in production environment.");
     } else {
         logger.info("Version: {}", PLAND_VERSION_STRING);
+    }
+
+    // 检查加载器版本
+    auto loaderVersion = ll::getLoaderVersion();
+    ll::data::Version requiredLoaderVersion(1, 2, 1); // 推荐的加载器版本
+
+    if (loaderVersion != requiredLoaderVersion) {
+        logger.warn("当前加载器版本与推荐版本不匹配！");
+        logger.warn("Current loader version does not match the recommended version!");
+        logger.warn("推荐版本: {}.{}.{}", requiredLoaderVersion.major, requiredLoaderVersion.minor, requiredLoaderVersion.patch);
+        logger.warn("您的版本: {}.{}.{}", loaderVersion.major, loaderVersion.minor, loaderVersion.patch);
+        logger.warn("使用不推荐的LeviLamina版本可能会导致插件无法正常工作或出现错误！！！");
+        logger.warn("Using an unsupported LeviLamina version may cause the plugin to not work properly or cause errors!!!");
+    } else {
+        logger.info("加载器版本检查通过。");
     }
 
     if (auto res = ll::i18n::getInstance().load(getSelf().getLangDir()); !res) {
