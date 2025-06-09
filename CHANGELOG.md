@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.9.0] - 2025-6-?
+## [0.9.0] - 2025-6-9
 
 ### 🐛 问题修复
 
@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 优化领地重叠冲突时的消息提醒，现在会显示和哪些领地冲突 #85 @yangyangzhong82
 - `pland reload` 支持重载事件监听器 @engsr6982
+- 适配 LeviLamina v1.2.1 & ilistenattentively v0.5.0-rc.1 @engsr6982
 
 ## [0.8.1] - 2025-06-01
 
