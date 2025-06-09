@@ -6,13 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
-## [0.9.0] - 2025-6-?
+## [0.9.0] - 2025-6-9
 
 ### 🐛 问题修复
 
 - 修复 xmake 打包语言文件路径错误问题 @engsr6982
 - 修复新创建的领地数据库误识别为旧版数据库 @engsr6982
 - 修复弹射物事件在某些情况下的报错 @yangyangzhong82
+- 修复领地传送功能可在部分关闭的情况下使用 #89 @engsr6982
 
 ### 🧩 权限与逻辑优化
 
@@ -22,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 优化领地重叠冲突时的消息提醒，现在会显示和哪些领地冲突 #85 @yangyangzhong82
 - `pland reload` 支持重载事件监听器 @engsr6982
+- 适配 LeviLamina v1.2.1 & ilistenattentively v0.5.0-rc.1 @engsr6982
 
 ## [0.8.1] - 2025-06-01
 
