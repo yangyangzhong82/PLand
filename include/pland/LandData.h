@@ -105,7 +105,7 @@ struct LandPermTable {
 
 using LandData_sptr           = std::shared_ptr<class LandData>; // 共享指针
 using LandData_wptr           = std::weak_ptr<class LandData>;   // 弱指针
-constexpr int LandDataVersion = 18;                              // 领地数据版本号
+constexpr int LandDataVersion = 19;                              // 领地数据版本号
 class LandData {
 public:
     int                 version{LandDataVersion};              // 版本号
