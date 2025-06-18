@@ -44,9 +44,7 @@ struct LandPermTable {
     bool allowAnimalSpawn{true};         // 允许动物生成
     bool allowInteractEntity{false};     // 实体交互
     bool allowActorDestroy{false};       // 实体破坏
-    bool allowAttackPainting{false};     // 攻击画
-    bool allowAttackMinecart{false};     // 攻击矿车
-    bool allowAttackBoat{false};         // 攻击船
+
 
     bool useAnvil{false};             // 使用铁砧
     bool useBarrel{false};            // 使用木桶
