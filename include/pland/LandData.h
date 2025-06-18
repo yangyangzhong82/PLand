@@ -36,8 +36,6 @@ struct LandPermTable {
     bool allowRideEntity{false};         // 允许骑乘实体
     bool allowRideTrans{false};          // 允许骑乘矿车、船
     bool allowAxePeeled{false};          // 允许斧头去皮
-    bool allowAttackEnderCrystal{false}; // 允许攻击末地水晶
-    bool allowDestroyArmorStand{false};  // 允许破坏盔甲架
     bool allowLiquidFlow{true};          // 允许液体流动
     bool allowSculkBlockGrowth{true};    // 允许幽匿尖啸体生长
     bool allowMonsterSpawn{true};        // 允许怪物生成
