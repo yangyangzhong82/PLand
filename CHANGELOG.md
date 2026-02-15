@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.1] - 2026-02-15
+
+### 🐛 问题修复
+
+- 修复部分事件误拦截玩家操作的问题 (`MobHurtEffectBeforeEvent`,`ActorHurtEvent`,`PlayerAttackEvent`,`PlayerInteractBlockEvent`恢复为黑名单模式) @engsr6982
+- 将漏斗矿车行为拆分为独立权限，避免影响生电机器运作 @engsr6982
+
 ## [0.18.0] - 2026-02-14
 
 > ⚠️ 本次版本为权限系统重构版本，存在破坏性变更

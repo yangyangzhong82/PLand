@@ -16,6 +16,7 @@
     "allowDragonEggTeleport": "Dragon Egg Teleportation",
     "allowSculkBlockGrowth": "Sculk Shrieker Growth",
     "allowSculkSpread": "Sculk Spread",
+    "allowMinecartHopperPullItems": "Allow Hopper Minecarts to Pull Items",
     "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$role": "Role Permissions",
     "allowDestroy": "Allow Block Breaking",
     "allowPlace": "Allow Block Placing",
