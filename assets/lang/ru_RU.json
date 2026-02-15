@@ -17,6 +17,7 @@
     "allowSculkBlockGrowth": "Рост скалк-крикуна",
     "allowSculkSpread": "Распространение скалка",
     "allowLightningBolt": "Заряды молний",
+    "allowMinecartHopperPullItems": "Разрешить вагонеткам с воронкой забирать предметы",
     "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$role": "Права ролей",
     "allowDestroy": "Разрушение блоков",
     "allowPlace": "Установка блоков",

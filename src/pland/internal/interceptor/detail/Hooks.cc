@@ -250,7 +250,7 @@ LL_TYPE_INSTANCE_HOOK(
 
     auto& registry = PLand::getInstance().getLandRegistry();
     auto  land     = registry.getLandAt(owner.getPosition(), owner.getDimensionId());
-    if (!hasGuestPermission<&RolePerms::useContainer>(land)) {
+    if (!hasEnvironmentPermission<&EnvironmentPerms::allowMinecartHopperPullItems>(land)) {
         return false;
     }
     return origin(owner);

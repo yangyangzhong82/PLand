@@ -7,22 +7,23 @@
 namespace land {
 
 struct EnvironmentPerms final {
-    bool allowFireSpread{true};           // 火焰蔓延
-    bool allowMonsterSpawn{true};         // 怪物生成
-    bool allowAnimalSpawn{true};          // 动物生成
-    bool allowMobGrief{false};            // 实体破坏(破坏/拾取/放置方块) v25 allowActorDestroy=false, enderman=false
-    bool allowExplode{false};             // 爆炸
-    bool allowFarmDecay{true};            // 耕地退化
-    bool allowPistonPushOnBoundary{true}; // 活塞推动边界方块
-    bool allowRedstoneUpdate{true};       // 红石更新
-    bool allowBlockFall{false};           // 方块掉落
-    bool allowWitherDestroy{false};       // 凋零破坏
-    bool allowMossGrowth{true};           // 苔藓生长(蔓延) v27
-    bool allowLiquidFlow{true};           // 流动液体
-    bool allowDragonEggTeleport{false};   // 龙蛋传送 v25 allowAttackDragonEgg=false
-    bool allowSculkBlockGrowth{true};     // 幽匿尖啸体生长
-    bool allowSculkSpread{false};         // 幽匿蔓延 v27
-    bool allowLightningBolt{true};        // 闪电
+    bool allowFireSpread{true};              // 火焰蔓延
+    bool allowMonsterSpawn{true};            // 怪物生成
+    bool allowAnimalSpawn{true};             // 动物生成
+    bool allowMobGrief{false};               // 实体破坏(破坏/拾取/放置方块) v25 allowActorDestroy=false, enderman=false
+    bool allowExplode{false};                // 爆炸
+    bool allowFarmDecay{true};               // 耕地退化
+    bool allowPistonPushOnBoundary{true};    // 活塞推动边界方块
+    bool allowRedstoneUpdate{true};          // 红石更新
+    bool allowBlockFall{false};              // 方块掉落
+    bool allowWitherDestroy{false};          // 凋零破坏
+    bool allowMossGrowth{true};              // 苔藓生长(蔓延) v27
+    bool allowLiquidFlow{true};              // 流动液体
+    bool allowDragonEggTeleport{false};      // 龙蛋传送 v25 allowAttackDragonEgg=false
+    bool allowSculkBlockGrowth{true};        // 幽匿尖啸体生长
+    bool allowSculkSpread{false};            // 幽匿蔓延 v27
+    bool allowLightningBolt{true};           // 闪电
+    bool allowMinecartHopperPullItems{true}; // 矿车漏斗拉取物品
 };
 struct RolePerms final {
     struct Entry final {
@@ -89,7 +90,7 @@ struct LandPermTable final {
 
 // ! 注意：如果 LandContext 有更改，则必须递增 LandSchemaVersion，否则导致加载异常
 // 对于字段变动、重命名，请注册对应的 migrator 转换数据
-constexpr int LandSchemaVersion = 27;
+constexpr int LandSchemaVersion = 28;
 struct LandContext {
     int                      version{LandSchemaVersion};            // 版本号
     LandAABB                 mPos{};                                // 领地对角坐标
