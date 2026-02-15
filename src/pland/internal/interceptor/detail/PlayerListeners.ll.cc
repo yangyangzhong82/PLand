@@ -91,23 +91,45 @@ void EventInterceptor::setupLLPlayerListeners() {
                 if (auto item = ev.item().getItem()) {
                     void** vftable = *reinterpret_cast<void** const*>(item);
                     if (vftable == BucketItem::$vftable()) {
-                        if (hasMemberOrGuestPermission<&RolePerms::useBucket>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::useBucket>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     } else if (vftable == HatchetItem::$vftable()) {
-                        if (hasMemberOrGuestPermission<&RolePerms::useAxe>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::useAxe>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     } else if (vftable == HoeItem::$vftable()) {
-                        if (hasMemberOrGuestPermission<&RolePerms::useHoe>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::useHoe>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     } else if (vftable == ShovelItem::$vftable()) {
-                        if (hasMemberOrGuestPermission<&RolePerms::useShovel>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::useShovel>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     } else if (item->hasTag(VanillaItemTags::Boats) || item->hasTag(VanillaItemTags::Boat)) {
-                        if (hasMemberOrGuestPermission<&RolePerms::placeBoat>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::placeBoat>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     } else if (item->hasTag(VanillaItemTags::Minecart)) {
-                        if (hasMemberOrGuestPermission<&RolePerms::placeMinecart>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::placeMinecart>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     } else if (vftable == FlintAndSteelItem::$vftable()) {
-                        if (hasMemberOrGuestPermission<&RolePerms::useFlintAndSteel>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::useFlintAndSteel>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     }
                     // fallback
                     if (auto pointer = InterceptorConfig::lookupDynamicRule(ev.item().getTypeName())) {
-                        if (_hasMemberOrGuestPermission(land, uuid, pointer)) {
+                        if (!_hasMemberOrGuestPermission(land, uuid, pointer)) {
+                            ev.cancel();
                             return;
                         }
                     }
@@ -116,37 +138,70 @@ void EventInterceptor::setupLLPlayerListeners() {
                     auto&  legacyBlock = block->getBlockType();
                     void** vftable     = *reinterpret_cast<void** const*>(&legacyBlock);
                     if (legacyBlock.isButtonBlock()) {
-                        if (hasMemberOrGuestPermission<&RolePerms::useButton>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::useButton>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     } else if (legacyBlock.isDoorBlock()) {
-                        if (hasMemberOrGuestPermission<&RolePerms::useDoor>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::useDoor>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     } else if (legacyBlock.isFenceGateBlock()) {
-                        if (hasMemberOrGuestPermission<&RolePerms::useFenceGate>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::useFenceGate>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     } else if (legacyBlock.isFenceBlock()) {
-                        if (hasMemberOrGuestPermission<&RolePerms::allowInteractEntity>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::allowInteractEntity>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     } else if (legacyBlock.mIsTrapdoor) {
-                        if (hasMemberOrGuestPermission<&RolePerms::useTrapdoor>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::useTrapdoor>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     } else if (vftable == ShulkerBoxBlock::$vftable()) {
-                        if (hasMemberOrGuestPermission<&RolePerms::useContainer>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::useContainer>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     } else if (legacyBlock.isCraftingBlock()) {
-                        if (hasMemberOrGuestPermission<&RolePerms::useWorkstation>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::useWorkstation>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     } else if (legacyBlock.isLeverBlock()) {
-                        if (hasMemberOrGuestPermission<&RolePerms::useLever>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::useLever>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     } else if (vftable == BlastFurnaceBlock::$vftable() || vftable == FurnaceBlock::$vftable()
                                || vftable == SmokerBlock::$vftable()) {
-                        if (hasMemberOrGuestPermission<&RolePerms::useFurnaces>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::useFurnaces>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     } else if (vftable == BeaconBlock::$vftable()) {
-                        if (hasMemberOrGuestPermission<&RolePerms::useBeacon>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::useBeacon>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     } else if (vftable == BedBlock::$vftable()) {
-                        if (hasMemberOrGuestPermission<&RolePerms::useBed>(land, uuid)) return;
+                        if (!hasMemberOrGuestPermission<&RolePerms::useBed>(land, uuid)) {
+                            ev.cancel();
+                            return;
+                        }
                     }
                     // fallback
                     if (auto pointer = InterceptorConfig::lookupDynamicRule(block->getTypeName().data())) {
-                        if (_hasMemberOrGuestPermission(land, uuid, pointer)) {
+                        if (!_hasMemberOrGuestPermission(land, uuid, pointer)) {
+                            ev.cancel();
                             return;
                         }
                     }
                 }
-                ev.cancel();
             }
         );
     });
@@ -166,19 +221,26 @@ void EventInterceptor::setupLLPlayerListeners() {
             if (hasPrivilege(land, uuid)) return;
 
             if (target.isPlayer()) {
-                if (hasMemberOrGuestPermission<&RolePerms::allowPvP>(land, uuid)) return;
+                if (!hasMemberOrGuestPermission<&RolePerms::allowPvP>(land, uuid)) {
+                    ev.cancel();
+                    return;
+                }
             }
 
             HashedString typeName{target.getTypeName()};
             if (InterceptorConfig::cfg.rules.mob.allowFriendlyDamage.contains(typeName)) {
-                if (hasMemberOrGuestPermission<&RolePerms::allowFriendlyDamage>(land, uuid)) return;
+                if (!hasMemberOrGuestPermission<&RolePerms::allowFriendlyDamage>(land, uuid)) {
+                    ev.cancel();
+                }
             } else if (InterceptorConfig::cfg.rules.mob.allowHostileDamage.contains(typeName)) {
-                if (hasMemberOrGuestPermission<&RolePerms::allowHostileDamage>(land, uuid)) return;
+                if (!hasMemberOrGuestPermission<&RolePerms::allowHostileDamage>(land, uuid)) {
+                    ev.cancel();
+                }
             } else if (InterceptorConfig::cfg.rules.mob.allowSpecialEntityDamage.contains(typeName)) {
-                if (hasMemberOrGuestPermission<&RolePerms::allowSpecialEntityDamage>(land, uuid)) return;
+                if (!hasMemberOrGuestPermission<&RolePerms::allowSpecialEntityDamage>(land, uuid)) {
+                    ev.cancel();
+                }
             }
-
-            ev.cancel();
         });
     });
     registerListenerIf(config.PlayerPickUpItemEvent, [bus, registry]() {

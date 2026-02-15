@@ -71,19 +71,26 @@ void EventInterceptor::setupLLEntityListeners() {
             if (hasPrivilege(land, uuid)) return;
 
             if (actor.isPlayer()) {
-                if (hasMemberOrGuestPermission<&RolePerms::allowPvP>(land, uuid)) return;
+                if (!hasMemberOrGuestPermission<&RolePerms::allowPvP>(land, uuid)) {
+                    ev.cancel();
+                    return;
+                }
             }
 
             HashedString typeName{actor.getTypeName()};
             if (InterceptorConfig::cfg.rules.mob.allowFriendlyDamage.contains(typeName)) {
-                if (hasMemberOrGuestPermission<&RolePerms::allowFriendlyDamage>(land, uuid)) return;
+                if (!hasMemberOrGuestPermission<&RolePerms::allowFriendlyDamage>(land, uuid)) {
+                    ev.cancel();
+                }
             } else if (InterceptorConfig::cfg.rules.mob.allowHostileDamage.contains(typeName)) {
-                if (hasMemberOrGuestPermission<&RolePerms::allowHostileDamage>(land, uuid)) return;
+                if (!hasMemberOrGuestPermission<&RolePerms::allowHostileDamage>(land, uuid)) {
+                    ev.cancel();
+                }
             } else if (InterceptorConfig::cfg.rules.mob.allowSpecialEntityDamage.contains(typeName)) {
-                if (hasMemberOrGuestPermission<&RolePerms::allowSpecialEntityDamage>(land, uuid)) return;
+                if (!hasMemberOrGuestPermission<&RolePerms::allowSpecialEntityDamage>(land, uuid)) {
+                    ev.cancel();
+                }
             }
-
-            ev.cancel();
         });
     });
 }

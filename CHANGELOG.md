@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.1] - 2026-02-15
+
+### 🐛 问题修复
+
+- 修复部分事件意外拦截玩家操作 (`MobHurtEffectBeforeEvent`,`ActorHurtEvent`,`PlayerAttackEvent`,
+  `PlayerInteractBlockEvent`回滚为黑名单模式) @engsr6982
+
 ## [0.18.0] - 2026-02-14
 
 > ⚠️ 本次版本为权限系统重构版本，存在破坏性变更
