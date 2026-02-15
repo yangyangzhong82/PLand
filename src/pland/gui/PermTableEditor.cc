@@ -1,5 +1,5 @@
-#include "utils/BackUtils.h"
 #include "PermTableEditor.h"
+#include "utils/BackUtils.h"
 
 #include "pland/land/repo/LandContext.h"
 #include "pland/utils/JsonUtil.h"
@@ -115,15 +115,24 @@ void PermTableEditor::sendTo(
 
     auto f = ll::form::SimpleForm{};
     f.setTitle("[PLand] - 权限管理"_trl(localeCode));
-    f.appendButton("环境权限"_trl(localeCode), "textures/ui/icon_recipe_nature", "path", [impl](Player& player) {
-        impl->sendEdit(player, Impl::EditType::Environment);
-    });
-    f.appendButton("成员权限"_trl(localeCode), "textures/ui/permissions_member_star", "path", [impl](Player& player) {
-        impl->sendEdit(player, Impl::EditType::Member);
-    });
-    f.appendButton("游客权限"_trl(localeCode), "textures/ui/permissions_visitor_hand", "path", [impl](Player& player) {
-        impl->sendEdit(player, Impl::EditType::Guest);
-    });
+    f.appendButton(
+        "环境权限\n§7世界自动行为与规则"_trl(localeCode),
+        "textures/ui/icon_recipe_nature",
+        "path",
+        [impl](Player& player) { impl->sendEdit(player, Impl::EditType::Environment); }
+    );
+    f.appendButton(
+        "成员权限\n§7拥有领地身份的成员行为"_trl(localeCode),
+        "textures/ui/permissions_member_star",
+        "path",
+        [impl](Player& player) { impl->sendEdit(player, Impl::EditType::Member); }
+    );
+    f.appendButton(
+        "游客权限\n§7所有未被标记为成员的行为(实体/玩家)"_trl(localeCode),
+        "textures/ui/permissions_visitor_hand",
+        "path",
+        [impl](Player& player) { impl->sendEdit(player, Impl::EditType::Guest); }
+    );
     if (backTo) {
         back_utils::injectBackButton(f, std::move(backTo));
     }
