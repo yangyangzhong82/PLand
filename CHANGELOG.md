@@ -11,9 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 问题修复
 
-- 修复部分事件意外拦截玩家操作 (`MobHurtEffectBeforeEvent`,`ActorHurtEvent`,`PlayerAttackEvent`,
-  `PlayerInteractBlockEvent`回滚为黑名单模式) @engsr6982
-- 将漏斗矿车分离为独立权限 (解决生电机器问题) @engsr6982
+- 修复部分事件误拦截玩家操作的问题 (`MobHurtEffectBeforeEvent`,`ActorHurtEvent`,`PlayerAttackEvent`,`PlayerInteractBlockEvent`恢复为黑名单模式) @engsr6982
+- 将漏斗矿车行为拆分为独立权限，避免影响生电机器运作 @engsr6982
 
 ## [0.18.0] - 2026-02-14
 
