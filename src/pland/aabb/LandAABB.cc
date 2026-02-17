@@ -10,8 +10,8 @@ LandPos&       LandAABB::getMax() { return max; }
 LandPos const& LandAABB::getMax() const { return max; }
 
 int   LandAABB::getSpanX() const { return max.x - min.x; }
-int   LandAABB::getSpanZ() const { return max.y - min.y; }
-int   LandAABB::getSpanY() const { return max.z - min.z; }
+int   LandAABB::getSpanZ() const { return max.z - min.z; }
+int   LandAABB::getSpanY() const { return max.y - min.y; }
 int   LandAABB::getBlockCountX() const { return getSpanX() + 1; }
 int   LandAABB::getBlockCountY() const { return getSpanY() + 1; }
 int   LandAABB::getBlockCountZ() const { return getSpanZ() + 1; }
