@@ -9,24 +9,28 @@
 #include "ll/api/event/entity/ActorHurtEvent.h"
 #include "ll/api/memory/Hook.h"
 
+#include "mc/entity/components_json_legacy/HopperComponent.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/world/actor/ActorDamageSource.h"
 #include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/FishingHook.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/ai/goal/LayEggGoal.h"
+#include "mc/world/actor/global/LightningBolt.h"
+#include "mc/world/actor/item/ExperienceOrb.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/actor/projectile/AbstractArrow.h"
+#include "mc/world/actor/projectile/Arrow.h"
+#include "mc/world/actor/projectile/ThrownTrident.h"
+#include "mc/world/effect/OozingMobEffect.h"
+#include "mc/world/effect/WeavingMobEffect.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/FireBlock.h"
-#include "mc/world/level/block/actor/ChestBlockActor.h"
-
-#include "mc/entity/components_json_legacy/HopperComponent.h"
-#include "mc/world/actor/global/LightningBolt.h"
-#include "mc/world/effect/OozingMobEffect.h"
-#include "mc/world/effect/WeavingMobEffect.h"
 #include "mc/world/level/block/LecternBlock.h"
+#include "mc/world/level/block/actor/ChestBlockActor.h"
 #include "mc/world/level/block/block_events/BlockPlayerInteractEvent.h"
+
 
 namespace land::internal::interceptor {
 
@@ -288,7 +292,68 @@ LL_TYPE_INSTANCE_HOOK(
     }
     return origin(owner);
 }
+LL_TYPE_INSTANCE_HOOK(
+    ExperienceOrbPlayerTouchHook,
+    ll::memory::HookPriority::Normal,
+    ExperienceOrb,
+    &ExperienceOrb::$playerTouch,
+    void,
+    ::Player& player
+) {
+    auto& registry = PLand::getInstance().getLandRegistry();
+    auto  land     = registry.getLandAt(this->getPosition(), this->getDimensionId());
+    if (!hasRolePermission<&RolePerms::allowPlayerPickupItem>(land, player.getUuid())) {
+        return;
+    }
+    origin(player);
+}
 
+LL_TYPE_INSTANCE_HOOK(
+    ThrownTridentPlayerTouchHook,
+    ll::memory::HookPriority::Normal,
+    ThrownTrident,
+    &ThrownTrident::$playerTouch,
+    void,
+    ::Player& player
+) {
+    auto& registry = PLand::getInstance().getLandRegistry();
+    auto  land     = registry.getLandAt(this->getPosition(), this->getDimensionId());
+    if (!hasRolePermission<&RolePerms::allowPlayerPickupItem>(land, player.getUuid())) {
+        return;
+    }
+    origin(player);
+}
+LL_TYPE_INSTANCE_HOOK(
+    ArrowPlayerTouchHook,
+    ll::memory::HookPriority::Normal,
+    Arrow,
+    &Arrow::$playerTouch,
+    void,
+    ::Player& player
+) {
+    auto& registry = PLand::getInstance().getLandRegistry();
+    auto  land     = registry.getLandAt(this->getPosition(), this->getDimensionId());
+    if (!hasRolePermission<&RolePerms::allowPlayerPickupItem>(land, player.getUuid())) {
+        return;
+    }
+    origin(player);
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    AbstractArrowPlayerTouchHook,
+    ll::memory::HookPriority::Normal,
+    AbstractArrow,
+    &AbstractArrow::$playerTouch,
+    void,
+    ::Player& player
+) {
+    auto& registry = PLand::getInstance().getLandRegistry();
+    auto  land     = registry.getLandAt(this->getPosition(), this->getDimensionId());
+    if (!hasRolePermission<&RolePerms::allowPlayerPickupItem>(land, player.getUuid())) {
+        return;
+    }
+    origin(player);
+}
 
 void EventInterceptor::setupHooks() {
     auto& config = InterceptorConfig::cfg.hooks;
@@ -303,6 +368,10 @@ void EventInterceptor::setupHooks() {
     registerHookIf<OozingMobEffectHook>(config.OozingMobEffectHook);
     registerHookIf<WeavingMobEffectHook>(config.WeavingMobEffectHook);
     registerHookIf<HopperComponentPullInItemsHook>(config.HopperComponentPullInItemsHook);
+    registerHookIf<ExperienceOrbPlayerTouchHook>(config.ExperienceOrbPlayerTouchHook);
+    registerHookIf<ThrownTridentPlayerTouchHook>(config.ThrownTridentPlayerTouchHook);
+    registerHookIf<ArrowPlayerTouchHook>(config.ArrowPlayerTouchHook);
+    registerHookIf<AbstractArrowPlayerTouchHook>(config.AbstractArrowPlayerTouchHook);
 }
 
 } // namespace land::internal::interceptor

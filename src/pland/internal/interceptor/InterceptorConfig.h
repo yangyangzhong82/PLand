@@ -60,6 +60,10 @@ struct InterceptorConfig {
         bool OozingMobEffectHook{true};            // 渗浆效果
         bool WeavingMobEffectHook{true};           // 盘丝效果
         bool HopperComponentPullInItemsHook{true}; // 漏斗组件吸取物品
+        bool ExperienceOrbPlayerTouchHook{true};   // 拾取经验球
+        bool ThrownTridentPlayerTouchHook{true};   // 拾取三叉戟
+        bool ArrowPlayerTouchHook{true};           // 拾取箭
+        bool AbstractArrowPlayerTouchHook{true};   // 拾取箭类投射物
     } hooks;
     struct Rules {
         using Mapping = std::unordered_map<std::string, std::string>; // TypeName -> Permission
