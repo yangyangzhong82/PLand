@@ -66,6 +66,11 @@ void EventInterceptor::setupIlaPlayerListeners() {
 
                 auto& player = ev.self();
 
+                if (!player.hasDimension()) {
+                    TRACE_LOG("player has no dimension yet, skip PlayerDropItemBeforeEvent");
+                    return;
+                }
+
                 TRACE_LOG("player={}", player.getRealName());
 
                 auto land = registry->getLandAt(player.getPosition(), player.getDimensionId());
