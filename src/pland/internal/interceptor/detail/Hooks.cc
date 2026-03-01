@@ -9,28 +9,33 @@
 #include "ll/api/event/entity/ActorHurtEvent.h"
 #include "ll/api/memory/Hook.h"
 
+#include "mc/entity/components_json_legacy/HopperComponent.h"
 #include "mc/server/ServerPlayer.h"
 #include "mc/world/actor/ActorDamageSource.h"
 #include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/FishingHook.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/ai/goal/LayEggGoal.h"
+#include "mc/world/actor/global/LightningBolt.h"
+#include "mc/world/actor/item/ExperienceOrb.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/actor/projectile/AbstractArrow.h"
+#include "mc/world/actor/projectile/Arrow.h"
+#include "mc/world/actor/projectile/ThrownTrident.h"
+#include "mc/world/effect/OozingMobEffect.h"
+#include "mc/world/effect/WeavingMobEffect.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/FireBlock.h"
-#include "mc/world/level/block/actor/ChestBlockActor.h"
-
-#include "mc/entity/components_json_legacy/HopperComponent.h"
-#include "mc/world/actor/global/LightningBolt.h"
-#include "mc/world/effect/OozingMobEffect.h"
-#include "mc/world/effect/WeavingMobEffect.h"
 #include "mc/world/level/block/LecternBlock.h"
+#include "mc/world/level/block/actor/ChestBlockActor.h"
 #include "mc/world/level/block/block_events/BlockPlayerInteractEvent.h"
+#include "mc/world/level/block/FarmBlock.h"
 
 namespace land::internal::interceptor {
 
 // Fix [#140](https://github.com/engsr6982/PLand/issues/140)
+// 部分实体受伤情况不走LL的ActorHurtEvent，需要在子类Mob受伤逻辑处拦截
 LL_TYPE_INSTANCE_HOOK(
     MobHurtHook,
     HookPriority::Normal,
@@ -42,14 +47,46 @@ LL_TYPE_INSTANCE_HOOK(
     bool                       knock,
     bool                       ignite
 ) {
-    ll::event::ActorHurtEvent ev{*this, source, damage, knock, ignite};
-    ll::event::EventBus::getInstance().publish(ev);
-    if (ev.isCancelled()) {
-        return false;
+    if (source.getEntityType() != ActorType::Player) {
+        return origin(source, damage, knock, ignite);
     }
+
+    auto player = this->getLevel().getPlayer(source.getEntityUniqueID());
+    if (!player) {
+        return origin(source, damage, knock, ignite);
+    }
+
+    auto& registry = PLand::getInstance().getLandRegistry();
+    auto& actor    = *this;
+    auto& uuid     = player->getUuid();
+    auto  land     = registry.getLandAt(actor.getPosition(), actor.getDimensionId());
+    if (hasPrivilege(land, uuid)) {
+        return origin(source, damage, knock, ignite);
+    }
+
+    if (actor.isPlayer()) {
+        if (!hasMemberOrGuestPermission<&RolePerms::allowPvP>(land, uuid)) {
+            return false;
+        }
+    }
+
+    HashedString typeName{actor.getTypeName()};
+    if (InterceptorConfig::cfg.rules.mob.allowFriendlyDamage.contains(typeName)) {
+        if (!hasMemberOrGuestPermission<&RolePerms::allowFriendlyDamage>(land, uuid)) {
+            return false;
+        }
+    } else if (InterceptorConfig::cfg.rules.mob.allowHostileDamage.contains(typeName)) {
+        if (!hasMemberOrGuestPermission<&RolePerms::allowHostileDamage>(land, uuid)) {
+            return false;
+        }
+    } else if (InterceptorConfig::cfg.rules.mob.allowSpecialEntityDamage.contains(typeName)) {
+        if (!hasMemberOrGuestPermission<&RolePerms::allowSpecialEntityDamage>(land, uuid)) {
+            return false;
+        }
+    }
+
     return origin(source, damage, knock, ignite);
 }
-
 // Fix [#56](https://github.com/engsr6982/PLand/issues/56)
 LL_TYPE_INSTANCE_HOOK(
     FishingHookHitHook,
@@ -255,7 +292,96 @@ LL_TYPE_INSTANCE_HOOK(
     }
     return origin(owner);
 }
+LL_TYPE_INSTANCE_HOOK(
+    ExperienceOrbPlayerTouchHook,
+    ll::memory::HookPriority::Normal,
+    ExperienceOrb,
+    &ExperienceOrb::$playerTouch,
+    void,
+    ::Player& player
+) {
+    auto& registry = PLand::getInstance().getLandRegistry();
+    auto  land     = registry.getLandAt(this->getPosition(), this->getDimensionId());
+    if (!hasRolePermission<&RolePerms::allowPlayerPickupItem>(land, player.getUuid())) {
+        return;
+    }
+    origin(player);
+}
 
+LL_TYPE_INSTANCE_HOOK(
+    ThrownTridentPlayerTouchHook,
+    ll::memory::HookPriority::Normal,
+    ThrownTrident,
+    &ThrownTrident::$playerTouch,
+    void,
+    ::Player& player
+) {
+    auto& registry = PLand::getInstance().getLandRegistry();
+    auto  land     = registry.getLandAt(this->getPosition(), this->getDimensionId());
+    if (!hasRolePermission<&RolePerms::allowPlayerPickupItem>(land, player.getUuid())) {
+        return;
+    }
+    origin(player);
+}
+LL_TYPE_INSTANCE_HOOK(
+    ArrowPlayerTouchHook,
+    ll::memory::HookPriority::Normal,
+    Arrow,
+    &Arrow::$playerTouch,
+    void,
+    ::Player& player
+) {
+    auto& registry = PLand::getInstance().getLandRegistry();
+    auto  land     = registry.getLandAt(this->getPosition(), this->getDimensionId());
+    if (!hasRolePermission<&RolePerms::allowPlayerPickupItem>(land, player.getUuid())) {
+        return;
+    }
+    origin(player);
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    AbstractArrowPlayerTouchHook,
+    ll::memory::HookPriority::Normal,
+    AbstractArrow,
+    &AbstractArrow::$playerTouch,
+    void,
+    ::Player& player
+) {
+    auto& registry = PLand::getInstance().getLandRegistry();
+    auto  land     = registry.getLandAt(this->getPosition(), this->getDimensionId());
+    if (!hasRolePermission<&RolePerms::allowPlayerPickupItem>(land, player.getUuid())) {
+        return;
+    }
+    origin(player);
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    FarmChangeEventHook,
+    ll::memory::HookPriority::Normal,
+    FarmBlock,
+    &FarmBlock::$transformOnFall,
+    void,
+    ::BlockSource&    region,
+    ::BlockPos const& pos,
+    ::Actor*          actor,
+    float             fallDistance
+) {
+    auto& registry = PLand::getInstance().getLandRegistry();
+    auto  land     = registry.getLandAt(pos, region.getDimensionId());
+    if (!hasEnvironmentPermission<&EnvironmentPerms::allowFarmDecay>(land)) {
+        return;
+    }
+
+    // Falling entities still trigger farmland decay; only players need role checks.
+    if (actor && actor->isPlayer()) {
+        auto& player = static_cast<Player&>(*actor);
+        if (!hasRolePermission<&RolePerms::allowDestroy>(land, player.getUuid())) {
+            return;
+        }
+    }
+
+    origin(region, pos, actor, fallDistance);
+}
 
 void EventInterceptor::setupHooks() {
     auto& config = InterceptorConfig::cfg.hooks;
@@ -270,6 +396,11 @@ void EventInterceptor::setupHooks() {
     registerHookIf<OozingMobEffectHook>(config.OozingMobEffectHook);
     registerHookIf<WeavingMobEffectHook>(config.WeavingMobEffectHook);
     registerHookIf<HopperComponentPullInItemsHook>(config.HopperComponentPullInItemsHook);
+    registerHookIf<ExperienceOrbPlayerTouchHook>(config.ExperienceOrbPlayerTouchHook);
+    registerHookIf<ThrownTridentPlayerTouchHook>(config.ThrownTridentPlayerTouchHook);
+    registerHookIf<ArrowPlayerTouchHook>(config.ArrowPlayerTouchHook);
+    registerHookIf<AbstractArrowPlayerTouchHook>(config.AbstractArrowPlayerTouchHook);
+    registerHookIf<FarmChangeEventHook>(config.FarmChangeEventHook);
 }
 
 } // namespace land::internal::interceptor

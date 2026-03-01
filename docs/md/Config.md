@@ -145,7 +145,7 @@
 
 ```jsonc
 {
-    "version": 1, // 配置文件版本
+    "version": 2, // 配置文件版本
     "listeners": {
         // 事件监听器开关 true 为开启，false 为关闭
         // 注意：非必要情况下，请勿关闭事件监听器，否则可能导致领地功能异常
@@ -163,17 +163,16 @@
         "ActorDestroyBlockEvent": true, // 生物破坏方块事件
         "MobTakeBlockBeforeEvent": true, // 生物取方块事件
         "MobPlaceBlockBeforeEvent": true, // 生物放置方块事件
+        "ActorPickupItemBeforeEvent": true, // 生物拾取物品事件
         "ActorRideBeforeEvent": true, // 生物骑乘事件
         "MobHurtEffectBeforeEvent": true, // 生物受伤效果事件
         "ActorTriggerPressurePlateBeforeEvent": true, // 生物触发压力板事件
-        "ProjectileCreateBeforeEvent": true, // 投掷物创建事件
         "PlayerInteractEntityBeforeEvent": true, // 玩家交互实体事件
         "ArmorStandSwapItemBeforeEvent": true, // 僵尸村民交互事件
         "PlayerDropItemBeforeEvent": true, // 玩家丢弃物品事件
         "PlayerOperatedItemFrameBeforeEvent": true, // 玩家操作物品展示框事件
         "PlayerEditSignBeforeEvent": true, // 玩家编辑告示牌事件
         "ExplosionBeforeEvent": true, // 爆炸事件
-        "FarmDecayBeforeEvent": true, // 农田枯萎事件
         "PistonPushBeforeEvent": true, // 活塞推动事件
         "RedstoneUpdateBeforeEvent": true, // 红石更新事件
         "BlockFallBeforeEvent": true, // 方块掉落事件
@@ -182,7 +181,8 @@
         "LiquidFlowBeforeEvent": true, // 液体流动事件
         "DragonEggBlockTeleportBeforeEvent": true, // 龙蛋方块传送事件
         "SculkBlockGrowthBeforeEvent": true, // 藤蔓生长事件
-        "SculkSpreadBeforeEvent": true // 藤蔓蔓延事件
+        "SculkSpreadBeforeEvent": true, // 藤蔓蔓延事件
+        "PlayerUseItemEvent": true // 玩家使用物品事件
     },
     "hooks": {
         // Hook 技术指的是在软件运行过程中，通过拦截、修改或补充原有代码逻辑，实现对目标软件行为的影响和控制的技术手段
@@ -202,7 +202,12 @@
         "LecternBlockDropBookHook": true, // 取出讲台书本
         "OozingMobEffectHook": true, // 渗浆效果
         "WeavingMobEffectHook": true, // 盘丝效果
-        "HopperComponentPullInItemsHook": true // 漏斗组件吸取物品(漏斗矿车)
+        "HopperComponentPullInItemsHook": true, // 漏斗组件吸取物品(漏斗矿车)
+        "ExperienceOrbPlayerTouchHook": true, // 经验球拾取
+        "ThrownTridentPlayerTouchHook": true, // 三叉戟拾取
+        "ArrowPlayerTouchHook": true, // 箭矢拾取
+        "AbstractArrowPlayerTouchHook": true, // 箭类投射物拾取
+        "FarmChangeEventHook": true // 农田踩踏/退化
     },
     "rules": {
         "mob": {

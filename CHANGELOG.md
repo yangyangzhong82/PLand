@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.2] - 2026-03-01
+
+### ✨ 新增功能
+
+- 增强拾取物品权限，其他非掉落物可拾取实体(三叉戟等)拾取需要权限 @yangyangzhong82 #193
+
+### 🐛 问题修复
+
+- 修复领地价格计算错误的问题 @engsr6982 #189
+- 修复耕地环境权限无法防止自然退化的问题 @yangyangzhong82 #191
+- 修复PlayerDropItemBeforeEvent报错 @yangyangzhong82 #157
+- 修复其他模组监听 ActorHurtEvent 会重复监听两次的问题 @yangyangzhong82 #196
+
 ## [0.18.1] - 2026-02-15
 
 ### 🐛 问题修复
