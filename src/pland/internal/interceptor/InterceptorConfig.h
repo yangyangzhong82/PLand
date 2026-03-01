@@ -11,7 +11,7 @@
 namespace land::internal::interceptor {
 
 struct InterceptorConfig {
-    inline static int SchemaVersion = 1;
+    inline static int SchemaVersion = 2;
 
     int version = SchemaVersion;
     struct Listeners {
@@ -36,7 +36,6 @@ struct InterceptorConfig {
         bool PlayerOperatedItemFrameBeforeEvent   = true; // ILA
         bool PlayerEditSignBeforeEvent            = true; // ILA
         bool ExplosionBeforeEvent                 = true; // ILA (env)
-        bool FarmDecayBeforeEvent                 = true; // ILA (env)
         bool PistonPushBeforeEvent                = true; // ILA (env)
         bool RedstoneUpdateBeforeEvent            = true; // ILA (env)
         bool BlockFallBeforeEvent                 = true; // ILA (env)
@@ -48,9 +47,10 @@ struct InterceptorConfig {
         bool SculkSpreadBeforeEvent               = true; // ILA (env)
         bool PlayerUseItemEvent                   = true; // LL
     } listeners;
+
     struct Hooks {
         bool MobHurtHook{true};                    // 生物受伤
-        bool FishingHookHitHook{true};             // 钓鱼竿
+        bool FishingHookHitHook{true};             // 钓鱼钩击中
         bool LayEggGoalHook{true};                 // 海龟产卵
         bool FireBlockBurnHook{true};              // 火焰蔓延
         bool ChestBlockActorOpenHook{true};        // 箱子打开
@@ -64,7 +64,9 @@ struct InterceptorConfig {
         bool ThrownTridentPlayerTouchHook{true};   // 拾取三叉戟
         bool ArrowPlayerTouchHook{true};           // 拾取箭
         bool AbstractArrowPlayerTouchHook{true};   // 拾取箭类投射物
+        bool FarmChangeEventHook{true};            // 耕地踩踏/退化
     } hooks;
+
     struct Rules {
         using Mapping = std::unordered_map<std::string, std::string>; // TypeName -> Permission
         struct Mob {
@@ -76,7 +78,6 @@ struct InterceptorConfig {
         Mapping item;
         Mapping block;
     } rules;
-
 
     static InterceptorConfig cfg;
 
@@ -90,6 +91,5 @@ struct InterceptorConfig {
 
     static void tryMigrate(std::filesystem::path configDir);
 };
-
 
 } // namespace land::internal::interceptor

@@ -30,7 +30,7 @@
 #include "mc/world/level/block/LecternBlock.h"
 #include "mc/world/level/block/actor/ChestBlockActor.h"
 #include "mc/world/level/block/block_events/BlockPlayerInteractEvent.h"
-
+#include "mc/world/level/block/FarmBlock.h"
 
 namespace land::internal::interceptor {
 
@@ -355,6 +355,34 @@ LL_TYPE_INSTANCE_HOOK(
     origin(player);
 }
 
+LL_TYPE_INSTANCE_HOOK(
+    FarmChangeEventHook,
+    ll::memory::HookPriority::Normal,
+    FarmBlock,
+    &FarmBlock::$transformOnFall,
+    void,
+    ::BlockSource&    region,
+    ::BlockPos const& pos,
+    ::Actor*          actor,
+    float             fallDistance
+) {
+    auto& registry = PLand::getInstance().getLandRegistry();
+    auto  land     = registry.getLandAt(pos, region.getDimensionId());
+    if (!hasEnvironmentPermission<&EnvironmentPerms::allowFarmDecay>(land)) {
+        return;
+    }
+
+    // Falling entities still trigger farmland decay; only players need role checks.
+    if (actor && actor->isPlayer()) {
+        auto& player = static_cast<Player&>(*actor);
+        if (!hasRolePermission<&RolePerms::allowDestroy>(land, player.getUuid())) {
+            return;
+        }
+    }
+
+    origin(region, pos, actor, fallDistance);
+}
+
 void EventInterceptor::setupHooks() {
     auto& config = InterceptorConfig::cfg.hooks;
     registerHookIf<MobHurtHook>(config.MobHurtHook);
@@ -372,6 +400,7 @@ void EventInterceptor::setupHooks() {
     registerHookIf<ThrownTridentPlayerTouchHook>(config.ThrownTridentPlayerTouchHook);
     registerHookIf<ArrowPlayerTouchHook>(config.ArrowPlayerTouchHook);
     registerHookIf<AbstractArrowPlayerTouchHook>(config.AbstractArrowPlayerTouchHook);
+    registerHookIf<FarmChangeEventHook>(config.FarmChangeEventHook);
 }
 
 } // namespace land::internal::interceptor

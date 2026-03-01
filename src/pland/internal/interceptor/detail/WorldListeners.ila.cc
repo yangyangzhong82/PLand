@@ -14,7 +14,6 @@
 #include "ila/event/minecraft/world/WitherDestroyEvent.h"
 #include "ila/event/minecraft/world/level/block/BlockFallEvent.h"
 #include "ila/event/minecraft/world/level/block/DragonEggBlockTeleportEvent.h"
-#include "ila/event/minecraft/world/level/block/FarmDecayEvent.h"
 #include "ila/event/minecraft/world/level/block/LiquidFlowEvent.h"
 #include "ila/event/minecraft/world/level/block/MossGrowthEvent.h"
 #include "ila/event/minecraft/world/level/block/SculkCatalystAbsorbExperienceEvent.h"
@@ -73,21 +72,6 @@ void EventInterceptor::setupIlaWorldListeners() {
                         return;
                     }
                 }
-            }
-        });
-    });
-
-    registerListenerIf(config.FarmDecayBeforeEvent, [bus, registry]() {
-        return bus->emplaceListener<ila::mc::FarmDecayBeforeEvent>([registry](ila::mc::FarmDecayBeforeEvent& ev) {
-            TRACE_THIS_EVENT(ila::mc::FarmDecayBeforeEvent);
-
-            auto& blockPos = ev.pos();
-
-            TRACE_LOG("pos={}", blockPos.toString());
-
-            auto land = registry->getLandAt(blockPos, ev.blockSource().getDimensionId());
-            if (!hasEnvironmentPermission<&EnvironmentPerms::allowFarmDecay>(land)) {
-                ev.cancel();
             }
         });
     });

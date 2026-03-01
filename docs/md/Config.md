@@ -145,7 +145,7 @@
 
 ```jsonc
 {
-    "version": 1, // 配置文件版本
+    "version": 2, // 配置文件版本
     "listeners": {
         // 事件监听器开关 true 为开启，false 为关闭
         // 注意：非必要情况下，请勿关闭事件监听器，否则可能导致领地功能异常
@@ -173,7 +173,6 @@
         "PlayerOperatedItemFrameBeforeEvent": true, // 玩家操作物品展示框事件
         "PlayerEditSignBeforeEvent": true, // 玩家编辑告示牌事件
         "ExplosionBeforeEvent": true, // 爆炸事件
-        "FarmDecayBeforeEvent": true, // 农田枯萎事件
         "PistonPushBeforeEvent": true, // 活塞推动事件
         "RedstoneUpdateBeforeEvent": true, // 红石更新事件
         "BlockFallBeforeEvent": true, // 方块掉落事件
@@ -202,7 +201,8 @@
         "LecternBlockDropBookHook": true, // 取出讲台书本
         "OozingMobEffectHook": true, // 渗浆效果
         "WeavingMobEffectHook": true, // 盘丝效果
-        "HopperComponentPullInItemsHook": true // 漏斗组件吸取物品(漏斗矿车)
+        "HopperComponentPullInItemsHook": true, // 漏斗组件吸取物品(漏斗矿车)
+        "FarmChangeEventHook": true // 农田踩踏/退化
     },
     "rules": {
         "mob": {
