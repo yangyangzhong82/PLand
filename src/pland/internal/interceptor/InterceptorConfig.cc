@@ -105,7 +105,7 @@ void InterceptorConfig::_buildDynamicRuleMap() {
         }
     }
 }
-RolePerms::Entry RolePerms::* InterceptorConfig::lookupDynamicRule(HashedString const& typeName) {
+RolePerms::Entry RolePerms::*InterceptorConfig::lookupDynamicRule(HashedString const& typeName) {
     TRACE_ADD_SCOPE("lookupDynamicRule");
     TRACE_LOG("lookup typename: {}", typeName.c_str());
     auto iter = DynamicRuleMap.find(typeName);
@@ -161,7 +161,6 @@ void InterceptorConfig::tryMigrate(std::filesystem::path configDir) {
         cfg.listeners.PlayerDropItemBeforeEvent          = listeners["PlayerDropItemBeforeEvent"].get<bool>();
         cfg.listeners.ActorRideBeforeEvent               = listeners["ActorRideBeforeEvent"].get<bool>();
         cfg.listeners.ExplosionBeforeEvent               = listeners["ExplosionBeforeEvent"].get<bool>();
-        cfg.listeners.FarmDecayBeforeEvent               = listeners["FarmDecayBeforeEvent"].get<bool>();
         cfg.listeners.ActorHurtEvent                     = listeners["ActorHurtEvent"].get<bool>();
         cfg.listeners.MobHurtEffectBeforeEvent           = listeners["MobHurtEffectBeforeEvent"].get<bool>();
         cfg.listeners.PistonPushBeforeEvent              = listeners["PistonPushBeforeEvent"].get<bool>();

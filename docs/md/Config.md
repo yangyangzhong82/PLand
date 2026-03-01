@@ -163,10 +163,10 @@
         "ActorDestroyBlockEvent": true, // 生物破坏方块事件
         "MobTakeBlockBeforeEvent": true, // 生物取方块事件
         "MobPlaceBlockBeforeEvent": true, // 生物放置方块事件
+        "ActorPickupItemBeforeEvent": true, // 生物拾取物品事件
         "ActorRideBeforeEvent": true, // 生物骑乘事件
         "MobHurtEffectBeforeEvent": true, // 生物受伤效果事件
         "ActorTriggerPressurePlateBeforeEvent": true, // 生物触发压力板事件
-        "ProjectileCreateBeforeEvent": true, // 投掷物创建事件
         "PlayerInteractEntityBeforeEvent": true, // 玩家交互实体事件
         "ArmorStandSwapItemBeforeEvent": true, // 僵尸村民交互事件
         "PlayerDropItemBeforeEvent": true, // 玩家丢弃物品事件
@@ -181,7 +181,8 @@
         "LiquidFlowBeforeEvent": true, // 液体流动事件
         "DragonEggBlockTeleportBeforeEvent": true, // 龙蛋方块传送事件
         "SculkBlockGrowthBeforeEvent": true, // 藤蔓生长事件
-        "SculkSpreadBeforeEvent": true // 藤蔓蔓延事件
+        "SculkSpreadBeforeEvent": true, // 藤蔓蔓延事件
+        "PlayerUseItemEvent": true // 玩家使用物品事件
     },
     "hooks": {
         // Hook 技术指的是在软件运行过程中，通过拦截、修改或补充原有代码逻辑，实现对目标软件行为的影响和控制的技术手段
@@ -202,6 +203,10 @@
         "OozingMobEffectHook": true, // 渗浆效果
         "WeavingMobEffectHook": true, // 盘丝效果
         "HopperComponentPullInItemsHook": true, // 漏斗组件吸取物品(漏斗矿车)
+        "ExperienceOrbPlayerTouchHook": true, // 经验球拾取
+        "ThrownTridentPlayerTouchHook": true, // 三叉戟拾取
+        "ArrowPlayerTouchHook": true, // 箭矢拾取
+        "AbstractArrowPlayerTouchHook": true, // 箭类投射物拾取
         "FarmChangeEventHook": true // 农田踩踏/退化
     },
     "rules": {
