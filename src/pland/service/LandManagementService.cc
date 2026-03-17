@@ -34,8 +34,10 @@
 #include <ll/api/event/EventBus.h>
 
 
+#include <chrono>
 #include <mc/world/actor/player/Player.h>
 #include <memory>
+
 
 namespace land {
 namespace service {
@@ -114,6 +116,9 @@ ll::Expected<> LandManagementService::requestCreateSubLand(Player& player, std::
     }
     if (!land->isOwner(player.getUuid())) {
         return ll::makeStringError("操作失败, 您不是当前领地主人"_trl(player.getLocaleCode()));
+    }
+    if (land->isLeased()) {
+        return ll::makeStringError("租赁领地暂不支持创建子领地"_trl(player.getLocaleCode()));
     }
     if (!land->canCreateSubLand()) {
         return ll::makeStringError("操作失败，当前领地无法继续创建子领地"_trl(player.getLocaleCode()));
@@ -309,6 +314,9 @@ ll::Expected<> LandManagementService::requestChangeRange(Player& player, std::sh
     if (!land->isOrdinaryLand()) {
         return ll::makeStringError("操作失败, 仅支持普通领地调整范围"_trl(player.getLocaleCode()));
     }
+    if (land->isLeased()) {
+        return ll::makeStringError("租赁领地暂不支持调整范围"_trl(player.getLocaleCode()));
+    }
 
     auto event = event::PlayerRequestChangeLandRangeBeforeEvent{player, land};
     ll::event::EventBus::getInstance().publish(event);
@@ -379,7 +387,7 @@ LandManagementService::_changeMember(std::shared_ptr<Land> const& land, mce::UUI
         return ChangeMemberResult::NotMember;
     }
 
-    isAdd ? land->addLandMember(target) : land->removeLandMember(target);
+    isAdd ? (void)land->addLandMember(target) : land->removeLandMember(target);
 
     ll::event::EventBus::getInstance().publish(event::MemberChangedEvent{land, target, isAdd});
     return ChangeMemberResult::Success;
@@ -575,6 +583,9 @@ LandManagementService::_processDeleteLand(Player& player, std::shared_ptr<Land> 
 
 ll::Expected<>
 LandManagementService::_processLandRefund(Player& player, std::shared_ptr<Land> const& land, bool isSingle) {
+    if (land->isLeased()) {
+        return {};
+    }
     auto price =
         isSingle ? impl->mPriceService.getRefundAmount(land) : impl->mPriceService.getRefundAmountRecursively(land);
     auto& economy = EconomySystem::getInstance();

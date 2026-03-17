@@ -18,7 +18,7 @@ struct ForbiddenRange {
 };
 
 struct Config {
-    inline static constexpr int SchemaVersion = 32;
+    inline static constexpr int SchemaVersion = 33;
 
     int version{SchemaVersion};
 
@@ -52,6 +52,37 @@ struct Config {
             int  bottomTipFrequency{1};    // 底部提示频率(s)
         } tip;
 
+        // 租赁配置
+        struct {
+            bool                   enabled{false};           // 是否启用租赁功能
+            std::vector<LandDimid> allowDimensions{0, 1, 2}; // 允许租赁的土地维度列表
+
+            // 租金计算相关配置
+            struct {
+                std::string threeDimensionl{"(square * 2 + height * 5)"}; // 三维空间的租金计算公式
+                std::string twoDimensionl{"(square * 8)"};                // 二维空间的租金计算公式
+            } calculate;
+
+            // 租期相关配置
+            struct {
+                int minPeriod{7};      // 最小租期（天）
+                int maxPeriod{30};     // 最大租期（天）
+                int renewalAdvance{3}; // 续约提前天数
+            } duration;
+
+            // 冻结相关配置
+            struct {
+                int    duration{7};             // 冻结持续时间（天）
+                double penaltyRatePerDay{0.05}; // 每日罚金比例（5%）
+            } freeze;
+
+            // 通知相关配置
+            struct {
+                bool loginTip{true}; // 登录时是否显示提示
+                bool enterTip{true}; // 进入土地时是否显示提示
+            } notifications;
+        } leasing; // 租赁配置实例
+
         // 购买配置
         struct {
             struct {
@@ -70,9 +101,8 @@ struct Config {
                 int minHeight{1}; // 最小领地高度
             } squareRange;
 
-            std::vector<LandDimid>      allowDimensions{0, 1, 2}; // 允许的领地维度
-            std::vector<ForbiddenRange> forbiddenRanges;          // 禁止创建领地的区域
-            // TODO: 更改 Key 类型，string => int
+            std::vector<LandDimid>        allowDimensions{0, 1, 2};   // 允许的领地维度
+            std::vector<ForbiddenRange>   forbiddenRanges;            // 禁止创建领地的区域
             std::map<std::string, double> dimensionPriceCoefficients; // 维度价格系数，例如维度id的1 是1.2倍 2是1.5倍
         } bought;
 
@@ -108,6 +138,8 @@ struct Config {
     LDAPI static bool ensureDimensionAllowed(int dimensionId);
     LDAPI static bool ensureSubLandFeatureEnabled();
     LDAPI static bool ensureOrdinaryLandEnabled(bool is3D);
+    LDAPI static bool ensureLeasingEnabled();
+    LDAPI static bool ensureLeasingDimensionAllowed(int dimensionId);
 
     LDAPI static bool ensureEconomySystemEnabled();
 

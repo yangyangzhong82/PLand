@@ -73,10 +73,22 @@ public:
     [[deprecated("Use getOwner() instead, this returns raw storage string (may be XUID or UUID).")]]
     LDNDAPI std::string const& getRawOwner() const;
 
+    /**
+     * @brief 判断当前领地是否为系统所有
+     * @return true/false
+     */
+    LDNDAPI bool isSystemOwned() const;
+
     LDNDAPI std::unordered_set<mce::UUID> const& getMembers() const;
 
-    LDAPI void addLandMember(mce::UUID const& uuid);
-    LDAPI void removeLandMember(mce::UUID const& uuid);
+    /**
+     * 添加领地成员
+     * @param uuid 要添加的领地成员 UUID
+     * @return 是否添加成功
+     * @note 此函数拒绝添加 Owner 为 Member
+     */
+    LDNDAPI bool addLandMember(mce::UUID const& uuid);
+    LDAPI void   removeLandMember(mce::UUID const& uuid);
 
     LDNDAPI std::string const& getName() const;
 
@@ -85,6 +97,64 @@ public:
     LDNDAPI int getOriginalBuyPrice() const;
 
     LDAPI void setOriginalBuyPrice(int price);
+
+    /**
+     * 获取土地持有类型
+     */
+    LDNDAPI LandHoldType getHoldType() const;
+    /**
+     * 获取租赁状态
+     */
+    LDNDAPI LeaseState getLeaseState() const;
+    /**
+     * 检查是否已被租赁
+     * @enum LandHoldType::Leased
+     */
+    LDNDAPI bool isLeased() const;
+    /**
+     * 检查租赁是否有效
+     * @enum LeaseState::Active
+     */
+    LDNDAPI bool isLeaseActive() const;
+    /**
+     * 检查租赁是否被冻结
+     * @enum LeaseState::Frozen
+     */
+    LDNDAPI bool isLeaseFrozen() const;
+    /**
+     * 检查租赁是否已过期
+     * @enum LeaseState::Expired
+     */
+    LDNDAPI bool isLeaseExpired() const;
+    /**
+     * 获取租赁开始时间
+     */
+    LDNDAPI long long getLeaseStartAt() const;
+    /**
+     * 获取租赁结束时间
+     */
+    LDNDAPI long long getLeaseEndAt() const;
+
+    /**
+     * 设置土地持有类型
+     * @param type 要设置的土地持有类型
+     */
+    LDAPI void setHoldType(LandHoldType type);
+    /**
+     * 设置租赁状态
+     * @param state 要设置的租赁状态
+     */
+    LDAPI void setLeaseState(LeaseState state);
+    /**
+     * 设置租赁开始时间
+     * @param ts 要设置的租赁开始时间戳
+     */
+    LDAPI void setLeaseStartAt(long long ts);
+    /**
+     * 设置租赁结束时间
+     * @param ts 要设置的租赁结束时间戳
+     */
+    LDAPI void setLeaseEndAt(long long ts);
 
     LDNDAPI bool is3D() const;
 

@@ -49,6 +49,11 @@ bool Config::ensureSubLandFeatureEnabled() { return cfg.land.subLand.enabled; }
 bool Config::ensureOrdinaryLandEnabled(bool is3D) {
     return is3D ? cfg.land.bought.threeDimensionl.enabled : cfg.land.bought.twoDimensionl.enabled;
 }
+bool Config::ensureLeasingEnabled() { return cfg.land.leasing.enabled; }
+bool Config::ensureLeasingDimensionAllowed(int dimensionId) {
+    auto& allowed = cfg.land.leasing.allowDimensions;
+    return std::find(allowed.begin(), allowed.end(), dimensionId) != allowed.end();
+}
 bool                  Config::ensureEconomySystemEnabled() { return cfg.economy.enabled; }
 std::optional<double> Config::getLandDimensionMultipliers(LandDimid dimid) {
     auto& map  = cfg.land.bought.dimensionPriceCoefficients;

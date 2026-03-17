@@ -4,6 +4,7 @@
 #include "pland/economy/PriceCalculate.h"
 #include "pland/land/Config.h"
 #include "pland/land/Land.h"
+#include "pland/utils/TimeUtils.h"
 
 namespace land {
 namespace service {
@@ -49,6 +50,58 @@ int64_t LandPriceService::getRefundAmountRecursively(std::shared_ptr<Land> const
         return true;
     });
 }
+
+ll::Expected<long long> LandPriceService::calculateDailyRent(LandAABB const& range, int dimId, bool is3D) const {
+    if (!Config::ensureEconomySystemEnabled()) {
+        return ll::makeStringError("Economy system is not enabled");
+    }
+
+    auto formula =
+        is3D ? Config::cfg.land.leasing.calculate.threeDimensionl : Config::cfg.land.leasing.calculate.twoDimensionl;
+
+    auto variable = PriceCalculate::Variable::make(range, dimId);
+    auto expected = PriceCalculate::eval(formula, variable);
+    if (!expected) return ll::makeStringError(expected.error().message());
+
+    auto dailyRent = expected.value();
+    if (auto multipliers = Config::getLandDimensionMultipliers(dimId)) {
+        dailyRent *= *multipliers;
+    }
+
+    return std::llround(dailyRent);
+}
+
+ll::Expected<long long>
+LandPriceService::calculateLeaseCost(LandAABB const& range, int dimId, bool is3D, int days) const {
+    auto daily = calculateDailyRent(range, dimId, is3D);
+    if (!daily) return daily.error();
+    return daily.value() * static_cast<long long>(days);
+}
+
+LandPriceService::LeaseCostDetail
+LandPriceService::calculateRenewCost(std::shared_ptr<Land> const& land, int days) const {
+    LeaseCostDetail detail{};
+    if (!land || !land->isLeased()) return detail;
+
+    auto dailyRent = 0;
+    if (auto calc = calculateDailyRent(land->getAABB(), land->getDimensionId(), land->is3D())) {
+        dailyRent = calc.value();
+    }
+
+    auto now         = time_utils::nowSeconds();
+    auto overdueDays = time_utils::ceilDays(now - land->getLeaseEndAt());
+    if (overdueDays < 0) overdueDays = 0;
+
+    detail.dailyRent   = dailyRent;
+    detail.overdueDays = overdueDays;
+    detail.baseAmount  = dailyRent * static_cast<long long>(overdueDays + std::max(0, days));
+
+    auto rate      = Config::cfg.land.leasing.freeze.penaltyRatePerDay;
+    detail.penalty = static_cast<long long>(std::ceil(dailyRent * overdueDays * rate));
+    detail.total   = detail.baseAmount + detail.penalty;
+    return detail;
+}
+
 
 ll::Expected<LandPriceService::PriceResult>
 LandPriceService::_getLandPrice(LandAABB const& range, int dimId, std::string const& calculateFormula) const {
