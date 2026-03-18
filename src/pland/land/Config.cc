@@ -44,15 +44,6 @@ ll::Expected<> ConfigProvider::save(const std::filesystem::path& baseDir) {
     return {};
 }
 
-bool Config::tryLoad() {
-    auto baseDir = PLand::getInstance().getSelf().getConfigDir();
-    return load(baseDir) ? true : false;
-}
-
-bool Config::trySave() {
-    auto baseDir = PLand::getInstance().getSelf().getConfigDir();
-    return save(baseDir) ? true : false;
-}
 bool Config::ensureDimensionAllowed(int dimensionId) {
     auto& allowed = cfg.business.bought.allowDimensions;
     return std::find(allowed.begin(), allowed.end(), dimensionId) != allowed.end();

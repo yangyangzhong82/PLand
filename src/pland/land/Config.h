@@ -213,9 +213,6 @@ struct ConfigProvider {
 };
 
 struct [[deprecated]] Config : ConfigProvider {
-    [[deprecated]] LDAPI static bool tryLoad();
-    [[deprecated]] LDAPI static bool trySave();
-
     [[deprecated]] LDAPI static bool ensureDimensionAllowed(int dimensionId);
     [[deprecated]] LDAPI static bool ensureSubLandFeatureEnabled();
     [[deprecated]] LDAPI static bool ensureOrdinaryLandEnabled(bool is3D);

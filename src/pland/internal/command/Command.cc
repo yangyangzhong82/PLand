@@ -210,7 +210,7 @@ static auto const Buy = [](CommandOrigin const& ori, CommandOutput& out) {
 
 static auto const Reload = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::DedicatedServer);
-    if (Config::tryLoad()) {
+    if (PLand::getInstance().loadConfig()) {
         ll::event::EventBus::getInstance().publish(events::ConfigReloadEvent{});
         feedback_utils::sendText(out, "领地系统配置已重新加载"_tr());
     } else {
