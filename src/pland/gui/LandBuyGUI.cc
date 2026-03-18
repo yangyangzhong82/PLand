@@ -54,7 +54,7 @@ void LandBuyGUI::sendTo(Player& player) {
     }
 }
 void LandBuyGUI::_chooseHoldType(Player& player, OrdinaryLandCreateSelector* def) {
-    if (Config::cfg.land.leasing.enabled && Config::ensureLeasingDimensionAllowed(def->getDimensionId())) {
+    if (ConfigProvider::isLeasingModelEnabled() && ConfigProvider::isLeasingDimensionAllowed(def->getDimensionId())) {
         auto fm = ll::form::ModalForm{};
 
         auto localeCode = player.getLocaleCode();
@@ -152,8 +152,6 @@ void LandBuyGUI::_chooseLeaseDays(Player& player, OrdinaryLandCreateSelector* se
         return;
     }
 
-    assert(Config::cfg.land.leasing.enabled);
-
     auto dailyExp = PLand::getInstance().getServiceLocator().getLandPriceService().calculateDailyRent(
         *range,
         selector->getDimensionId(),
@@ -166,7 +164,7 @@ void LandBuyGUI::_chooseLeaseDays(Player& player, OrdinaryLandCreateSelector* se
     }
     auto dailyRent = dailyExp.value();
 
-    auto const& duration = Config::cfg.land.leasing.duration;
+    auto const& duration = ConfigProvider::getLeasingConfig().duration;
 
     std::string baseInfo = "领地类型: {}\n体积: {}x{}x{} = {}\n范围: {}\n每日租金: {}"_trl(
         localeCode,

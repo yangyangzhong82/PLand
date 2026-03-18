@@ -160,7 +160,7 @@ static auto const New = [](CommandOrigin const& ori, CommandOutput& out, NewPara
             player,
             "选区功能已开启，使用命令 /pland set 或使用 {} 来选择ab点"_trl(
                 player.getLocaleCode(),
-                Config::cfg.selector.tool
+                ConfigProvider::getSelectionConfig().alias
             )
         );
         break;
@@ -211,7 +211,7 @@ static auto const Buy = [](CommandOrigin const& ori, CommandOutput& out) {
 static auto const Reload = [](CommandOrigin const& ori, CommandOutput& out) {
     CHECK_TYPE(ori, out, CommandOriginType::DedicatedServer);
     if (Config::tryLoad()) {
-        ll::event::EventBus::getInstance().publish(events::ConfigReloadEvent{Config::cfg});
+        ll::event::EventBus::getInstance().publish(events::ConfigReloadEvent{});
         feedback_utils::sendText(out, "领地系统配置已重新加载"_tr());
     } else {
         feedback_utils::sendErrorText(out, "领地系统配置加载失败，请检查配置文件"_tr());
@@ -250,7 +250,8 @@ static auto const Draw = [](CommandOrigin const& ori, CommandOutput& out, DrawPa
     }
 
     case DrawType::NearLand: {
-        auto lands = db.getLandAt(player.getPosition(), Config::cfg.land.drawRange, player.getDimensionId().id);
+        auto lands =
+            db.getLandAt(player.getPosition(), ConfigProvider::getDrawConfig().range, player.getDimensionId().id);
         for (auto& land : lands) handle->draw(land, mce::Color::WHITE());
         feedback_utils::sendText(out, "已绘制附近 {} 个领地"_trl(localeCode, lands.size()));
         break;
@@ -341,7 +342,7 @@ bool LandCommand::setup() {
     cmd.overload().text("buy").execute(Lambda::Buy);
 
     // pland draw <disable|near|current> 开启/关闭领地绘制
-    if (Config::cfg.land.setupDrawCommand) {
+    if (ConfigProvider::getDrawConfig().enabled) {
         cmd.overload<Lambda::DrawParam>().text("draw").required("type").execute(Lambda::Draw);
     }
 
@@ -350,7 +351,7 @@ bool LandCommand::setup() {
 
 #ifdef LD_DEVTOOL
     // pland devtool
-    if (Config::cfg.internal.devTools) {
+    if (ConfigProvider::isDevToolsEnabled()) {
         cmd.overload().text("devtool").execute([](CommandOrigin const& ori, CommandOutput&) {
             if (ori.getOriginType() == CommandOriginType::DedicatedServer) {
                 auto& mod = PLand::getInstance();

@@ -182,9 +182,10 @@ bool Land::isSubLand() const { return hasParentLand() && !hasSubLand(); }       
 
 bool Land::canCreateSubLand() const {
     if (isLeased()) return false;
-    auto nestedLevel = getNestedLevel();
-    return nestedLevel < Config::cfg.land.subLand.maxNested && nestedLevel < GlobalSubLandMaxNestedLevel
-        && static_cast<int>(impl->mContext.mSubLandIDs.size()) < Config::cfg.land.subLand.maxSubLand;
+    auto const& conf        = ConfigProvider::getSubLandConfig();
+    auto        nestedLevel = getNestedLevel();
+    return nestedLevel < conf.maxNestedDepth && nestedLevel < GlobalSubLandMaxNestedLevel
+        && static_cast<int>(impl->mContext.mSubLandIDs.size()) < conf.maxSubLandsPerLand;
 }
 
 LandID              Land::getParentLandID() const { return impl->mContext.mParentLandID; }

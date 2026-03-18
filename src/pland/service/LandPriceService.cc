@@ -42,11 +42,13 @@ ll::Expected<LandPriceService::PriceResult> LandPriceService::getSubLandPrice(La
     return _getLandPrice(range, dimId, Config::getSubLandPriceCalculateFormula());
 }
 int64_t LandPriceService::getRefundAmount(std::shared_ptr<Land> const& land) const {
-    return PriceCalculate::calculateRefundsPrice(land->getOriginalBuyPrice(), Config::cfg.land.refundRate);
+    auto const& conf = ConfigProvider::getBoughtConfig();
+    return PriceCalculate::calculateRefundsPrice(land->getOriginalBuyPrice(), conf.refundRate);
 }
 int64_t LandPriceService::getRefundAmountRecursively(std::shared_ptr<Land> const& land) const {
-    return calculatePriceRecursively(land, [](std::shared_ptr<Land> const& land, int64_t& price) {
-        price += PriceCalculate::calculateRefundsPrice(land->getOriginalBuyPrice(), Config::cfg.land.refundRate);
+    auto const& conf = ConfigProvider::getBoughtConfig();
+    return calculatePriceRecursively(land, [&conf](std::shared_ptr<Land> const& land, int64_t& price) {
+        price += PriceCalculate::calculateRefundsPrice(land->getOriginalBuyPrice(), conf.refundRate);
         return true;
     });
 }
@@ -56,8 +58,7 @@ ll::Expected<long long> LandPriceService::calculateDailyRent(LandAABB const& ran
         return ll::makeStringError("Economy system is not enabled");
     }
 
-    auto formula =
-        is3D ? Config::cfg.land.leasing.calculate.threeDimensionl : Config::cfg.land.leasing.calculate.twoDimensionl;
+    auto& formula = ConfigProvider::getLeasingFormula(is3D);
 
     auto variable = PriceCalculate::Variable::make(range, dimId);
     auto expected = PriceCalculate::eval(formula, variable);
@@ -94,9 +95,9 @@ LandPriceService::calculateRenewCost(std::shared_ptr<Land> const& land, int days
 
     detail.dailyRent   = dailyRent;
     detail.overdueDays = overdueDays;
-    detail.baseAmount  = dailyRent * static_cast<long long>(overdueDays + std::max(0, days));
+    detail.baseAmount  = dailyRent * (overdueDays + std::max(0, days));
 
-    auto rate      = Config::cfg.land.leasing.freeze.penaltyRatePerDay;
+    auto rate      = ConfigProvider::getLeasingConfig().freeze.penaltyRatePerDay;
     detail.penalty = static_cast<long long>(std::ceil(dailyRent * overdueDays * rate));
     detail.total   = detail.baseAmount + detail.penalty;
     return detail;
@@ -117,7 +118,7 @@ LandPriceService::_getLandPrice(LandAABB const& range, int dimId, std::string co
     if (multipliers) {
         originalPrice *= *multipliers;
     }
-    auto discountedPrice = PriceCalculate::calculateDiscountPrice(originalPrice, Config::cfg.land.discountRate);
+    auto discountedPrice = PriceCalculate::calculateDiscountPrice(originalPrice, ConfigProvider::getDiscountRate());
     return PriceResult{static_cast<long long>(originalPrice), discountedPrice, multipliers};
 }
 

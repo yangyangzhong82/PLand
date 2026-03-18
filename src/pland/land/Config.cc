@@ -44,51 +44,31 @@ ll::Expected<> ConfigProvider::save(const std::filesystem::path& baseDir) {
     return {};
 }
 
-
 bool Config::tryLoad() {
-    auto path = land::PLand::getInstance().getSelf().getConfigDir() / FileName;
-
-    if (!std::filesystem::exists(path)) {
-        trySave();
-        return true;
-    }
-    auto data = ll::file_utils::readFile(path);
-    if (!data) {
-        return false;
-    }
-    auto json = nlohmann::json::parse(*data);
-
-    auto& migrator = internal::ConfigMigrator::getInstance();
-    if (auto exp = migrator.migrate(json, SchemaVersion); !exp) {
-        throw std::runtime_error{exp.error().message()};
-    }
-    json_util::json2structWithVersionPatch(json, cfg, true);
-    return true;
+    auto baseDir = PLand::getInstance().getSelf().getConfigDir();
+    return load(baseDir) ? true : false;
 }
 
 bool Config::trySave() {
-    auto dir = land::PLand::getInstance().getSelf().getConfigDir() / FileName;
-
-    bool status = ll::config::saveConfig(cfg, dir);
-
-    return status;
+    auto baseDir = PLand::getInstance().getSelf().getConfigDir();
+    return save(baseDir) ? true : false;
 }
 bool Config::ensureDimensionAllowed(int dimensionId) {
-    auto& allowed = cfg.land.bought.allowDimensions;
+    auto& allowed = cfg.business.bought.allowDimensions;
     return std::find(allowed.begin(), allowed.end(), dimensionId) != allowed.end();
 }
-bool Config::ensureSubLandFeatureEnabled() { return cfg.land.subLand.enabled; }
+bool Config::ensureSubLandFeatureEnabled() { return cfg.business.bought.subLand.enabled; }
 bool Config::ensureOrdinaryLandEnabled(bool is3D) {
-    return is3D ? cfg.land.bought.threeDimensionl.enabled : cfg.land.bought.twoDimensionl.enabled;
+    return is3D ? cfg.business.bought.mode3D.enabled : cfg.business.bought.mode2D.enabled;
 }
-bool Config::ensureLeasingEnabled() { return cfg.land.leasing.enabled; }
+bool Config::ensureLeasingEnabled() { return cfg.business.leasing.enabled; }
 bool Config::ensureLeasingDimensionAllowed(int dimensionId) {
-    auto& allowed = cfg.land.leasing.allowDimensions;
+    auto& allowed = cfg.business.leasing.allowDimensions;
     return std::find(allowed.begin(), allowed.end(), dimensionId) != allowed.end();
 }
 bool                  Config::ensureEconomySystemEnabled() { return cfg.economy.enabled; }
 std::optional<double> Config::getLandDimensionMultipliers(LandDimid dimid) {
-    auto& map  = cfg.land.bought.dimensionPriceCoefficients;
+    auto& map  = cfg.business.dimensionalPriceMultiplier;
     auto  iter = map.find(std::to_string(dimid));
     if (iter != map.end()) {
         return iter->second;
@@ -96,11 +76,9 @@ std::optional<double> Config::getLandDimensionMultipliers(LandDimid dimid) {
     return std::nullopt;
 }
 std::string const& Config::getLandPriceCalculateFormula(bool is3D) {
-    return is3D ? cfg.land.bought.threeDimensionl.calculate : cfg.land.bought.twoDimensionl.calculate;
+    return is3D ? cfg.business.bought.mode3D.formula : cfg.business.bought.mode2D.formula;
 }
-std::string const& Config::getSubLandPriceCalculateFormula() { return cfg.land.subLand.calculate; }
+std::string const& Config::getSubLandPriceCalculateFormula() { return cfg.business.bought.subLand.formula; }
 
-
-Config Config::cfg = {};
 
 } // namespace land

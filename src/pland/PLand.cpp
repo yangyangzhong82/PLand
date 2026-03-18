@@ -113,7 +113,7 @@ bool PLand::enable() {
     mImpl->mSelectorManager   = std::make_unique<SelectorManager>();
     mImpl->mDrawHandleManager = std::make_unique<DrawHandleManager>();
     mImpl->mTelemetry         = std::make_unique<internal::adapter::Telemetry>();
-    if (Config::cfg.internal.telemetry) {
+    if (ConfigProvider::isTelemetryEnabled()) {
         mImpl->mTelemetry->launch(getThreadPool());
     }
 
@@ -127,7 +127,7 @@ bool PLand::enable() {
 
             EconomySystem::getInstance().reload();
 
-            if (ev.config().internal.telemetry) {
+            if (ConfigProvider::isTelemetryEnabled()) {
                 mImpl->mTelemetry->launch(getThreadPool());
             } else {
                 mImpl->mTelemetry->shutdown();
@@ -139,7 +139,7 @@ bool PLand::enable() {
     );
 
 #ifdef LD_DEVTOOL
-    if (land::Config::cfg.internal.devTools) {
+    if (ConfigProvider::isDevToolsEnabled()) {
         mImpl->mDevToolApp = devtool::DevToolApp::make();
     }
 #endif
@@ -149,7 +149,7 @@ bool PLand::enable() {
 
 bool PLand::disable() {
 #ifdef LD_DEVTOOL
-    if (Config::cfg.internal.devTools) {
+    if (ConfigProvider::isDevToolsEnabled()) {
         mImpl->mDevToolApp.reset();
     }
 #endif
@@ -197,7 +197,7 @@ service::ServiceLocator&        PLand::getServiceLocator() const { return *mImpl
 
 #ifdef LD_DEVTOOL
 void PLand::setDevToolVisible(bool visible) {
-    if (Config::cfg.internal.devTools) {
+    if (ConfigProvider::isDevToolsEnabled()) {
         if (visible) {
             mImpl->mDevToolApp->show();
         } else {

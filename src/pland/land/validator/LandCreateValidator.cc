@@ -78,18 +78,20 @@ ll::Expected<> LandCreateValidator::validateCreateSubLand(
 
 
 ll::Expected<> LandCreateValidator::isPlayerLandCountLimitExceeded(LandRegistry& registry, mce::UUID const& uuids) {
-    auto  count    = static_cast<int>(registry.getLands(uuids).size());
-    auto& maxCount = Config::cfg.land.maxLand;
+    auto count = static_cast<int>(registry.getLands(uuids).size());
+
+    auto const& conf = ConfigProvider::getConstraintsConfig();
 
     // 非管理员 && 领地数量超过限制
-    if (!registry.isOperator(uuids) && count >= Config::cfg.land.maxLand) {
-        return makeError<LandCountExceededContext>(count, maxCount);
+    if (!registry.isOperator(uuids) && count >= conf.maxLandsPerPlayer) {
+        return makeError<LandCountExceededContext>(count, conf.maxLandsPerPlayer);
     }
     return {};
 }
 
 ll::Expected<> LandCreateValidator::isLandInForbiddenRange(LandAABB const& range, LandDimid dimid) {
-    for (auto const& forbiddenRange : Config::cfg.land.bought.forbiddenRanges) {
+    auto const& conf = ConfigProvider::getConstraintsConfig();
+    for (auto const& forbiddenRange : conf.forbiddenRanges) {
         if (forbiddenRange.dimensionId == dimid && LandAABB::isCollision(forbiddenRange.aabb, range)) {
             return makeError<LandInForbiddenRangeContext>(range, forbiddenRange.aabb);
         }
@@ -98,7 +100,7 @@ ll::Expected<> LandCreateValidator::isLandInForbiddenRange(LandAABB const& range
 }
 
 ll::Expected<> LandCreateValidator::isLandRangeLegal(LandAABB const& range, LandDimid dimid, bool is3D) {
-    auto const& squareRange = Config::cfg.land.bought.squareRange;
+    auto const& conf = ConfigProvider::getConstraintsConfig().size;
 
     auto const length = range.getBlockCountX();
     auto const width  = range.getBlockCountZ();
@@ -110,11 +112,11 @@ ll::Expected<> LandCreateValidator::isLandRangeLegal(LandAABB const& range, Land
     }
 
     // 范围长度和宽度
-    if (length < squareRange.min || width < squareRange.min) {
-        return makeError<LandRangeErrorContext>(ErrorCode::LandRangeTooSmall, squareRange.min);
+    if (length < conf.minSideLength || width < conf.minSideLength) {
+        return makeError<LandRangeErrorContext>(ErrorCode::LandRangeTooSmall, conf.minSideLength);
     }
-    if (length > squareRange.max || width > squareRange.max) {
-        return makeError<LandRangeErrorContext>(ErrorCode::LandRangeTooLarge, squareRange.max);
+    if (length > conf.maxSideLength || width > conf.maxSideLength) {
+        return makeError<LandRangeErrorContext>(ErrorCode::LandRangeTooLarge, conf.maxSideLength);
     }
 
     if (is3D) {
@@ -135,8 +137,8 @@ ll::Expected<> LandCreateValidator::isLandRangeLegal(LandAABB const& range, Land
             );
         }
         // 校验业务允许范围
-        if (height < squareRange.minHeight) {
-            return makeError<LandHeightErrorContext>(ErrorCode::LandHeightTooSmall, height, squareRange.minHeight);
+        if (height < conf.minHeight) {
+            return makeError<LandHeightErrorContext>(ErrorCode::LandHeightTooSmall, height, conf.minHeight);
         }
     }
 
@@ -149,11 +151,11 @@ ll::Expected<> LandCreateValidator::isOrdinaryLandRangeConflict(
     std::shared_ptr<Land> const& land,
     std::optional<LandAABB>      newRange
 ) {
-    auto&       aabb       = newRange ? *newRange : land->getAABB();
-    auto const& minSpacing = Config::cfg.land.minSpacing;
-    bool const  includeY   = Config::cfg.land.minSpacingIncludeY; // 获取配置
+    auto& aabb = newRange ? *newRange : land->getAABB();
 
-    auto expanded = aabb.expanded(minSpacing, includeY);
+    auto const& conf = ConfigProvider::getConstraintsConfig().spacing;
+
+    auto expanded = aabb.expanded(conf.minDistance, conf.includeY);
     auto lands    = registry.getLandAt(expanded.min.as(), expanded.max.as(), land->getDimensionId());
     if (lands.empty()) {
         return {};
@@ -168,10 +170,10 @@ ll::Expected<> LandCreateValidator::isOrdinaryLandRangeConflict(
             // 领地范围与其他领地冲突
             return makeError<LandRangeConflictContext>(aabb, ld);
         }
-        if (!LandAABB::isComplisWithMinSpacing(ld->getAABB(), aabb, minSpacing)) {
+        if (!LandAABB::isComplisWithMinSpacing(ld->getAABB(), aabb, conf.minDistance)) {
             // 领地范围与其他领地间距过小
-            int actualDist = LandAABB::getMinSpacing(ld->getAABB(), aabb, includeY);
-            return makeError<LandSpacingContext>(actualDist, minSpacing, ld);
+            int actualDist = LandAABB::getMinSpacing(ld->getAABB(), aabb, conf.includeY);
+            return makeError<LandSpacingContext>(actualDist, conf.minDistance, ld);
         }
     }
     return {};
@@ -187,8 +189,11 @@ ll::Expected<> LandCreateValidator::isSubLandPositionLegal(
         return makeError<SubLandNotInParentContext>(land, subRange);
     }
 
-    auto const& minSpacing = Config::cfg.land.subLand.minSpacing;
-    bool const  includeY   = Config::cfg.land.subLand.minSpacingIncludeY;
+
+    auto const& conf = ConfigProvider::getSubLandConfig();
+
+    auto const minSpacing = conf.minSpacing;
+    bool const includeY   = conf.minSpacingIncludeY;
 
     auto family  = hierarchyService.getFamilyTree(land);       // 整个领地家族
     auto parents = hierarchyService.getSelfAndAncestors(land); // 相对于 land 的所有父领地

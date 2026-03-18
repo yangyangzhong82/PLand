@@ -132,7 +132,7 @@ void LandManagerGUI::sendMainMenu(Player& player, std::shared_ptr<Land> land) {
 
     if (canOperLand) {
         // 开启了领地传送功能，或者玩家是领地管理员
-        if (Config::cfg.land.landTp || PLand::getInstance().getLandRegistry().isOperator(player.getUuid())) {
+        if (ConfigProvider::isLandTeleportEnabled() || isAdmin) {
             fm.appendButton("传送到领地"_trl(localeCode), "textures/ui/icon_recipe_nature", "path", [land](Player& pl) {
                 LandTeleportGUI::impl(pl, land);
             });
@@ -204,7 +204,7 @@ void LandManagerGUI::sendLeaseRenewGUI(Player& player, std::shared_ptr<Land> con
         );
     }
 
-    auto const& duration = Config::cfg.land.leasing.duration;
+    auto const& duration = ConfigProvider::getLeasingConfig().duration;
 
     CustomForm fm{"[PLand] | 租赁续费"_trl(localeCode)};
     fm.appendLabel(status);
@@ -548,7 +548,7 @@ void LandManagerGUI::sendCreateSubLandConfirm(Player& player, const std::shared_
                     player,
                     "选区功能已开启，使用命令 /pland set 或使用 {} 来选择ab点"_trl(
                         player.getLocaleCode(),
-                        Config::cfg.selector.tool
+                        ConfigProvider::getSelectionConfig().alias
                     )
                 );
             } else {
@@ -583,7 +583,7 @@ void LandManagerGUI::sendChangeRangeConfirm(Player& player, std::shared_ptr<Land
                 self,
                 "选区功能已开启，使用命令 /pland set 或使用 {} 来选择ab点"_trl(
                     self.getLocaleCode(),
-                    Config::cfg.selector.tool
+                    ConfigProvider::getSelectionConfig().alias
                 )
             );
         } else {

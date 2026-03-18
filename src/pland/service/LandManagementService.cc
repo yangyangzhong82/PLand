@@ -242,7 +242,7 @@ ll::Expected<> LandManagementService::deleteLand(Player& player, std::shared_ptr
     return {};
 }
 ll::Expected<> LandManagementService::setLandName(Player& player, std::shared_ptr<Land> const& land, std::string name) {
-    auto const& rule = Config::cfg.land.textRules.name;
+    auto const& rule = ConfigProvider::getConstraintsConfig().nameRule;
 
     auto result = StringValidator::validate(
         name,
