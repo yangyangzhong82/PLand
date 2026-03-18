@@ -13,6 +13,38 @@ namespace land {
 
 namespace fs = std::filesystem;
 
+decltype(ConfigProvider::cfg) ConfigProvider::cfg = {};
+
+std::filesystem::path ConfigProvider::_filePath(const std::filesystem::path& baseDir) { return baseDir / FILE_NAME; }
+ll::Expected<>        ConfigProvider::load(const std::filesystem::path& baseDir) {
+    auto path = _filePath(baseDir);
+
+    if (!fs::exists(path)) {
+        return save(baseDir);
+    }
+
+    auto data = ll::file_utils::readFile(path);
+    if (!data) {
+        return ll::makeStringError("Failed to read config file: " + path.string());
+    }
+
+    auto  json     = nlohmann::json::parse(*data);
+    auto& migrator = internal::ConfigMigrator::getInstance();
+
+    if (auto expected = migrator.migrate(json, Impl::SchemaVersion); !expected) {
+        return expected;
+    }
+
+    json_util::json2structWithVersionPatch(json, cfg, true);
+    return {};
+}
+ll::Expected<> ConfigProvider::save(const std::filesystem::path& baseDir) {
+    auto path = _filePath(baseDir);
+    ll::config::saveConfig(cfg, path);
+    return {};
+}
+
+
 bool Config::tryLoad() {
     auto path = land::PLand::getInstance().getSelf().getConfigDir() / FileName;
 

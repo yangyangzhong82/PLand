@@ -68,6 +68,22 @@ public:
     inline static constexpr std::string_view VersionKey = "version";
 
 protected:
+    struct Route {
+        const char* src;
+        const char* dst;
+    };
+
+    /**
+     * @brief 将JSON数据中的路径从src映射到dst
+     *
+     * @param root JSON数据的引用，将被修改以包含路径映射信息
+     * @param src 源路径字符串视图，表示原始路径
+     * @param dst 目标路径字符串视图，表示映射后的目标路径
+     */
+    static void mapPath(nlohmann::json& root, std::string_view src, std::string_view dst);
+
+    static void mapPath(nlohmann::json& root, Route const& route);
+
     std::map<Version, Executor> mMigrators_;
 };
 

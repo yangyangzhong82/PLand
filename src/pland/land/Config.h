@@ -17,7 +17,171 @@ struct ForbiddenRange {
     int      dimensionId; // 维度ID
 };
 
-struct Config {
+
+struct ConfigV34 {
+    inline static constexpr int SchemaVersion = 34;
+
+    int version{SchemaVersion};
+
+    EconomyConfig economy;
+
+    struct SelectionConfig {
+        std::string item{"minecraft:stick"}; // 选区使用的物品
+        std::string alias{"木棍"};           // 显示在 UI 中的别名
+    } selector;
+
+    struct FeaturesConfig {
+        bool landTeleport{true}; // 领地传送
+
+        struct DrawConfig {
+            bool       enabled{false};                  // 领地绘制
+            int        range{64};                       // 绘制范围(以玩家为中心, 半径)
+            DrawerType backend{DrawerType::DebugShape}; // 绘制实现
+        } draw;
+
+        struct NotificationsConfig {
+            bool enterLandTip{true};        // 进入领地提示
+            bool bottomContinuousTip{true}; // 底部持续提示
+            int  bottomTipCycle{1};         // 底部提示刷新周期(秒)
+        } notifications;
+
+    } features;
+
+    /**
+     * 全局约束配置
+     * - 此配置影响所有玩家、领地
+     */
+    struct ConstraintsConfig {
+        int maxLandsPerPlayer{20}; // 每个玩家最大领地数量
+
+        struct NameRule {
+            size_t minLen{1};           // 领地名最小长度
+            size_t maxLen{32};          // 领地名最大长度
+            bool   allowNewline{false}; // 是否允许换行符
+        } nameRule;
+
+        struct SizeConfig {
+            int minSideLength{4};     // 最小领地边长(X或Z轴的最小跨度)
+            int maxSideLength{60000}; // 最大领地边长 (X或Z轴的最大跨度)
+            int minHeight{1};         // 最小领地高度 (Y轴跨度)
+        } size;
+
+        struct SpacingConfig {
+            int  minDistance{16}; // 独立领地之间的最小间距
+            bool includeY{true};  // 间距计算是否包含 Y 轴
+        } spacing;
+
+        std::vector<ForbiddenRange> forbiddenRanges; // 禁止创建领地的范围
+
+    } constraints;
+
+    struct BusinessConfig {
+
+        /**
+         * 维度价格倍率
+         * - key: 维度 ID value: 倍率
+         * - 默认倍率为 1.0，即 1 乘以任何数都等于它本身
+         * - 在价格计算时，PLand 会将上一步的价格乘以这个倍率交给下一步继续计算
+         */
+        std::unordered_map<std::string, double> dimensionalPriceMultiplier;
+
+        /**
+         * 折扣率
+         * @note 此配置将在价格计算的最后一个环节对价格进行相乘
+         * @note 有效范围为 0.01 ~ 1.0
+         */
+        double discountRate{1};
+
+        using DimensionWhitelist = std::vector<LandDimid>;
+
+        /**
+         * 空间形态计费配置 (用于 3D立体 / 2D平面)
+         */
+        struct PricingModeConfig {
+            bool        enabled; // 是否允许创建该形态的领地
+            std::string formula; // 对应的价格/租金计算公式
+        };
+
+        struct BoughtConfig {
+            // bool enabled{false}; // 是否启用购买功能 // todo: impl
+
+            /**
+             * 退款率
+             * @note 有效范围为 0.01 ~ 1.0
+             * @note 退款率越高，玩家退款金额越多
+             */
+            double refundRate{0.9};
+
+            DimensionWhitelist allowDimensions{0, 1, 2}; // 允许购买的土地维度列表
+
+            PricingModeConfig mode3D{true, "square * 8 + height * 20"}; // 3D 立体领地购买配置
+            PricingModeConfig mode2D{true, "square * 25"};              // 2D 平面领地购买配置
+
+            struct SubLandConfig {
+                bool        enabled{false};                      // 是否启用子领地特性
+                int         maxNestedDepth{6};                   // 子领地最大嵌套深度(最大16)
+                int         maxSubLandsPerLand{6};               // 每个领地最多可创建多少个子领地
+                int         minSpacing{8};                       // 子领地之间的最小间距
+                bool        minSpacingIncludeY{true};            // 子领地之间的最小间距是否包含Y轴
+                std::string formula{"square * 8 + height * 20"}; // 价格公式
+            } subLand;
+
+        } bought;
+
+        struct LeasingConfig {
+            bool               enabled{false};           // 是否启用租赁功能
+            DimensionWhitelist allowDimensions{0, 1, 2}; // 允许租赁的土地维度列表
+
+            PricingModeConfig mode3D{true, "(square * 2 + height * 5)"}; // 3D 立体领地租金配置
+            PricingModeConfig mode2D{true, "(square * 8)"};              // 2D 平面领地租金配置
+
+            struct DurationConfig {
+                int minPeriod{7};      // 最小租期（天）
+                int maxPeriod{30};     // 最大租期（天）
+                int renewalAdvance{3}; // 续约提前天数
+            } duration;
+
+            struct FreezeConfig {
+                int    days{7};                 // 冻结持续天数
+                double penaltyRatePerDay{0.05}; // 每日罚金比例（5%）
+            } freeze;
+
+            struct NotificationsConfig {
+                bool loginTip{true}; // 登录时是否显示提示
+                bool enterTip{true}; // 进入土地时是否显示提示
+            } notifications;
+
+        } leasing;
+
+    } business;
+
+    struct SystemConfig {
+        bool telemetry{true}; // 是否启用遥测
+        bool devTools{false}; // 开发者工具
+    } system;
+};
+
+
+struct ConfigProvider {
+    ConfigProvider() = delete;
+
+    using Impl = ConfigV34;
+    LDAPI static Impl cfg;
+
+    inline static constexpr std::string_view FILE_NAME = "Config.json";
+
+    LDNDAPI static std::filesystem::path _filePath(const std::filesystem::path& baseDir);
+
+    LDNDAPI static ll::Expected<> load(const std::filesystem::path& baseDir);
+
+    LDNDAPI static ll::Expected<> save(const std::filesystem::path& baseDir);
+};
+
+
+struct LegacyConfig;
+using Config = LegacyConfig;
+
+struct [[deprecated]] LegacyConfig {
     inline static constexpr int SchemaVersion = 33;
 
     int version{SchemaVersion};
@@ -128,26 +292,26 @@ struct Config {
 
 
     // Functions
-    LDAPI static Config cfg;
+    [[deprecated]] LDAPI static Config cfg;
 
-    inline static constexpr std::string_view FileName = "Config.json";
+    [[deprecated]] inline static constexpr std::string_view FileName = "Config.json";
 
-    LDAPI static bool tryLoad();
-    LDAPI static bool trySave();
+    [[deprecated]] LDAPI static bool tryLoad();
+    [[deprecated]] LDAPI static bool trySave();
 
-    LDAPI static bool ensureDimensionAllowed(int dimensionId);
-    LDAPI static bool ensureSubLandFeatureEnabled();
-    LDAPI static bool ensureOrdinaryLandEnabled(bool is3D);
-    LDAPI static bool ensureLeasingEnabled();
-    LDAPI static bool ensureLeasingDimensionAllowed(int dimensionId);
+    [[deprecated]] LDAPI static bool ensureDimensionAllowed(int dimensionId);
+    [[deprecated]] LDAPI static bool ensureSubLandFeatureEnabled();
+    [[deprecated]] LDAPI static bool ensureOrdinaryLandEnabled(bool is3D);
+    [[deprecated]] LDAPI static bool ensureLeasingEnabled();
+    [[deprecated]] LDAPI static bool ensureLeasingDimensionAllowed(int dimensionId);
 
-    LDAPI static bool ensureEconomySystemEnabled();
+    [[deprecated]] LDAPI static bool ensureEconomySystemEnabled();
 
-    LDAPI static std::optional<double> getLandDimensionMultipliers(LandDimid dimid);
+    [[deprecated]] LDAPI static std::optional<double> getLandDimensionMultipliers(LandDimid dimid);
 
-    LDAPI static std::string const& getLandPriceCalculateFormula(bool is3D); // 获取价格计算公式
+    [[deprecated]] LDAPI static std::string const& getLandPriceCalculateFormula(bool is3D); // 获取价格计算公式
 
-    LDAPI static std::string const& getSubLandPriceCalculateFormula(); // 获取子领地价格计算公式
+    [[deprecated]] LDAPI static std::string const& getSubLandPriceCalculateFormula(); // 获取子领地价格计算公式
 };
 
 

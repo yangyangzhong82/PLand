@@ -55,10 +55,13 @@ flowchart LR
       "enabled": false, // 是否启用租赁模式
       "allowDimensions": [0, 1, 2], // 允许租赁的维度 (有些服可能主世界只能买，资源区只能租)
 
-      "calculate": {
-        // 因为考虑到双模式并行，所以这里独立出一个配置组
-        "threeDimensionl": "(square * 2 + height * 5)", // 3D领地每日租金公式
-        "twoDimensionl": "(square * 8)", // 2D领地每日租金公式
+      "mode3D": {
+        "enabled": true, // 是否启用3D领地租赁
+        "formula": "(square * 2 + height * 5)" // 3D领地每日租金公式
+      },
+      "mode2D": {
+        "enabled": true, // 是否启用2D领地租赁
+        "formula": "(square * 8)" // 2D领地每日租金公式
       },
       "duration": {
         "minPeriod": 7, // 首次起租/单次续租的最小天数
@@ -66,7 +69,7 @@ flowchart LR
         "renewalAdvance": 3, // 提前多少天开始在进服/进领地时提醒临期
       },
       "freeze": {
-        "duration": 7, // 冻结期时长 (天)，超过此时间将被物理销毁记录
+        "days": 7, // 冻结期时长 (天)，超过此时间将被物理销毁记录
         "penaltyRatePerDay": 0.05, // 滞纳金算法变更建议：按日叠加惩罚率(例：每天增加 5% 额外手续费)
       },
       "notifications": {
@@ -138,8 +141,6 @@ flowchart LR
 #### `LandStateChangedEvent` - 领地状态变更事件(domain)
 
 #### `LandRecycleEvent` - 领地被回收事件(domain)
-
-todo: 还需要更多?
 
 ## 待定
 

@@ -97,5 +97,28 @@ std::optional<JsonMigrator::Version> JsonMigrator::getMaxVersion() const {
     }
     return mMigrators_.rbegin()->first;
 }
+void JsonMigrator::mapPath(nlohmann::json& root, std::string_view src, std::string_view dst) {
+    // 辅助函数：把 "land.bought.xxx" 变成 "/land/bought/xxx"
+    auto toPtr = [](std::string_view s) {
+        std::string res = "/";
+        for (char c : s) {
+            res += (c == '.' ? '/' : c);
+        }
+        return nlohmann::json::json_pointer(res);
+    };
+
+    auto srcPtr = toPtr(src);
+    if (root.contains(srcPtr)) {
+        // std::move 转移数据到新家（自动创建缺失的父节点）
+        root[toPtr(dst)] = std::move(root[srcPtr]);
+
+        // 擦除旧数据的数据痕迹
+        auto parentPtr = srcPtr.parent_pointer();
+        if (root.contains(parentPtr)) {
+            root[parentPtr].erase(srcPtr.back());
+        }
+    }
+}
+void JsonMigrator::mapPath(nlohmann::json& root, Route const& route) { mapPath(root, route.src, route.dst); }
 
 } // namespace land
