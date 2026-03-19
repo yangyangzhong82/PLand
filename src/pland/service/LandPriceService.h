@@ -36,8 +36,8 @@ public:
     ) const;
 
     struct PriceResult {
-        int64_t               mOriginalPrice{0};
-        int64_t               mDiscountedPrice{0};
+        int64_t               mOriginalPrice{0};          // 原始价格
+        int64_t               mDiscountedPrice{0};        // 折扣后价格
         std::optional<double> mMultipliers{std::nullopt}; // 倍率
 
         PriceResult() = default;
@@ -121,8 +121,9 @@ public:
     LDNDAPI LeaseCostDetail calculateRenewCost(std::shared_ptr<Land> const& land, int days) const;
 
 private:
-    ll::Expected<PriceResult>
-    _getLandPrice(LandAABB const& range, int dimId, std::string const& calculateFormula) const;
+    static ll::Expected<> ensureEconomySystemAvailable();
+
+    ll::Expected<PriceResult> executeFormula(LandAABB const& range, int dimId, std::string const& formula) const;
 };
 
 } // namespace service

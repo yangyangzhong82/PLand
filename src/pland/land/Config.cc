@@ -61,15 +61,6 @@ bool Config::ensureLeasingDimensionAllowed(int dimensionId) {
     auto& allowed = cfg.business.leasing.allowDimensions;
     return std::find(allowed.begin(), allowed.end(), dimensionId) != allowed.end();
 }
-bool                  Config::ensureEconomySystemEnabled() { return cfg.economy.enabled; }
-std::optional<double> Config::getLandDimensionMultipliers(LandDimid dimid) {
-    auto& map  = cfg.business.dimensionalPriceMultiplier;
-    auto  iter = map.find(std::to_string(dimid));
-    if (iter != map.end()) {
-        return iter->second;
-    }
-    return std::nullopt;
-}
 std::string const& Config::getLandPriceCalculateFormula(bool is3D) {
     return is3D ? cfg.business.bought.mode3D.formula : cfg.business.bought.mode2D.formula;
 }

@@ -98,7 +98,7 @@ void LandBuyGUI::_impl(Player& player, OrdinaryLandCreateSelector* selector) {
     );
 
     std::optional<int64_t> discountedPrice;
-    if (Config::ensureEconomySystemEnabled()) {
+    if (ConfigProvider::isEconomySystemEnabled()) {
         auto& service = PLand::getInstance().getServiceLocator().getLandPriceService();
         if (auto result = service.getOrdinaryLandPrice(*range, selector->getDimensionId(), is3D)) {
             discountedPrice  = result->mDiscountedPrice;
@@ -267,7 +267,7 @@ void LandBuyGUI::_impl(Player& player, LandResizeSelector* selector) {
     std::optional<int64_t> discountedPrice;
     std::optional<int64_t> needPay;
     std::optional<int64_t> refund;
-    if (Config::ensureEconomySystemEnabled()) {
+    if (ConfigProvider::isEconomySystemEnabled()) {
         auto& service = PLand::getInstance().getServiceLocator().getLandPriceService();
         if (auto result = service.getOrdinaryLandPrice(*aabb, land->getDimensionId(), land->is3D())) {
             discountedPrice  = result->mDiscountedPrice;
@@ -351,7 +351,7 @@ void LandBuyGUI::_impl(Player& player, SubLandCreateSelector* selector) {
     );
 
     std::optional<int64_t> discountedPrice;
-    if (Config::ensureEconomySystemEnabled()) {
+    if (ConfigProvider::isEconomySystemEnabled()) {
         auto& service = PLand::getInstance().getServiceLocator().getLandPriceService();
         if (auto result = service.getSubLandPrice(*subLandRange, selector->getParentLand()->getDimensionId())) {
             discountedPrice  = result->mDiscountedPrice;

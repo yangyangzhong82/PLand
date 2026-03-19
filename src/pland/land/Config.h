@@ -193,6 +193,8 @@ struct ConfigProvider {
 
     inline static bool isLandTeleportEnabled() { return cfg.features.landTeleport; }
 
+    inline static bool isEconomySystemEnabled() { return cfg.economy.enabled; }
+
     inline static auto& getLeasingConfig() { return cfg.business.leasing; }
 
     inline static auto& getSelectionConfig() { return cfg.selector; }
@@ -210,6 +212,14 @@ struct ConfigProvider {
     }
 
     inline static double getDiscountRate() { return cfg.business.discountRate; }
+
+    inline static std::optional<double> getDimensionPriceMultiplier(LandDimid dimid) {
+        auto& multipliers = cfg.business.dimensionalPriceMultiplier;
+        if (auto it = multipliers.find(std::to_string(dimid)); it != multipliers.end()) {
+            return it->second;
+        }
+        return std::nullopt;
+    }
 };
 
 struct [[deprecated]] Config : ConfigProvider {
@@ -218,10 +228,6 @@ struct [[deprecated]] Config : ConfigProvider {
     [[deprecated]] LDAPI static bool ensureOrdinaryLandEnabled(bool is3D);
     [[deprecated]] LDAPI static bool ensureLeasingEnabled();
     [[deprecated]] LDAPI static bool ensureLeasingDimensionAllowed(int dimensionId);
-
-    [[deprecated]] LDAPI static bool ensureEconomySystemEnabled();
-
-    [[deprecated]] LDAPI static std::optional<double> getLandDimensionMultipliers(LandDimid dimid);
 
     [[deprecated]] LDAPI static std::string const& getLandPriceCalculateFormula(bool is3D); // 获取价格计算公式
 
