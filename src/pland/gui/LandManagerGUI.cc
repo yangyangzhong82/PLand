@@ -125,7 +125,7 @@ void LandManagerGUI::sendMainMenu(Player& player, std::shared_ptr<Land> land) {
     }
 
     if (land->isLeased()) {
-        fm.appendButton("续费/缴费"_trl(localeCode), "textures/ui/mcoin", "path", [land](Player& pl) {
+        fm.appendButton("续费/缴费"_trl(localeCode), "textures/ui/MCoin", "path", [land](Player& pl) {
             sendLeaseRenewGUI(pl, land);
         });
     }
