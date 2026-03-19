@@ -82,7 +82,7 @@ flowchart LR
       },
       "recycle": {
         "mode": "TransferToSystem", // 领地回收处理方式 (TransferToSystem | Delete)
-        "keepMembers": false, // 回收时是否保留领地成员
+        "keepMembers": false, // 回收时是否保留领地成员(仅 TransferToSystem 模式有效)
       },
       "notifications": {
         "loginTip": true, // 玩家进服时，如果有临期/冻结领地，是否发送提示

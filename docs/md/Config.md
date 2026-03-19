@@ -125,6 +125,10 @@
                 "days": 7, // 冻结持续天数
                 "penaltyRatePerDay": 0.05 // 每日罚金比例（5%）
             },
+            "recycle": {
+                "mode": "TransferToSystem", // 领地回收处理方式 (TransferToSystem | Delete)
+                "keepMembers": false, // 回收时是否保留领地成员(仅 TransferToSystem 模式有效)
+            },
             "notifications": { // 到期/续期提醒
                 "loginTip": true, // 登录时是否显示提示
                 "enterTip": true // 进入土地时是否显示提示
