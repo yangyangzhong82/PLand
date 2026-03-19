@@ -90,6 +90,8 @@ public:
     LDNDAPI bool addLandMember(mce::UUID const& uuid);
     LDAPI void   removeLandMember(mce::UUID const& uuid);
 
+    LDAPI void clearMembers();
+
     LDNDAPI std::string const& getName() const;
 
     LDAPI void setName(std::string const& name);

@@ -107,6 +107,11 @@ void Land::removeLandMember(mce::UUID const& uuid) {
     std::erase_if(impl->mContext.mLandMembers, [uuid = uuid.asString()](auto const& u) { return u == uuid; });
     impl->mDirtyCounter.increment();
 }
+void Land::clearMembers() {
+    impl->mCacheMembers.clear();
+    impl->mContext.mLandMembers.clear();
+    impl->mDirtyCounter.increment();
+}
 
 std::string const& Land::getName() const { return impl->mContext.mLandName; }
 void               Land::setName(std::string const& name) {
