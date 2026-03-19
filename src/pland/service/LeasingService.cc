@@ -374,12 +374,12 @@ LeasingService::reactivateLease(Player& player, std::shared_ptr<Land> const& lan
         return ll::makeStringError("当前领地不是租赁模式"_trl(player.getLocaleCode()));
     }
 
-    auto const ts = time_utils::nowSeconds();
+    auto now = time_utils::nowSeconds();
+    auto ts = time_utils::toSeconds(days);
 
     if (append) {
         land->setLeaseEndAt(land->getLeaseEndAt() + ts);
     } else {
-        auto now = time_utils::nowSeconds();
         land->setLeaseStartAt(now);
         land->setLeaseEndAt(now + ts);
     }
