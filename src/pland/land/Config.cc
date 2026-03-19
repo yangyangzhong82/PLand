@@ -31,11 +31,15 @@ ll::Expected<>        ConfigProvider::load(const std::filesystem::path& baseDir)
     auto  json     = nlohmann::json::parse(*data);
     auto& migrator = internal::ConfigMigrator::getInstance();
 
-    if (auto expected = migrator.migrate(json, Impl::SchemaVersion); !expected) {
-        return expected;
+    auto expected = migrator.migrate(json, Impl::SchemaVersion);
+    if (!expected) {
+        return ll::makeStringError(expected.error().message());
     }
 
     json_util::json2structWithVersionPatch(json, cfg, true);
+    if (expected.value() == JsonMigrator::MigrateResult::Success) {
+        (void)save(baseDir);
+    }
     return {};
 }
 ll::Expected<> ConfigProvider::save(const std::filesystem::path& baseDir) {

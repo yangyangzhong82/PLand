@@ -50,6 +50,12 @@ public:
 
     LDNDAPI optional_ref<const Executor> getExecutor(Version version) const;
 
+    enum class MigrateResult : uint8_t {
+        Success,                     // 迁移成功
+        SkipByNoAvailableMigrate,    // 没有可用的迁移器，跳过
+        SkipByCurrentVersionTooHigh, // 当前版本高于目标版本，跳过
+    };
+
     /**
      * @brief 核心迁移函数
      * @param data 待迁移的 JSON 对象
@@ -58,7 +64,7 @@ public:
      *        - 若为 true：从 v1 迁移到 v15 时，即使中间没有 2-14 的迁移器也会继续。
      *        - 若为 false：要求每一步版本提升必须连续 (N -> N+1)。
      */
-    LDNDAPI virtual ll::Expected<>
+    LDNDAPI virtual ll::Expected<MigrateResult>
     migrate(nlohmann::json& data, Version targetVersion, bool allowVersionGap = true) const;
 
     LDNDAPI std::optional<Version> getMinVersion() const;

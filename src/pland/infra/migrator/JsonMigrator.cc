@@ -29,15 +29,16 @@ optional_ref<JsonMigrator::Executor const> JsonMigrator::getExecutor(Version ver
     return {};
 }
 
-ll::Expected<> JsonMigrator::migrate(nlohmann::json& data, Version targetVersion, bool allowVersionGap) const {
-    if (mMigrators_.empty()) return {};
+ll::Expected<JsonMigrator::MigrateResult>
+JsonMigrator::migrate(nlohmann::json& data, Version targetVersion, bool allowVersionGap) const {
+    if (mMigrators_.empty()) return MigrateResult::SkipByNoAvailableMigrate;
 
     // 获取当前版本，如果 JSON 中没有版本字段，默认视为 0
     Version currentVersion = data.value(VersionKey, Version(0));
 
     // 如果已经达到或超过目标版本，直接返回
     if (currentVersion >= targetVersion) {
-        return {};
+        return MigrateResult::SkipByCurrentVersionTooHigh;
     }
 
     // 循环寻找“下一个可用的迁移器”
@@ -62,7 +63,7 @@ ll::Expected<> JsonMigrator::migrate(nlohmann::json& data, Version targetVersion
         // 执行具体的迁移函数
         try {
             if (auto res = std::invoke(executor, data); !res) {
-                return res; // 迁移器内部返回错误，中止迁移
+                return ll::makeStringError(res.error().message()); // 迁移器内部返回错误，中止迁移
             }
         } catch (std::exception const& e) {
             return ll::makeStringError(
@@ -82,7 +83,7 @@ ll::Expected<> JsonMigrator::migrate(nlohmann::json& data, Version targetVersion
         return ll::makeStringError(fmt::format("Migration failed to reach target v{}", targetVersion));
     }
 
-    return {};
+    return MigrateResult::Success;
 }
 
 std::optional<JsonMigrator::Version> JsonMigrator::getMinVersion() const {
