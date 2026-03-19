@@ -236,8 +236,11 @@ ll::Expected<> LandManagementService::deleteLand(Player& player, std::shared_ptr
     auto expected = _processDeleteLand(player, ptr, policy);
     if (!expected) return expected;
 
-    if (auto refund = _processLandRefund(player, ptr, policy != DeletePolicy::Recursive); !refund) {
-        return refund;
+    // 仅非租赁领地执行退款逻辑
+    if (!ptr->isLeased()) {
+        if (auto refund = _processLandRefund(player, ptr, policy != DeletePolicy::Recursive); !refund) {
+            return refund;
+        }
     }
     return {};
 }
