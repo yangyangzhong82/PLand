@@ -81,6 +81,7 @@ LeasingService::LeasingService(
     impl->mQuit  = std::make_shared<std::atomic<bool>>(false);
     impl->mSleep = std::make_shared<ll::coro::InterruptableSleep>();
 
+    // todo: 检查为什么不工作
     if (conf.notifications.loginTip)
         impl->mPlayerJoinListener =
             bus.emplaceListener<ll::event::PlayerJoinEvent>([this](ll::event::PlayerJoinEvent& ev) {
@@ -196,7 +197,7 @@ LeasingService::LeasingService(
                 } else if (land->getLeaseState() == LeaseState::Frozen) {
                     auto freezeEnd = land->getLeaseEndAt() + freezeDayTs;
                     if (freezeEnd <= now) {
-                        (void)recycleLand(land, event::LandRecycleReason::LeaseExpired);
+                        (void)recycleLand(land, LandRecycleReason::LeaseExpired);
                     }
                 }
             }
@@ -337,24 +338,33 @@ ll::Expected<> LeasingService::renewLease(Player& player, std::shared_ptr<Land> 
 }
 
 
-ll::Expected<> LeasingService::recycleLand(std::shared_ptr<Land> const& land, event::LandRecycleReason reason) {
+ll::Expected<> LeasingService::recycleLand(std::shared_ptr<Land> const& land, LandRecycleReason reason) {
     if (!land) {
         return ll::makeStringError("Invalid land ptr");
     }
 
-    auto members = land->getMembers();
-    for (auto const& m : members) {
-        land->removeLandMember(m);
+    auto const& conf = ConfigProvider::getLeasingConfig().recycle;
+
+    if (!conf.keepMembers) {
+        land->clearMembers();
     }
 
-    assert(SYSTEM_ACCOUNT_UUID != mce::UUID::EMPTY());
-    assert(SYSTEM_ACCOUNT_UUID.asString() == SYSTEM_ACCOUNT_UUID_STR);
-    land->setOwner(SYSTEM_ACCOUNT_UUID);
-    land->setLeaseState(LeaseState::Expired);
-    land->setName("[欠费|系统所有] {}"_tr(land->getName()));
+    switch (conf.mode) {
+    case LeaseRecycleMode::TransferToSystem: {
+        assert(SYSTEM_ACCOUNT_UUID != mce::UUID::EMPTY());
+        assert(SYSTEM_ACCOUNT_UUID.asString() == SYSTEM_ACCOUNT_UUID_STR);
+        land->setOwner(SYSTEM_ACCOUNT_UUID);
+        land->setLeaseState(LeaseState::Expired);
+        land->setName("[欠费|系统所有] {}"_tr(land->getName()));
+        break;
+    }
+    case LeaseRecycleMode::Delete: {
+        // todo: 删除领地
+        break;
+    }
+    }
 
     ll::event::EventBus::getInstance().publish(event::LandRecycleEvent{land, reason});
-
     return {};
 }
 

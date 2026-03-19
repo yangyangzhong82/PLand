@@ -9,11 +9,7 @@ class Player;
 
 namespace land {
 class Land;
-
-namespace event {
 enum class LandRecycleReason : uint8_t;
-}
-
 class LandRegistry;
 class OrdinaryLandCreateSelector;
 
@@ -27,11 +23,7 @@ class LeasingService {
     std::unique_ptr<Impl> impl;
 
 public:
-    LeasingService(
-        LandRegistry&         registry,
-        LandPriceService&     priceService,
-        SelectionService&     selectionService
-    );
+    LeasingService(LandRegistry& registry, LandPriceService& priceService, SelectionService& selectionService);
     ~LeasingService();
 
     LD_DISABLE_COPY_AND_MOVE(LeasingService);
@@ -67,7 +59,7 @@ public:
      * @param land 领地对象的共享指针
      * @param reason 领地回收原因
      */
-    ll::Expected<> recycleLand(std::shared_ptr<Land> const& land, event::LandRecycleReason reason);
+    ll::Expected<> recycleLand(std::shared_ptr<Land> const& land, LandRecycleReason reason);
 
     /**
      * 重新激活领地租约

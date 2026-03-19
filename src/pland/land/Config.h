@@ -3,6 +3,7 @@
 #include "pland/aabb/LandAABB.h"
 #include "pland/drawer/DrawerType.h"
 #include "pland/economy/EconomySystem.h"
+#include "pland/enums/LeaseRecycleMode.h"
 
 #include <unordered_set>
 #include <vector>
@@ -145,6 +146,11 @@ struct ConfigData {
                 int    days{7};                 // 冻结持续天数
                 double penaltyRatePerDay{0.05}; // 每日罚金比例（5%）
             } freeze;
+
+            struct RecycleConfig {
+                LeaseRecycleMode mode{LeaseRecycleMode::TransferToSystem}; // 回收模式
+                bool             keepMembers{false};                       // 是否保留领地成员
+            } recycle;
 
             struct NotificationsConfig {
                 bool loginTip{true}; // 登录时是否显示提示

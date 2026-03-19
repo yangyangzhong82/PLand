@@ -2,12 +2,10 @@
 #include "pland/Global.h"
 #include "pland/events/LandEventMixin.h"
 
+#include "pland/enums/LandRecycleReason.h"
+
 namespace land::event {
 
-enum class LandRecycleReason : uint8_t {
-    LeaseExpired = 0, // 租赁到期
-    Inactivity   = 1, // 闲置
-};
 
 class LandRecycleEvent final : public LandEventMixin<ll::event::Event> {
     LandRecycleReason mReason;
