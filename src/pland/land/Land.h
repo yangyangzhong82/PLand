@@ -1,7 +1,7 @@
 #pragma once
-#include "LandType.h"
 #include "pland/Global.h"
 #include "pland/aabb/LandAABB.h"
+#include "pland/enums/LandType.h"
 #include "pland/infra/DirtyCounter.h"
 #include "repo/LandContext.h"
 

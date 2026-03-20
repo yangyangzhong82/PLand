@@ -1,6 +1,9 @@
 #pragma once
 #include "pland/Global.h"
 #include "pland/aabb/LandAABB.h"
+#include "pland/enums/LandHoldType.h"
+#include "pland/enums/LeaseState.h"
+
 #include <vector>
 
 

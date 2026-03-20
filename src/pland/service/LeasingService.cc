@@ -12,6 +12,8 @@
 #include "pland/PLand.h"
 #include "pland/economy/EconomySystem.h"
 #include "pland/economy/PriceCalculate.h"
+#include "pland/enums/LandHoldType.h"
+#include "pland/enums/LeaseState.h"
 #include "pland/events/domain/LandRecycleEvent.h"
 #include "pland/events/domain/LandStateChangedEvent.h"
 #include "pland/events/player/PlayerLeaseLandEvent.h"
@@ -20,16 +22,13 @@
 #include "pland/infra/TimerScheduler.h"
 #include "pland/land/Config.h"
 #include "pland/land/Land.h"
-#include "pland/land/LandType.h"
 #include "pland/land/repo/LandRegistry.h"
 #include "pland/land/validator/LandCreateValidator.h"
 #include "pland/selector/land/OrdinaryLandCreateSelector.h"
 #include "pland/service/LandHierarchyService.h"
-#include "pland/service/ServiceLocator.h"
 #include "pland/utils/FeedbackUtils.h"
 #include "pland/utils/TimeUtils.h"
 
-#include <algorithm>
 #include <chrono>
 
 namespace land::service {
@@ -375,7 +374,7 @@ LeasingService::reactivateLease(Player& player, std::shared_ptr<Land> const& lan
     }
 
     auto now = time_utils::nowSeconds();
-    auto ts = time_utils::toSeconds(days);
+    auto ts  = time_utils::toSeconds(days);
 
     if (append) {
         land->setLeaseEndAt(land->getLeaseEndAt() + ts);
