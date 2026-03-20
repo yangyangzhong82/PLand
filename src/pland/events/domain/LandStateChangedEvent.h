@@ -1,5 +1,6 @@
 #pragma once
 #include "pland/Global.h"
+#include "pland/enums/LeaseState.h"
 #include "pland/events/LandEventMixin.h"
 
 namespace land::event {
