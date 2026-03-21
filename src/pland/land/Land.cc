@@ -130,9 +130,9 @@ LeaseState   Land::getLeaseState() const { return impl->mContext.mLeasing.mState
 bool         Land::isLeased() const { return impl->mContext.mHoldType == LandHoldType::Leased; }
 bool         Land::isLeaseActive() const { return isLeased() && impl->mContext.mLeasing.mState == LeaseState::Active; }
 bool         Land::isLeaseFrozen() const { return isLeased() && impl->mContext.mLeasing.mState == LeaseState::Frozen; }
-bool      Land::isLeaseExpired() const { return isLeased() && impl->mContext.mLeasing.mState == LeaseState::Expired; }
-long long Land::getLeaseStartAt() const { return impl->mContext.mLeasing.mStartAt; }
-long long Land::getLeaseEndAt() const { return impl->mContext.mLeasing.mEndAt; }
+bool   Land::isLeaseExpired() const { return isLeased() && impl->mContext.mLeasing.mState == LeaseState::Expired; }
+time_t Land::getLeaseStartAt() const { return impl->mContext.mLeasing.mStartAt; }
+time_t Land::getLeaseEndAt() const { return impl->mContext.mLeasing.mEndAt; }
 
 void Land::setHoldType(LandHoldType type) {
     impl->mContext.mHoldType = type;
@@ -142,11 +142,11 @@ void Land::setLeaseState(LeaseState state) {
     impl->mContext.mLeasing.mState = state;
     impl->mDirtyCounter.increment();
 }
-void Land::setLeaseStartAt(long long ts) {
+void Land::setLeaseStartAt(time_t ts) {
     impl->mContext.mLeasing.mStartAt = ts;
     impl->mDirtyCounter.increment();
 }
-void Land::setLeaseEndAt(long long ts) {
+void Land::setLeaseEndAt(time_t ts) {
     impl->mContext.mLeasing.mEndAt = ts;
     impl->mDirtyCounter.increment();
 }

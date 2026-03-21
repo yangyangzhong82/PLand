@@ -8,8 +8,8 @@ template <typename T>
 class TimerScheduler {
 public:
     struct Task {
-        long long timestamp;
-        T         data;
+        time_t timestamp;
+        T      data;
 
         bool operator>(Task const& other) const { return timestamp > other.timestamp; }
     };
@@ -20,12 +20,12 @@ private:
     std::mutex mMutex;
 
 public:
-    void push(long long timestamp, T data) {
+    void push(time_t timestamp, T data) {
         std::lock_guard lock(mMutex);
         mQueue.push({timestamp, std::move(data)});
     }
 
-    std::vector<T> popDueTasks(long long now) {
+    std::vector<T> popDueTasks(time_t now) {
         std::vector<T>  dueTasks;
         std::lock_guard lock(mMutex);
         while (!mQueue.empty() && mQueue.top().timestamp <= now) {

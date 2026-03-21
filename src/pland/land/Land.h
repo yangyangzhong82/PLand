@@ -131,11 +131,11 @@ public:
     /**
      * 获取租赁开始时间
      */
-    LDNDAPI long long getLeaseStartAt() const;
+    LDNDAPI time_t getLeaseStartAt() const;
     /**
      * 获取租赁结束时间
      */
-    LDNDAPI long long getLeaseEndAt() const;
+    LDNDAPI time_t getLeaseEndAt() const;
 
     /**
      * 设置土地持有类型
@@ -151,12 +151,12 @@ public:
      * 设置租赁开始时间
      * @param ts 要设置的租赁开始时间戳
      */
-    LDAPI void setLeaseStartAt(long long ts);
+    LDAPI void setLeaseStartAt(time_t ts);
     /**
      * 设置租赁结束时间
      * @param ts 要设置的租赁结束时间戳
      */
-    LDAPI void setLeaseEndAt(long long ts);
+    LDAPI void setLeaseEndAt(time_t ts);
 
     LDNDAPI bool is3D() const;
 

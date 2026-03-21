@@ -109,8 +109,8 @@ struct LandContext {
     LandHoldType             mHoldType{LandHoldType::Bought};       // 购买/租赁模式
     struct LeaseInfo {
         LeaseState mState{LeaseState::None}; // 租赁状态
-        long long  mStartAt{0};              // 租赁开始时间(秒)
-        long long  mEndAt{0};                // 租赁到期时间(秒)
+        time_t     mStartAt{0};              // 租赁开始时间(秒)
+        time_t     mEndAt{0};                // 租赁到期时间(秒)
     } mLeasing;
     [[deprecated]] bool mIsConvertedLand{false};        // 是否为转换后的领地(其它插件创建的领地)
     [[deprecated]] bool mOwnerDataIsXUID{false};        // 领地主人数据是否为XUID (如果为true，则主人上线自动转换为UUID)
