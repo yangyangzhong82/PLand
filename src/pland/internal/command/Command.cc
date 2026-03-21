@@ -19,12 +19,13 @@
 #include "ll/api/command/Command.h"
 #include "ll/api/command/CommandHandle.h"
 #include "ll/api/command/CommandRegistrar.h"
+#include "ll/api/command/runtime/RuntimeCommand.h"
+#include "ll/api/command/runtime/RuntimeOverload.h"
 #include "ll/api/event/EventBus.h"
 #include "ll/api/form/CustomForm.h"
 #include "ll/api/i18n/I18n.h"
 #include "ll/api/io/Logger.h"
 #include "ll/api/service/PlayerInfo.h"
-
 
 #include "mc/deps/core/math/Color.h"
 #include "mc/deps/core/utility/optional_ref.h"
@@ -38,6 +39,7 @@
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
 #include "pland/gui/admin/OperatorManager.h"
+#include "pland/utils/TimeUtils.h"
 
 #include <memory>
 #include <sstream>
@@ -297,6 +299,81 @@ void show_current_land_mgr(CommandOrigin const& ori, CommandOutput& out) {
     gui::LandManagerGUI::sendMainMenu(player, land);
 }
 
+using ll::command::RuntimeCommand;
+void show_lease_info(CommandOrigin const& ori, CommandOutput& out, RuntimeCommand const& param) {
+    auto originType = ori.getOriginType();
+    if (originType != CommandOriginType::DedicatedServer && originType != CommandOriginType::Player) {
+        feedback_utils::sendErrorText(out, "只有玩家和服务器可以查询领地租赁信息"_tr());
+        return;
+    }
+
+    auto& rawID = param["id"];
+
+    std::shared_ptr<Land> land{nullptr};
+
+    auto& registry = PLand::getInstance().getLandRegistry();
+
+    if (!rawID.has_value()) {
+        // 未指定 ID，进行当前位置查询
+        if (originType != CommandOriginType::Player) {
+            feedback_utils::sendErrorText(out, "仅玩家可以查询当前位置的领地租赁信息"_tr());
+            return;
+        }
+
+        auto& player = GET_AS_PLAYER(ori);
+        land         = registry.getLandAt(player.getPosition(), player.getDimensionId());
+        if (!land) {
+            feedback_utils::sendErrorText(out, "当前位置没有领地"_tr());
+            return;
+        }
+
+    } else {
+        // 指定 ID，进行精确查询
+        LandID id = std::get<int>(rawID.value());
+        land      = registry.getLand(id);
+
+        if (!land) {
+            feedback_utils::sendErrorText(out, "指定的领地 ID 不存在"_tr());
+            return;
+        }
+
+        // 非控制台执行此命令，校验权限
+        if (originType == CommandOriginType::Player) {
+            auto& player = GET_AS_PLAYER(ori);
+            if (!land->isOwner(player.getUuid()) && !registry.isOperator(player.getUuid())) {
+                feedback_utils::sendErrorText(out, "您没有权限查询此领地的租赁信息"_tr());
+                return;
+            }
+        }
+    }
+
+    assert(land != nullptr);
+    if (!land->isLeased()) {
+        feedback_utils::sendErrorText(out, "当前领地不是租赁模式"_tr());
+        return;
+    }
+
+    auto&       infoDb = ll::service::PlayerInfo::getInstance();
+    std::string displayName;
+    if (land->isSystemOwned()) {
+        displayName = "系统"_tr();
+    } else if (auto info = infoDb.fromUuid(land->getOwner())) {
+        displayName = info->name;
+    } else {
+        displayName = land->getOwner().asString();
+    }
+
+    out.success("---- 租赁信息 ----"_tr());
+    out.success("领地ID: {}"_tr(land->getId()));
+    out.success("领地名称: {}"_tr(land->getName()));
+    out.success("所有者: {}"_tr(displayName));
+    out.success("租赁状态: {}"_tr(magic_enum::enum_name(land->getLeaseState())));
+    out.success("租赁起始时间: {}"_tr(time_utils::formatTime(time_utils::toClockTime(land->getLeaseStartAt()))));
+    out.success("租赁结束时间: {}"_tr(time_utils::formatTime(time_utils::toClockTime(land->getLeaseEndAt()))));
+    out.success("剩余租期: {}"_tr(time_utils::formatRemaining(land->getLeaseEndAt())));
+}
+
+
 }; // namespace handlers
 
 
@@ -348,6 +425,11 @@ bool LandCommand::setup() {
 
     // todo
     // pland lease info [id] 查看当前/指定领地的租赁信息
+    h.runtimeOverload()
+        .text("lease")
+        .text("info")
+        .optional("id", ll::command::ParamKind::Int)
+        .execute(&handlers::show_lease_info);
 
     // pland admin lease set_start <timestamp|YYYY-MM-DD HH:mm:ss> [id] 设置领地租赁开始时间
 
