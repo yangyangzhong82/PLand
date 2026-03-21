@@ -72,11 +72,8 @@ void LandManagerGUI::sendMainMenu(Player& player, std::shared_ptr<Land> land) {
         case LeaseState::None:
             break;
         case LeaseState::Active: {
-            auto remaining = land->getLeaseEndAt() - time_utils::nowSeconds();
-            leaseContent   = "租赁状态:正常\n剩余租期:{}"_trl(
-                localeCode,
-                service::LeasingService::formatDuration(remaining, localeCode)
-            );
+            leaseContent =
+                "租赁状态:正常\n剩余租期:{}"_trl(localeCode, time_utils::formatRemaining(land->getLeaseEndAt()));
             break;
         }
         case LeaseState::Frozen: {
@@ -189,19 +186,13 @@ void LandManagerGUI::sendLeaseRenewGUI(Player& player, std::shared_ptr<Land> con
 
     auto localeCode = player.getLocaleCode();
 
-    auto now = time_utils::nowSeconds();
-
     std::string status;
     if (land->isLeaseFrozen()) {
         auto& priceService = PLand::getInstance().getServiceLocator().getLandPriceService();
         auto  detail       = priceService.calculateRenewCost(land, 0);
         status             = "当前状态: 已冻结\n欠费: {}"_trl(localeCode, detail.total);
     } else {
-        auto remaining = land->getLeaseEndAt() - now;
-        status         = "当前状态: 正常\n剩余到期时间: {}"_trl(
-            localeCode,
-            service::LeasingService::formatDuration(remaining, player.getLocaleCode())
-        );
+        status = "当前状态: 正常\n剩余到期时间: {}"_trl(localeCode, time_utils::formatRemaining(land->getLeaseEndAt()));
     }
 
     auto const& duration = ConfigProvider::getLeasingConfig().duration;

@@ -1,8 +1,8 @@
 #pragma once
 #include <chrono>
 
-#include "fmt/format.h"
 #include "fmt/chrono.h"
+#include "fmt/format.h"
 
 namespace land::time_utils {
 
@@ -53,8 +53,7 @@ inline long long ceilDays(long long seconds) noexcept {
  * @param fmt_str 时间格式字符串，默认为"%Y-%m-%d %H:%M:%S"
  * @return 格式化后的时间字符串
  */
-inline std::string
-formatDuration(std::chrono::system_clock::time_point time, std::string_view fmt_str = "%Y-%m-%d %H:%M:%S") {
+inline std::string formatTime(std::chrono::system_clock::time_point time, std::string_view fmt_str = "%Y-%m-%d %H:%M:%S") {
     return fmt::format(fmt::runtime("{:" + std::string(fmt_str) + "}"), time);
 }
 
@@ -71,16 +70,30 @@ struct DurationParts {
  * @return DurationParts 包含分解后的天、小时、分钟和秒的结构体
  */
 inline DurationParts decomposeDuration(long long totalSeconds) {
-    using namespace std::chrono;
-
     totalSeconds = std::max(totalSeconds, 0LL);
 
-    auto d = duration_cast<days>(seconds(totalSeconds));
-    auto h = duration_cast<hours>(seconds(totalSeconds) - d);
-    auto m = duration_cast<minutes>(seconds(totalSeconds) - d - h);
-    auto s = seconds(totalSeconds) - d - h - m;
+    long long days    = totalSeconds / 86400;
+    long long hours   = (totalSeconds % 86400) / 3600;
+    long long minutes = (totalSeconds % 3600) / 60;
+    long long seconds = totalSeconds % 60;
 
-    return {d.count(), h.count(), m.count(), s.count()};
+    return {days, hours, minutes, seconds};
 }
+
+inline std::string formatDuration(long long durationSeconds) {
+    durationSeconds = std::max(durationSeconds, 0LL); // 保证不出现负数
+    auto parts      = decomposeDuration(durationSeconds);
+
+    if (parts.days > 0) return fmt::format("{}d{}h{}m{}s", parts.days, parts.hours, parts.minutes, parts.seconds);
+    if (parts.hours > 0) return fmt::format("{}h{}m{}s", parts.hours, parts.minutes, parts.seconds);
+    if (parts.minutes > 0) return fmt::format("{}m{}s", parts.minutes, parts.seconds);
+    return fmt::format("{}s", parts.seconds);
+}
+
+inline std::string formatRemaining(long long totalSeconds) {
+    auto remaining = totalSeconds - nowSeconds();
+    return formatDuration(remaining);
+}
+
 
 } // namespace land::time_utils

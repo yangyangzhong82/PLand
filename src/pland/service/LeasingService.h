@@ -28,8 +28,6 @@ public:
 
     LD_DISABLE_COPY_AND_MOVE(LeasingService);
 
-    static std::string formatDuration(long long sec, std::string_view localeCode) noexcept;
-
     /**
      * @brief 检查功能是否启用
      * @return 返回功能是否启用的状态

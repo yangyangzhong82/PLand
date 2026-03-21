@@ -147,7 +147,7 @@ LeasingService::LeasingService(
                     auto localeCode = player.getLocaleCode();
                     feedback_utils::sendActionBar(
                         player,
-                        "[Land] 租赁即将到期：{}"_trl(localeCode, formatDuration(remaining, localeCode))
+                        "[Land] 租赁即将到期：{}"_trl(localeCode, time_utils::formatDuration(remaining))
                     );
                 }
             });
@@ -211,17 +211,6 @@ LeasingService::~LeasingService() {
     bus.removeListener(impl->mPlayerEnterLandListener);
     impl->mQuit->store(true);
     impl->mSleep->interrupt(true);
-}
-
-std::string LeasingService::formatDuration(long long sec, std::string_view localeCode) noexcept {
-    auto parts = time_utils::decomposeDuration(sec);
-    if (parts.days > 0) {
-        return "{}天{}小时{}分钟"_trl(localeCode, parts.days, parts.hours, parts.minutes);
-    }
-    if (parts.hours > 0) {
-        return "{}小时{}分钟"_trl(localeCode, parts.hours, parts.minutes);
-    }
-    return "{}分钟"_trl(localeCode, parts.minutes);
 }
 
 bool LeasingService::enabled() const { return ConfigProvider::getLeasingConfig().enabled; }
