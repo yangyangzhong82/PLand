@@ -79,7 +79,7 @@ inline std::string formatTime(
         return fmt::format(fmt::runtime(format_pattern), zt.get_local_time());
 #else
         std::time_t t = std::chrono::system_clock::to_time_t(time);
-        std::tm tm_buf{};
+        std::tm     tm_buf{};
 #if defined(_WIN32)
         localtime_s(&tm_buf, &t);
 #else
@@ -150,14 +150,15 @@ inline bool ensureTimestamp(time_t ts) { return ts >= 946684800LL && ts <= 41024
 /**
  * @brief 解析时间字符串 (支持 Unix 时间戳 或 YYYY-MM-DD HH:mm:ss)
  * @param time_str 输入字符串
+ * @param isLocal 是否使用本地时间，默认为 true
  * @return system_clock::time_point 解析失败返回 epoch (0)
  */
-inline std::chrono::system_clock::time_point parseTime(std::string_view time_str) {
+inline std::chrono::system_clock::time_point parseTime(std::string_view time_str, bool isLocal = true) {
     using namespace std::chrono;
 
     if (time_str.empty()) return {};
 
-    // 尝试解析纯数字 Unix 时间戳
+    // 解析纯数字 Unix 时间戳 (Unix时间戳永远是绝对的/UTC，不需要受时区影响)
     time_t ts      = 0;
     auto [ptr, ec] = std::from_chars(time_str.data(), time_str.data() + time_str.size(), ts);
 
@@ -169,19 +170,56 @@ inline std::chrono::system_clock::time_point parseTime(std::string_view time_str
         return {}; // 时间戳不合理
     }
 
-    // 尝试解析日期格式 YYYY-MM-DD HH:mm:ss
-    std::istringstream       ss{std::string(time_str)};
-    system_clock::time_point tp;
+    // 尝试解析日期格式 YYYY-MM-DD HH:mm:ss 或 YYYY-MM-DD
+    std::istringstream ss{std::string(time_str)};
 
-    // 尝试解析 2026-03-21 17:00:00
-    ss >> std::chrono::parse("%Y-%m-%d %H:%M:%S", tp);
-    if (!ss.fail()) return tp;
+    if (isLocal) {
+#if defined(__cpp_lib_chrono) && __cpp_lib_chrono >= 201907L
+        // 解析为无时区关联的本地时间
+        local_seconds lt;
+        ss >> std::chrono::parse("%Y-%m-%d %H:%M:%S", lt);
+        if (ss.fail()) {
+            ss.clear();
+            ss.str(std::string(time_str));
+            ss >> std::chrono::parse("%Y-%m-%d", lt);
+        }
 
-    // 备选逻辑：只输入了日期 2026-03-21
-    ss.clear();
-    ss.str(std::string(time_str));
-    ss >> std::chrono::parse("%Y-%m-%d", tp);
-    if (!ss.fail()) return tp;
+        if (!ss.fail()) {
+            try {
+                // 将本地时间通过当前时区转换回 UTC 系统时间点
+                return current_zone()->to_sys(lt);
+            } catch (const std::chrono::nonexistent_local_time&) {
+                return {}; // 夏令时跳跃导致的“不存在时间”异常处理
+            } catch (const std::chrono::ambiguous_local_time&) {
+                return {}; // 夏令时回退导致的“重叠时间”异常处理
+            }
+        }
+#else
+        // 对于不支持时区库的编译器，使用 C 风格 API
+        std::tm tm_buf{};
+        ss >> std::get_time(&tm_buf, "%Y-%m-%d %H:%M:%S");
+        if (ss.fail()) {
+            ss.clear();
+            ss.str(std::string(time_str));
+            ss >> std::get_time(&tm_buf, "%Y-%m-%d");
+        }
+        if (!ss.fail()) {
+            tm_buf.tm_isdst = -1; // 让系统自动判断夏令时
+            time_t t        = std::mktime(&tm_buf);
+            if (t != -1) return system_clock::from_time_t(t);
+        }
+#endif
+    } else {
+        // 如果明确字符串是 UTC 时间，直接存入 sys_seconds
+        sys_seconds st; // 等价于 time_point<system_clock, seconds>
+        ss >> std::chrono::parse("%Y-%m-%d %H:%M:%S", st);
+        if (ss.fail()) {
+            ss.clear();
+            ss.str(std::string(time_str));
+            ss >> std::chrono::parse("%Y-%m-%d", st);
+        }
+        if (!ss.fail()) return st;
+    }
 
     return {}; // 解析失败
 }
