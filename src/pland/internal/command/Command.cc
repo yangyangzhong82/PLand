@@ -307,29 +307,13 @@ void show_lease_info(CommandOrigin const& ori, CommandOutput& out, RuntimeComman
         return;
     }
 
-    auto& rawID = param["id"];
-
     std::shared_ptr<Land> land{nullptr};
 
     auto& registry = PLand::getInstance().getLandRegistry();
 
-    if (!rawID.has_value()) {
-        // 未指定 ID，进行当前位置查询
-        if (originType != CommandOriginType::Player) {
-            feedback_utils::sendErrorText(out, "仅玩家可以查询当前位置的领地租赁信息"_tr());
-            return;
-        }
-
-        auto& player = GET_AS_PLAYER(ori);
-        land         = registry.getLandAt(player.getPosition(), player.getDimensionId());
-        if (!land) {
-            feedback_utils::sendErrorText(out, "当前位置没有领地"_tr());
-            return;
-        }
-
-    } else {
+    if (auto& optID = param["id"]) {
         // 指定 ID，进行精确查询
-        LandID id = std::get<int>(rawID.value());
+        LandID id = std::get<int>(optID.value());
         land      = registry.getLand(id);
 
         if (!land) {
@@ -344,6 +328,19 @@ void show_lease_info(CommandOrigin const& ori, CommandOutput& out, RuntimeComman
                 feedback_utils::sendErrorText(out, "您没有权限查询此领地的租赁信息"_tr());
                 return;
             }
+        }
+    } else {
+        // 未指定 ID，进行当前位置查询
+        if (originType != CommandOriginType::Player) {
+            feedback_utils::sendErrorText(out, "仅玩家可以查询当前位置的领地租赁信息"_tr());
+            return;
+        }
+
+        auto& player = GET_AS_PLAYER(ori);
+        land         = registry.getLandAt(player.getPosition(), player.getDimensionId());
+        if (!land) {
+            feedback_utils::sendErrorText(out, "当前位置没有领地"_tr());
+            return;
         }
     }
 
@@ -373,12 +370,72 @@ void show_lease_info(CommandOrigin const& ori, CommandOutput& out, RuntimeComman
     out.success("剩余租期: {}"_tr(time_utils::formatRemaining(land->getLeaseEndAt())));
 }
 
+void admin_set_lease_start_end(CommandOrigin const& ori, CommandOutput& out, RuntimeCommand const& param) {
+    auto originType = ori.getOriginType();
+    if (originType != CommandOriginType::DedicatedServer && originType != CommandOriginType::Player) {
+        feedback_utils::sendErrorText(out, "只有玩家和服务器可以设置领地租赁信息"_tr());
+        return;
+    }
+
+    auto& registry = PLand::getInstance().getLandRegistry();
+    if (originType == CommandOriginType::Player) {
+        auto& player = GET_AS_PLAYER(ori);
+        if (!registry.isOperator(player.getUuid())) {
+            feedback_utils::sendErrorText(out, "您没有权限设置领地租赁信息"_tr());
+            return;
+        }
+    }
+
+    auto& target  = std::get<ll::command::RuntimeEnum>(param["set_target"].value());
+    bool  isStart = target.name == "set_start";
+
+    std::shared_ptr<Land> land;
+    if (auto& optId = param["id"]) {
+        LandID id = std::get<int>(optId.value());
+        land      = registry.getLand(id);
+        if (!land) {
+            feedback_utils::sendErrorText(out, "指定的领地 ID 不存在"_tr());
+        }
+    } else {
+        if (originType != CommandOriginType::Player) {
+            feedback_utils::sendErrorText(out, "仅玩家可以设置当前位置的领地租赁信息"_tr());
+            return;
+        }
+        auto& player = GET_AS_PLAYER(ori);
+        land         = registry.getLandAt(player.getPosition(), player.getDimensionId());
+        if (!land) {
+            feedback_utils::sendErrorText(out, "当前位置没有领地"_tr());
+            return;
+        }
+    }
+
+    assert(land);
+
+    auto date  = std::get<std::string>(param["date"].value());
+    auto clock = time_utils::parseTime(date);
+    if (clock == std::chrono::system_clock::time_point{}) {
+        feedback_utils::sendErrorText(out, "无效的日期格式"_tr());
+        return;
+    }
+
+    auto timestamp = time_utils::toSeconds(clock);
+
+    if (isStart) {
+        land->setLeaseStartAt(timestamp);
+        feedback_utils::sendText(out, "领地租赁起始时间已修改为: {}"_tr(time_utils::formatTime(clock)));
+    } else {
+        land->setLeaseEndAt(timestamp);
+        feedback_utils::sendText(out, "领地租赁结束时间已修改为: {}"_tr(time_utils::formatTime(clock)));
+    }
+}
+
 
 }; // namespace handlers
 
 
 bool LandCommand::setup() {
-    auto& h = ll::command::CommandRegistrar::getInstance(false).getOrCreateCommand("pland", "PLand - 领地系统"_tr());
+    auto& registrar = ll::command::CommandRegistrar::getInstance(false);
+    auto& h         = registrar.getOrCreateCommand("pland", "PLand - 领地系统"_tr());
     h.alias("land");
 
     // pland reload
@@ -424,31 +481,47 @@ bool LandCommand::setup() {
     h.overload().text("set").text("teleport_pos").execute(&handlers::land_set_teleport_pos);
 
     // todo
-    // pland lease info [id] 查看当前/指定领地的租赁信息
-    h.runtimeOverload()
-        .text("lease")
-        .text("info")
-        .optional("id", ll::command::ParamKind::Int)
-        .execute(&handlers::show_lease_info);
+    if (ConfigProvider::getLeasingConfig().enabled) {
 
-    // pland admin lease set_start <timestamp|YYYY-MM-DD HH:mm:ss> [id] 设置领地租赁开始时间
+        // pland lease info [id] 查看当前/指定领地的租赁信息
+        h.runtimeOverload()
+            .text("lease")
+            .text("info")
+            .optional("id", ll::command::ParamKind::Int)
+            .execute(&handlers::show_lease_info);
 
-    // pland admin lease set_end <timestamp|YYYY-MM-DD HH:mm:ss> [id] 设置领地租赁结束时间
+        // pland admin lease <set_start|set_end> <timestamp|YYYY-MM-DD HH:mm:ss> [id] 设置领地租赁 开启/结束 时间
+        if (!registrar.hasEnum("pland_lease_set_target")) {
+            registrar.tryRegisterRuntimeEnum(
+                "pland_lease_set_target",
+                {
+                    {"set_start", 0},
+                    {  "set_end", 1}
+            }
+            );
+        }
+        h.runtimeOverload()
+            .text("admin")
+            .text("lease")
+            .required("set_target", ll::command::ParamKind::Enum, "pland_lease_set_target")
+            .required("date", ll::command::ParamKind::String)
+            .optional("id", ll::command::ParamKind::Int)
+            .execute(&handlers::admin_set_lease_start_end);
 
-    // pland admin lease add_time <day|hour|minute|second> <amount> [id] 增加领地租赁时间
+        // pland admin lease add_time <day|hour|minute|second> <amount> [id] 增加领地租赁时间
 
-    // pland admin lease set_state <active|frozen|expired> [id] 设置领地租赁状态
+        // pland admin lease set_state <active|frozen|expired> [id] 设置领地租赁状态
 
-    // pland admin lease thaw [id] 解除领地租赁冻结 (续费 24h)
+        // pland admin lease thaw [id] 解除领地租赁冻结 (续费 24h)
 
-    // pland admin lease renew <day|hour|minute|second> <amount> [id] 续费领地租赁
+        // pland admin lease renew <day|hour|minute|second> <amount> [id] 续费领地租赁
 
-    // pland admin lease recycle [id] 回收领地
+        // pland admin lease recycle [id] 回收领地
 
-    // pland admin lease clean <days> 清理到期超过n天的领地
+        // pland admin lease clean <days> 清理到期超过n天的领地
 
-    // pland admin lease to_bought [id] 将租赁领地转为购买领地
-
+        // pland admin lease to_bought [id] 将租赁领地转为购买领地
+    }
 
 #ifdef LD_DEVTOOL
     // pland devtool
