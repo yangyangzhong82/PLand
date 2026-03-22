@@ -127,6 +127,7 @@ void Land::setOriginalBuyPrice(int price) {
 
 LandHoldType Land::getHoldType() const { return impl->mContext.mHoldType; }
 LeaseState   Land::getLeaseState() const { return impl->mContext.mLeasing.mState; }
+bool         Land::isBought() const { return impl->mContext.mHoldType == LandHoldType::Bought; }
 bool         Land::isLeased() const { return impl->mContext.mHoldType == LandHoldType::Leased; }
 bool         Land::isLeaseActive() const { return isLeased() && impl->mContext.mLeasing.mState == LeaseState::Active; }
 bool         Land::isLeaseFrozen() const { return isLeased() && impl->mContext.mLeasing.mState == LeaseState::Frozen; }

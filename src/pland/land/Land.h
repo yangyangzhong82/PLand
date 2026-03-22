@@ -108,6 +108,13 @@ public:
      * 获取租赁状态
      */
     LDNDAPI LeaseState getLeaseState() const;
+
+    /**
+     * 领地是否为买断制领地
+     * @enum LandHoldType::Bought
+     */
+    LDNDAPI bool isBought() const;
+
     /**
      * 检查是否已被租赁
      * @enum LandHoldType::Leased
