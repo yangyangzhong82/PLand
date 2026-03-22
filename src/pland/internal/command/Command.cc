@@ -39,6 +39,7 @@
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
 #include "pland/gui/admin/OperatorManager.h"
+#include "pland/service/LeasingService.h"
 #include "pland/utils/TimeUtils.h"
 
 #include <memory>
@@ -418,14 +419,19 @@ void admin_set_lease_start_end(CommandOrigin const& ori, CommandOutput& out, Run
         return;
     }
 
-    auto timestamp = time_utils::toSeconds(clock);
-
+    auto& service = PLand::getInstance().getServiceLocator().getLeasingService();
     if (isStart) {
-        land->setLeaseStartAt(timestamp);
-        feedback_utils::sendText(out, "领地租赁起始时间已修改为: {}"_tr(time_utils::formatTime(clock)));
+        if (auto exp = service.setStartAt(land, clock)) {
+            feedback_utils::sendText(out, "领地租赁起始时间已修改为: {}"_tr(time_utils::formatTime(clock)));
+        } else {
+            feedback_utils::sendError(out, exp.error());
+        }
     } else {
-        land->setLeaseEndAt(timestamp);
-        feedback_utils::sendText(out, "领地租赁结束时间已修改为: {}"_tr(time_utils::formatTime(clock)));
+        if (auto exp = service.setEndAt(land, clock)) {
+            feedback_utils::sendText(out, "领地租赁结束时间已修改为: {}"_tr(time_utils::formatTime(clock)));
+        } else {
+            feedback_utils::sendError(out, exp.error());
+        }
     }
 }
 
@@ -510,15 +516,11 @@ bool LandCommand::setup() {
 
         // pland admin lease add_time <day|hour|minute|second> <amount> [id] 增加领地租赁时间
 
-        // pland admin lease set_state <active|frozen|expired> [id] 设置领地租赁状态
+        // pland admin lease force_freeze [id] 强制冻结领地
 
-        // pland admin lease thaw [id] 解除领地租赁冻结 (续费 24h)
+        // pland admin lease force_recycle [id] 强制回收领地
 
-        // pland admin lease renew <day|hour|minute|second> <amount> [id] 续费领地租赁
-
-        // pland admin lease recycle [id] 回收领地
-
-        // pland admin lease clean <days> 清理到期超过n天的领地
+        // pland admin lease clean <days> 回收到期超过n天的领地
 
         // pland admin lease to_bought [id] 将租赁领地转为购买领地
     }

@@ -33,6 +33,8 @@
 
 namespace land::service {
 
+static_assert(sizeof(time_t) >= 8, "time_t must be 64-bit");
+
 struct LeasingService::Impl {
     LandRegistry&     mRegistry;
     LandPriceService& mLandPriceService;
@@ -53,13 +55,21 @@ struct LeasingService::Impl {
 
 
     ll::Expected<> enqueue(std::shared_ptr<Land> const& land) {
-        if (!land) {
-            return ll::makeStringError("enqueue failed, land is null");
+        assert(land);
+        assert(land->isLeased());
+
+        auto state = land->getLeaseState();
+        if (state == LeaseState::Active) {
+            mScheduler.push(land->getLeaseEndAt(), land->getId());
+        } else if (state == LeaseState::Frozen) {
+            // 如果已经是冻结状态，关注的是它何时被回收
+            auto freezeDayTs = time_utils::toSeconds(ConfigProvider::getLeasingConfig().freeze.days);
+            auto freezeEnd   = land->getLeaseEndAt() + freezeDayTs;
+
+            // 只有死亡时间还在未来，才压入调度器。如果在过去，说明它该死但还没死，压入 now 让它下一秒立刻死。
+            auto now = time_utils::nowSeconds();
+            mScheduler.push(std::max(freezeEnd, now), land->getId());
         }
-        if (!land->isLeased()) {
-            return ll::makeStringError("enqueue failed, land is not leased");
-        }
-        mScheduler.push(land->getLeaseEndAt(), land->getId());
         return {};
     }
 };
@@ -80,7 +90,6 @@ LeasingService::LeasingService(
     impl->mQuit  = std::make_shared<std::atomic<bool>>(false);
     impl->mSleep = std::make_shared<ll::coro::InterruptableSleep>();
 
-    // todo: 检查为什么不工作
     if (conf.notifications.loginTip)
         impl->mPlayerJoinListener =
             bus.emplaceListener<ll::event::PlayerJoinEvent>([this](ll::event::PlayerJoinEvent& ev) {
@@ -96,7 +105,10 @@ LeasingService::LeasingService(
                 for (auto& land : lands) {
                     if (!land->isLeased()) continue;
 
-                    if (land->isLeaseFrozen()) {
+                    bool isActuallyFrozen =
+                        land->isLeaseFrozen()
+                        || (land->getLeaseState() == LeaseState::Active && land->getLeaseEndAt() <= now);
+                    if (isActuallyFrozen) {
                         frozen.push_back(land);
                         continue;
                     }
@@ -133,21 +145,21 @@ LeasingService::LeasingService(
                 }
 
                 auto now = time_utils::nowSeconds();
-                if (land->isLeaseFrozen()) {
-                    auto detail = impl->mLandPriceService.calculateRenewCost(land, 0);
-                    feedback_utils::sendActionBar(
-                        player,
-                        "[Land] 已冻结，欠费 {}"_trl(player.getLocaleCode(), detail.total)
-                    );
+
+                bool isActuallyFrozen = land->isLeaseFrozen()
+                                     || (land->getLeaseState() == LeaseState::Active && land->getLeaseEndAt() <= now);
+                if (isActuallyFrozen) {
+                    auto detail = impl->mLandPriceService.calculateRenewCost(land, 0); // todo: fix
+                    feedback_utils::sendText(player, "此领地已冻结，欠费 {}"_trl(player.getLocaleCode(), detail.total));
                     return;
                 }
 
                 auto remaining = land->getLeaseEndAt() - now;
                 if (remaining <= time_utils::toSeconds(ConfigProvider::getLeasingConfig().duration.renewalAdvance)) {
                     auto localeCode = player.getLocaleCode();
-                    feedback_utils::sendActionBar(
+                    feedback_utils::sendText(
                         player,
-                        "[Land] 租赁即将到期：{}"_trl(localeCode, time_utils::formatDuration(remaining))
+                        "此领地租赁即将到期：{}"_trl(localeCode, time_utils::formatDuration(remaining))
                     );
                 }
             });
@@ -181,20 +193,30 @@ LeasingService::LeasingService(
                 auto land = impl->mRegistry.getLand(landId);
                 if (!land || !land->isLeased()) continue;
 
-                if (land->getLeaseState() == LeaseState::Active) {
+                auto state = land->getLeaseState();
+
+                if (state == LeaseState::Active) {
                     if (land->getLeaseEndAt() <= now) { // 懒惰双检，防止玩家刚才一瞬间续费了
-                        auto oldState = land->getLeaseState();
+                        auto oldState = state;
                         land->setLeaseState(LeaseState::Frozen);
 
                         ll::event::EventBus::getInstance().publish(
                             event::LandStateChangedEvent{land, oldState, LeaseState::Frozen}
                         );
 
-                        // 刚进入冻结，将它彻底死亡的时间推入调度器
-                        impl->mScheduler.push(now + freezeDayTs, landId);
+                        // 基于原本的到期时间计算死期, 而不是现在的 now
+                        auto freezeEnd = land->getLeaseEndAt() + freezeDayTs;
+                        if (freezeEnd <= now) {
+                            // 如果因为服务器停机太久，开服时发现连冻结期都过了，直接回收
+                            (void)recycleLand(land, LandRecycleReason::LeaseExpired);
+                        } else {
+                            // 正常推入死亡时间
+                            impl->mScheduler.push(freezeEnd, landId);
+                        }
                     }
-                } else if (land->getLeaseState() == LeaseState::Frozen) {
+                } else if (state == LeaseState::Frozen) {
                     auto freezeEnd = land->getLeaseEndAt() + freezeDayTs;
+                    // 懒惰双检：过滤掉那些在冻结期被玩家续费了，但旧任务还在队列里的“幽灵任务”
                     if (freezeEnd <= now) {
                         (void)recycleLand(land, LandRecycleReason::LeaseExpired);
                     }
@@ -213,7 +235,216 @@ LeasingService::~LeasingService() {
     impl->mSleep->interrupt(true);
 }
 
+ll::Expected<> LeasingService::ensureLandLeased(std::shared_ptr<Land> const& land) const {
+    if (!land) {
+        return ll::makeStringError("land not found");
+    }
+    if (!land->isLeased()) {
+        return ll::makeStringError("land is not in leased state");
+    }
+
+    // assert
+    if (!land->isOrdinaryLand()) {
+        PLand::getInstance().getSelf().getLogger().error(
+            "Data inconsistency detected: leased land {} has parent/child land, "
+            "this violates mutex condition",
+            land->getId()
+        );
+        return ll::makeStringError("leased land has invalid hierarchical relationship");
+    }
+
+    return {};
+}
+
 bool LeasingService::enabled() const { return ConfigProvider::getLeasingConfig().enabled; }
+
+void LeasingService::refreshSchedule(std::shared_ptr<Land> const& land) {
+    if (land && land->isLeased()) {
+        impl->enqueue(land); // 重新压入调度器
+    }
+}
+
+ll::Expected<>
+LeasingService::setStartAt(std::shared_ptr<Land> const& land, std::chrono::system_clock::time_point date) {
+    if (auto expected = ensureLandLeased(land); !expected) {
+        return expected;
+    }
+    auto ts = time_utils::toSeconds(date);
+    if (!time_utils::ensureTimestamp(ts)) {
+        return ll::makeStringError("invalid timestamp");
+    }
+    if (ts >= land->getLeaseEndAt()) {
+        return ll::makeStringError("lease start time must be earlier than end time");
+    }
+    land->setLeaseStartAt(ts);
+    return {};
+}
+
+ll::Expected<> LeasingService::setEndAt(std::shared_ptr<Land> const& land, std::chrono::system_clock::time_point date) {
+    if (auto expected = ensureLandLeased(land); !expected) {
+        return expected;
+    }
+    auto ts = time_utils::toSeconds(date);
+    if (!time_utils::ensureTimestamp(ts)) {
+        return ll::makeStringError("invalid timestamp");
+    }
+    if (ts <= land->getLeaseStartAt()) {
+        return ll::makeStringError("lease end time must be later than start time");
+    }
+
+    auto now      = time_utils::nowSeconds();
+    auto oldState = land->getLeaseState();
+    auto newState = oldState;
+
+    // 推导状态
+    if (ts > now) {
+        // 只要结束时间在未来，无论它之前是啥，现在都必须是活跃(Active)
+        newState = LeaseState::Active;
+    } else {
+        // 如果结束时间在过去，它显然已经过期了，强制进入冻结(Frozen)
+        newState = LeaseState::Frozen;
+    }
+
+    land->setLeaseEndAt(ts);
+
+    if (newState != oldState) {
+        land->setLeaseState(newState);
+        ll::event::EventBus::getInstance().publish(event::LandStateChangedEvent{land, oldState, newState});
+    }
+
+    refreshSchedule(land);
+    return {};
+}
+
+ll::Expected<> LeasingService::forceFreeze(std::shared_ptr<Land> const& land) {
+    if (auto expected = ensureLandLeased(land); !expected) {
+        return expected;
+    }
+    if (!land->isLeaseActive()) {
+        return ll::makeStringError("Only territories that are in a normal (Active) state can be forcibly frozen.");
+    }
+
+    auto now      = time_utils::nowSeconds();
+    auto oldState = land->getLeaseState();
+
+    // 忽略剩余租期，立即结算
+    if (land->getLeaseEndAt() > now) {
+        land->setLeaseEndAt(now);
+    }
+
+    land->setLeaseState(LeaseState::Frozen);
+    ll::event::EventBus::getInstance().publish(event::LandStateChangedEvent{land, oldState, LeaseState::Frozen});
+
+    refreshSchedule(land); // 压入调度器，等待协程回收
+    return {};
+}
+
+ll::Expected<> LeasingService::forceRecycle(std::shared_ptr<Land> const& land) {
+    if (auto expected = ensureLandLeased(land); !expected) {
+        return expected;
+    }
+    return recycleLand(land, LandRecycleReason::ForceRecycle);
+}
+
+ll::Expected<> LeasingService::addTime(std::shared_ptr<Land> const& land, int seconds) {
+    if (auto expected = ensureLandLeased(land); !expected) {
+        return expected;
+    }
+    auto newEnd = time_utils::toClockTime(land->getLeaseEndAt() + seconds);
+    return setEndAt(land, newEnd);
+}
+
+ll::Expected<int> LeasingService::cleanExpiredLands(int daysOverdue) {
+    if (daysOverdue < 0) {
+        return ll::makeStringError("The overdue days must be a positive integer");
+    }
+
+    int  count       = 0;
+    auto now         = time_utils::nowSeconds();
+    auto freezeDayTs = time_utils::toSeconds(ConfigProvider::getLeasingConfig().freeze.days);
+    auto threshold   = now - time_utils::toSeconds(daysOverdue);
+
+    auto& logger = PLand::getInstance().getSelf().getLogger();
+
+    std::vector<std::shared_ptr<Land>> toDelete;
+    for (auto& land : impl->mRegistry.getLands(SYSTEM_ACCOUNT_UUID)) {
+        if (!land->isLeased()) continue;
+
+        if (!land->isOrdinaryLand()) {
+            logger.fatal(
+                "FATAL: Leased land {} has parent/child land, "
+                "this violates mutex condition and CANNOT be auto-repaired. "
+                "Manual intervention required. Land will be skipped in cleanup.",
+                land->getId()
+            );
+            continue;
+        }
+
+        // 只清理已经被回收（Expired）且属于系统的领地
+        if (land->isLeaseExpired()) {
+            // 它的实际“死亡/被系统接管时间”是 LeaseEndAt + freezeDayTs
+            auto deathTime = land->getLeaseEndAt() + freezeDayTs;
+
+            if (deathTime <= threshold) {
+                toDelete.push_back(land);
+            }
+        }
+    }
+
+    for (auto ptr : toDelete) {
+        if (auto result = impl->mRegistry.removeOrdinaryLand(ptr)) {
+            count++;
+        } else {
+            logger.error("Failed to remove expired land {} from registry: {}", ptr->getId(), result.error().message());
+        }
+    }
+
+    return count;
+}
+
+ll::Expected<> LeasingService::toBought(std::shared_ptr<Land> const& land) {
+    if (auto expected = ensureLandLeased(land); !expected) {
+        return expected;
+    }
+
+    auto oldState = land->getLeaseState();
+
+    land->setHoldType(LandHoldType::Bought); // 转为购买模式
+    land->setLeaseState(LeaseState::None);   // 重置状态
+
+    ll::event::EventBus::getInstance().publish(event::LandStateChangedEvent{land, oldState, LeaseState::None});
+
+    land->setLeaseStartAt(0);
+    land->setLeaseEndAt(0);
+
+    return {};
+}
+
+ll::Expected<> LeasingService::toLeased(std::shared_ptr<Land> const& land, int days) {
+    if (!land) {
+        return ll::makeStringError("land is null");
+    }
+    if (land->isLeased()) {
+        return ll::makeStringError("land is already leased");
+    }
+    if (!land->isOrdinaryLand()) {
+        return ll::makeStringError("only ordinary land can be leased");
+    }
+
+    land->setHoldType(LandHoldType::Leased);
+
+    auto now = time_utils::nowSeconds();
+    land->setLeaseStartAt(now);
+    land->setLeaseEndAt(now + time_utils::toSeconds(days));
+    land->setLeaseState(LeaseState::Active);
+
+    ll::event::EventBus::getInstance().publish(
+        event::LandStateChangedEvent{land, LeaseState::Expired, LeaseState::Active}
+    );
+
+    refreshSchedule(land);
+    return {};
+}
 
 ll::Expected<std::shared_ptr<Land>>
 LeasingService::leaseLand(Player& player, OrdinaryLandCreateSelector* selector, int days) {
@@ -253,7 +484,8 @@ LeasingService::leaseLand(Player& player, OrdinaryLandCreateSelector* selector, 
     auto land = selector->newLand();
     auto now  = time_utils::nowSeconds();
 
-    land->setOriginalBuyPrice(0);
+    assert(land);
+
     land->setHoldType(LandHoldType::Leased);
     land->setLeaseState(LeaseState::Active);
     land->setLeaseStartAt(now);
@@ -282,8 +514,8 @@ LeasingService::leaseLand(Player& player, OrdinaryLandCreateSelector* selector, 
 }
 
 ll::Expected<> LeasingService::renewLease(Player& player, std::shared_ptr<Land> const& land, int days) {
-    if (!land || !land->isLeased()) {
-        return ll::makeStringError("当前领地不是租赁模式"_trl(player.getLocaleCode()));
+    if (auto expected = ensureLandLeased(land); !expected) {
+        return expected;
     }
 
     auto const& duration = ConfigProvider::getLeasingConfig().duration;
@@ -327,58 +559,35 @@ ll::Expected<> LeasingService::renewLease(Player& player, std::shared_ptr<Land> 
 
 
 ll::Expected<> LeasingService::recycleLand(std::shared_ptr<Land> const& land, LandRecycleReason reason) {
-    if (!land) {
-        return ll::makeStringError("Invalid land ptr");
+    if (auto expected = ensureLandLeased(land); !expected) {
+        return expected;
     }
 
     auto const& conf = ConfigProvider::getLeasingConfig().recycle;
 
-    if (!conf.keepMembers) {
-        land->clearMembers();
-    }
 
     switch (conf.mode) {
     case LeaseRecycleMode::TransferToSystem: {
         assert(SYSTEM_ACCOUNT_UUID != mce::UUID::EMPTY());
         assert(SYSTEM_ACCOUNT_UUID.asString() == SYSTEM_ACCOUNT_UUID_STR);
+        if (!conf.keepMembers) {
+            land->clearMembers();
+        }
         land->setOwner(SYSTEM_ACCOUNT_UUID);
         land->setLeaseState(LeaseState::Expired);
         land->setName("[欠费|系统所有] {}"_tr(land->getName()));
         break;
     }
     case LeaseRecycleMode::Delete: {
-        // todo: 删除领地
+        if (auto result = impl->mRegistry.removeOrdinaryLand(land); !result) {
+            return result;
+        }
         break;
     }
     }
 
     ll::event::EventBus::getInstance().publish(event::LandRecycleEvent{land, reason});
     return {};
-}
-
-ll::Expected<>
-LeasingService::reactivateLease(Player& player, std::shared_ptr<Land> const& land, int days, bool append) {
-    if (!land || !land->isLeased()) {
-        return ll::makeStringError("当前领地不是租赁模式"_trl(player.getLocaleCode()));
-    }
-
-    auto now = time_utils::nowSeconds();
-    auto ts  = time_utils::toSeconds(days);
-
-    if (append) {
-        land->setLeaseEndAt(land->getLeaseEndAt() + ts);
-    } else {
-        land->setLeaseStartAt(now);
-        land->setLeaseEndAt(now + ts);
-    }
-
-    auto oldState = land->getLeaseState();
-    land->setLeaseState(LeaseState::Active);
-    if (oldState != land->getLeaseState()) {
-        ll::event::EventBus::getInstance().publish(event::LandStateChangedEvent{land, oldState, land->getLeaseState()});
-    }
-
-    return impl->enqueue(land); // 重新加入调度系统
 }
 
 
