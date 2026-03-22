@@ -101,7 +101,7 @@ public:
     LDAPI void setOriginalBuyPrice(int price);
 
     /**
-     * 获取土地持有类型
+     * 获取领地持有类型
      */
     LDNDAPI LandHoldType getHoldType() const;
     /**
@@ -138,23 +138,29 @@ public:
     LDNDAPI time_t getLeaseEndAt() const;
 
     /**
-     * 设置土地持有类型
-     * @param type 要设置的土地持有类型
+     * 设置领地持有类型
+     * @param type 要设置的领地持有类型
+     * @note 非必要请勿直接修改数据，请在 LeasingService 中修改
      */
     LDAPI void setHoldType(LandHoldType type);
     /**
      * 设置租赁状态
      * @param state 要设置的租赁状态
+     * @note 非必要请勿直接修改数据，请在 LeasingService 中修改
      */
     LDAPI void setLeaseState(LeaseState state);
     /**
      * 设置租赁开始时间
      * @param ts 要设置的租赁开始时间戳
+     * @note 非必要请勿直接修改数据，请在 LeasingService 中修改
+     * @note 直接调用此接口修改数据不会自动推导租赁状态，可能导致系统调度异常
      */
     LDAPI void setLeaseStartAt(time_t ts);
     /**
      * 设置租赁结束时间
      * @param ts 要设置的租赁结束时间戳
+     * @note 非必要请勿直接修改数据，请在 LeasingService 中修改
+     * @note 直接调用此接口修改数据不会自动推导租赁状态，可能导致系统调度异常
      */
     LDAPI void setLeaseEndAt(time_t ts);
 
