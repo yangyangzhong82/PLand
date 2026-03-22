@@ -573,6 +573,7 @@ ll::Expected<> LeasingService::recycleLand(std::shared_ptr<Land> const& land, La
         if (!conf.keepMembers) {
             land->clearMembers();
         }
+        // todo: 结算清理可能的剩余时间?
         land->setOwner(SYSTEM_ACCOUNT_UUID);
         land->setLeaseState(LeaseState::Expired);
         land->setName("[欠费|系统所有] {}"_tr(land->getName()));

@@ -168,17 +168,21 @@ flowchart LR
 
 #### `LandRecycleEvent` - 领地被回收事件(domain)
 
+### 新增命令
+
+```bash
+pland lease info [id] # 查看当前/指定领地的租赁信息
+pland admin lease <set_start|set_end> <timestamp|YYYY-MM-DD HH:mm:ss> [id] # 设置领地租赁 开启/结束 时间
+pland admin lease add_time <amount> <day|hour|min|sec> [id] # 增加领地租赁时间
+pland admin lease <force_freeze|force_recycle> [id] # 强制冻结/回收领地
+pland admin lease clean <days> # 回收到期超过n天的领地
+pland admin lease to_bought [id] # 租赁领地转为购买领地
+pland admin lease to_leased <days> [id] # 将购买领地转为租赁领地
+```
+
 ## 待定
 
-1. 管理员干预接口：为服主或管理员提供强制设置领地状态、修改租金、手动清理的后台命令或界面?
-   - GUI:
-     - [修改到期时间] ?
-     - [强制解除冻结] ?
-   - 命令:
-     - `/pland admin lease addtime <ID> <days>` // 增加领地剩余到期时间
-     - `/pland admin lease reset <ID>` // 重置状态? 默认重置为1天?
-
-2. 支持 `rentDiscount` 配置(key: 最小天数, value: 折扣率)? 长租折扣?
+1. 支持 `rentDiscount` 配置(key: 最小天数, value: 折扣率)? 长租折扣?
 
    ```jsonc
    {
@@ -198,7 +202,7 @@ flowchart LR
    }
    ```
 
-3. 强制租赁区域?
+2. 强制租赁区域?
    - 目前有禁止创建领地区域，相对应，是否有强制租赁区域?
 
    ```jsonc
