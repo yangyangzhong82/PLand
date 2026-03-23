@@ -496,14 +496,14 @@ void admin_force_freeze_or_recycle(CommandOrigin const& ori, CommandOutput& out,
     switch (target) {
     case AdminLeaseForceTarget::force_freeze:
         if (auto exp = service.forceFreeze(land)) {
-            feedback_utils::sendText(out, "领地 {}(ID: {}) 已强制冻结"_tr(land->getName(), land->getId()));
+            feedback_utils::sendText(out, "领地 '{}(ID: {})' 已强制冻结"_tr(land->getName(), land->getId()));
         } else {
             feedback_utils::sendError(out, exp.error());
         }
         break;
     case AdminLeaseForceTarget::force_recycle:
         if (auto exp = service.forceRecycle(land)) {
-            feedback_utils::sendText(out, "领地 {}(ID: {}) 已强制回收"_tr(land->getName(), land->getId()));
+            feedback_utils::sendText(out, "领地 '{}(ID: {})' 已强制回收"_tr(land->getName(), land->getId()));
         } else {
             feedback_utils::sendError(out, exp.error());
         }
@@ -517,9 +517,14 @@ void admin_clean_lease(CommandOrigin const& ori, CommandOutput& out, RuntimeComm
     if (!ensure_lease_origin(ori, out)) return;
     if (!ensure_admin(ori, out)) return;
 
-    auto land = resolve_lease_land(ori, out, param);
-    if (!land) return;
-    // todo
+    auto days = std::get<int>(param["days"].value());
+
+    auto& service = PLand::getInstance().getServiceLocator().getLeasingService();
+    if (auto exp = service.cleanExpiredLands(days)) {
+        feedback_utils::sendText(out, "已删除 {} 个过期领地"_tr(exp.value()));
+    } else {
+        feedback_utils::sendError(out, exp.error());
+    }
 }
 
 void admin_to_bought(CommandOrigin const& ori, CommandOutput& out, RuntimeCommand const& param) {
@@ -528,7 +533,13 @@ void admin_to_bought(CommandOrigin const& ori, CommandOutput& out, RuntimeComman
 
     auto land = resolve_lease_land(ori, out, param);
     if (!land) return;
-    // todo
+
+    auto& service = PLand::getInstance().getServiceLocator().getLeasingService();
+    if (auto exp = service.toBought(land)) {
+        feedback_utils::sendText(out, "领地 '{}(ID: {})' 已转为购买领地"_tr(land->getName(), land->getId()));
+    } else {
+        feedback_utils::sendError(out, exp.error());
+    }
 }
 
 void admin_to_leased(CommandOrigin const& ori, CommandOutput& out, RuntimeCommand const& param) {
@@ -537,7 +548,18 @@ void admin_to_leased(CommandOrigin const& ori, CommandOutput& out, RuntimeComman
 
     auto land = resolve_lease_land(ori, out, param);
     if (!land) return;
-    // todo
+
+    auto days = std::get<int>(param["days"].value());
+
+    auto& service = PLand::getInstance().getServiceLocator().getLeasingService();
+    if (auto exp = service.toLeased(land, days)) {
+        feedback_utils::sendText(
+            out,
+            "领地 '{}(ID: {})' 已转为租赁领地，租期 {} 天"_tr(land->getName(), land->getId(), days)
+        );
+    } else {
+        feedback_utils::sendError(out, exp.error());
+    }
 }
 
 }; // namespace handlers
@@ -636,7 +658,6 @@ bool LandCommand::setup() {
             .optional("id", ll::command::ParamKind::Int)
             .execute(&handlers::admin_force_freeze_or_recycle);
 
-        // todo: 待测试
         // pland admin lease clean <days> 回收到期超过n天的领地
         h.runtimeOverload()
             .text("admin")
@@ -645,7 +666,6 @@ bool LandCommand::setup() {
             .required("days", ll::command::ParamKind::Int)
             .execute(&handlers::admin_clean_lease);
 
-        // todo: 待测试
         // pland admin lease to_bought [id] 将租赁领地转为购买领地
         h.runtimeOverload()
             .text("admin")
@@ -654,7 +674,6 @@ bool LandCommand::setup() {
             .optional("id", ll::command::ParamKind::Int)
             .execute(&handlers::admin_to_bought);
 
-        // todo: 待测试
         // pland admin lease to_leased <days> [id] 将购买领地转为租赁领地
         h.runtimeOverload()
             .text("admin")
