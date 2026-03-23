@@ -103,8 +103,8 @@ LeasingService::LeasingService(
                 auto uuid     = player.getUuid();
                 auto threadId = std::this_thread::get_id();
                 ll::coro::keepThis([uuid, registry = &impl->mRegistry, threadId]() -> ll::coro::CoroTask<> {
-                    std::vector<std::shared_ptr<Land>> frozen;
-                    std::vector<std::shared_ptr<Land>> nearDue;
+                    int frozen  = 0;
+                    int nearDue = 0;
 
                     {
                         // 切换到线程池中扫描领地
@@ -124,13 +124,13 @@ LeasingService::LeasingService(
                                 land->isLeaseFrozen()
                                 || (land->getLeaseState() == LeaseState::Active && land->getLeaseEndAt() <= now);
                             if (isActuallyFrozen) {
-                                frozen.push_back(land);
+                                frozen++;
                                 continue;
                             }
 
                             auto remaining = land->getLeaseEndAt() - now;
                             if (remaining <= renewalAdvanceTs) {
-                                nearDue.push_back(land);
+                                nearDue++ + ;
                             }
                         }
                     }
@@ -139,17 +139,17 @@ LeasingService::LeasingService(
                     co_await ll::coro::yield;
                     assert(std::this_thread::get_id() == threadId);
                     if (auto player = ll::service::getLevel()->getPlayer(uuid)) {
-                        if (!frozen.empty()) {
+                        if (frozen != 0) {
                             feedback_utils::sendText(
                                 *player,
-                                "您有 {} 个租赁领地已冻结，请尽快缴费续租!"_trl(player->getLocaleCode(), frozen.size())
+                                "您有 {} 个租赁领地已冻结，请尽快缴费续租!"_trl(player->getLocaleCode(), frozen)
 
                             );
                         }
-                        if (!nearDue.empty()) {
+                        if (nearDue != 0) {
                             feedback_utils::sendText(
                                 *player,
-                                "您有 {} 个租赁领地即将到期，请及时续租!"_trl(player->getLocaleCode(), nearDue.size())
+                                "您有 {} 个租赁领地即将到期，请及时续租!"_trl(player->getLocaleCode(), nearDue)
                             );
                         }
                     }
