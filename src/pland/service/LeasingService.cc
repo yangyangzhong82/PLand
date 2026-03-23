@@ -130,7 +130,7 @@ LeasingService::LeasingService(
 
                             auto remaining = land->getLeaseEndAt() - now;
                             if (remaining <= renewalAdvanceTs) {
-                                nearDue++ + ;
+                                nearDue++;
                             }
                         }
                     }
