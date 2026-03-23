@@ -171,7 +171,8 @@ LeasingService::LeasingService(
                 bool isActuallyFrozen = land->isLeaseFrozen()
                                      || (land->getLeaseState() == LeaseState::Active && land->getLeaseEndAt() <= now);
                 if (isActuallyFrozen) {
-                    auto detail = impl->mLandPriceService.calculateRenewCost(land, 0); // todo: fix
+                    auto days   = time_utils::ceilDays(now - land->getLeaseEndAt());
+                    auto detail = impl->mLandPriceService.calculateRenewCost(land, days);
                     feedback_utils::sendText(player, "此领地已冻结，欠费 {}"_trl(player.getLocaleCode(), detail.total));
                     return;
                 }
