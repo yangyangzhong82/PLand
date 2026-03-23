@@ -292,27 +292,41 @@ ll::Expected<> LeasingService::setEndAt(std::shared_ptr<Land> const& land, std::
         return ll::makeStringError("lease end time must be later than start time");
     }
 
-    auto now      = time_utils::nowSeconds();
-    auto oldState = land->getLeaseState();
-    auto newState = oldState;
-
-    // 推导状态
-    if (ts > now) {
-        // 只要结束时间在未来，无论它之前是啥，现在都必须是活跃(Active)
-        newState = LeaseState::Active;
-    } else {
-        // 如果结束时间在过去，它显然已经过期了，强制进入冻结(Frozen)
-        newState = LeaseState::Frozen;
-    }
+    auto now         = time_utils::nowSeconds();
+    auto freezeDayTs = time_utils::toSeconds(ConfigProvider::getLeasingConfig().freeze.days);
+    auto oldState    = land->getLeaseState();
 
     land->setLeaseEndAt(ts);
 
-    if (newState != oldState) {
-        land->setLeaseState(newState);
-        ll::event::EventBus::getInstance().publish(event::LandStateChangedEvent{land, oldState, newState});
+    // 推导状态
+    if (ts > now) {
+        // 结束时间在未来
+        if (oldState != LeaseState::Active) {
+            land->setLeaseState(LeaseState::Active);
+            ll::event::EventBus::getInstance().publish(
+                event::LandStateChangedEvent{land, oldState, LeaseState::Active}
+            );
+        }
+    } else if (ts + freezeDayTs > now) {
+        // 已过期，但在冻结宽限期内
+        if (oldState != LeaseState::Frozen) {
+            land->setLeaseState(LeaseState::Frozen);
+            ll::event::EventBus::getInstance().publish(
+                event::LandStateChangedEvent{land, oldState, LeaseState::Frozen}
+            );
+        }
+    } else {
+        // 连冻结期都过了，死透了
+        if (oldState != LeaseState::Expired) {
+            // 时间被修改为很久之前，无需调度，直接回收
+            return recycleLand(land, LandRecycleReason::LeaseExpired);
+        }
     }
 
-    refreshSchedule(land);
+    // 依然存活（Active/Frozen），重新排入调度系统
+    if (land->getLeaseState() != LeaseState::Expired) {
+        refreshSchedule(land);
+    }
     return {};
 }
 
@@ -439,7 +453,7 @@ ll::Expected<> LeasingService::toLeased(std::shared_ptr<Land> const& land, int d
     land->setLeaseState(LeaseState::Active);
 
     ll::event::EventBus::getInstance().publish(
-        event::LandStateChangedEvent{land, LeaseState::Expired, LeaseState::Active}
+        event::LandStateChangedEvent{land, LeaseState::None, LeaseState::Active}
     );
 
     refreshSchedule(land);
@@ -471,6 +485,7 @@ LeasingService::leaseLand(Player& player, OrdinaryLandCreateSelector* selector, 
 
     auto rentExp = impl->mLandPriceService.calculateDailyRent(*range, selector->getDimensionId(), selector->is3D());
     if (!rentExp) {
+        PLand::getInstance().getSelf().getLogger().error(rentExp.error().message());
         return ll::makeStringError("价格表达式解析失败，请联系管理员"_trl(player.getLocaleCode()));
     }
 
@@ -563,23 +578,29 @@ ll::Expected<> LeasingService::recycleLand(std::shared_ptr<Land> const& land, La
         return expected;
     }
 
-    auto const& conf = ConfigProvider::getLeasingConfig().recycle;
+    auto const& conf = ConfigProvider::getLeasingConfig();
 
+    auto now         = time_utils::nowSeconds();
+    auto freezeDayTs = time_utils::toSeconds(conf.freeze.days);
+    // 既然进入了 Expired (回收态)，它的数学定义就是“结束时间 + 冻结期 <= 现在”
+    if (land->getLeaseEndAt() + freezeDayTs > now) {
+        land->setLeaseEndAt(now - freezeDayTs);
+    }
 
-    switch (conf.mode) {
+    switch (conf.recycle.mode) {
     case LeaseRecycleMode::TransferToSystem: {
         assert(SYSTEM_ACCOUNT_UUID != mce::UUID::EMPTY());
         assert(SYSTEM_ACCOUNT_UUID.asString() == SYSTEM_ACCOUNT_UUID_STR);
-        if (!conf.keepMembers) {
+        if (!conf.recycle.keepMembers) {
             land->clearMembers();
         }
-        // todo: 结算清理可能的剩余时间?
         land->setOwner(SYSTEM_ACCOUNT_UUID);
         land->setLeaseState(LeaseState::Expired);
         land->setName("[欠费|系统所有] {}"_tr(land->getName()));
         break;
     }
     case LeaseRecycleMode::Delete: {
+        // todo: LandDeletedEvent
         if (auto result = impl->mRegistry.removeOrdinaryLand(land); !result) {
             return result;
         }
