@@ -8,6 +8,7 @@
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/player/PlayerJoinEvent.h"
 #include "ll/api/thread/ServerThreadExecutor.h"
+#include <ll/api/service/Bedrock.h>
 
 #include "pland/PLand.h"
 #include "pland/economy/EconomySystem.h"
@@ -27,7 +28,10 @@
 #include "pland/selector/land/OrdinaryLandCreateSelector.h"
 #include "pland/service/LandHierarchyService.h"
 #include "pland/utils/FeedbackUtils.h"
+#include "pland/utils/SwitchExecutor.h"
 #include "pland/utils/TimeUtils.h"
+
+#include "mc/world/level/Level.h"
 
 #include <chrono>
 
@@ -96,43 +100,61 @@ LeasingService::LeasingService(
                 auto& player = ev.self();
                 if (player.isSimulatedPlayer()) return;
 
-                auto now   = time_utils::nowSeconds();
-                auto lands = impl->mRegistry.getLands(player.getUuid());
+                auto uuid     = player.getUuid();
+                auto threadId = std::this_thread::get_id();
+                ll::coro::keepThis([uuid, registry = &impl->mRegistry, threadId]() -> ll::coro::CoroTask<> {
+                    std::vector<std::shared_ptr<Land>> frozen;
+                    std::vector<std::shared_ptr<Land>> nearDue;
 
-                std::vector<std::shared_ptr<Land>> frozen;
-                std::vector<std::shared_ptr<Land>> nearDue;
+                    {
+                        // 切换到线程池中扫描领地
+                        co_await coro_utils::SwitchExecutor{PLand::getInstance().getThreadPool()};
 
-                for (auto& land : lands) {
-                    if (!land->isLeased()) continue;
+                        assert(std::this_thread::get_id() != threadId);
 
-                    bool isActuallyFrozen =
-                        land->isLeaseFrozen()
-                        || (land->getLeaseState() == LeaseState::Active && land->getLeaseEndAt() <= now);
-                    if (isActuallyFrozen) {
-                        frozen.push_back(land);
-                        continue;
+                        auto now   = time_utils::nowSeconds();
+                        auto lands = registry->getLands(uuid);
+
+                        auto renewalAdvanceTs =
+                            time_utils::toSeconds(ConfigProvider::getLeasingConfig().duration.renewalAdvance);
+                        for (auto& land : lands) {
+                            if (!land->isLeased()) continue;
+
+                            bool isActuallyFrozen =
+                                land->isLeaseFrozen()
+                                || (land->getLeaseState() == LeaseState::Active && land->getLeaseEndAt() <= now);
+                            if (isActuallyFrozen) {
+                                frozen.push_back(land);
+                                continue;
+                            }
+
+                            auto remaining = land->getLeaseEndAt() - now;
+                            if (remaining <= renewalAdvanceTs) {
+                                nearDue.push_back(land);
+                            }
+                        }
                     }
 
-                    auto remaining = land->getLeaseEndAt() - now;
-                    if (remaining
-                        <= time_utils::toSeconds(ConfigProvider::getLeasingConfig().duration.renewalAdvance)) {
-                        nearDue.push_back(land);
+                    // 切回主线程
+                    co_await ll::coro::yield;
+                    assert(std::this_thread::get_id() == threadId);
+                    if (auto player = ll::service::getLevel()->getPlayer(uuid)) {
+                        if (!frozen.empty()) {
+                            feedback_utils::sendText(
+                                *player,
+                                "您有 {} 个租赁领地已冻结，请尽快缴费续租!"_trl(player->getLocaleCode(), frozen.size())
+
+                            );
+                        }
+                        if (!nearDue.empty()) {
+                            feedback_utils::sendText(
+                                *player,
+                                "您有 {} 个租赁领地即将到期，请及时续租!"_trl(player->getLocaleCode(), nearDue.size())
+                            );
+                        }
                     }
-                }
-
-                if (!frozen.empty()) {
-                    feedback_utils::sendText(
-                        player,
-                        "您有 {} 个租赁领地已冻结，请尽快缴费续租!"_trl(player.getLocaleCode(), frozen.size())
-
-                    );
-                }
-                if (!nearDue.empty()) {
-                    feedback_utils::sendText(
-                        player,
-                        "您有 {} 个租赁领地即将到期，请及时续租!"_trl(player.getLocaleCode(), nearDue.size())
-                    );
-                }
+                    co_return;
+                }).launch(ll::thread::ServerThreadExecutor::getDefault());
             });
 
     if (conf.notifications.enterTip)
