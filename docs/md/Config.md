@@ -6,7 +6,7 @@
 
 ## 领地配置 `Config.json`
 
-```jsonc
+```json
 {
     "version": 34, // 配置文件版本，请勿修改
     "economy": {
@@ -54,6 +54,7 @@
             "includeY": true // 间距计算是否包含 Y 轴
         },
         "forbiddenRanges": [] // 禁止创建领地的范围
+        "leaseOnlyRanges": [] // 仅租赁领地范围
     },
     "business": {
     

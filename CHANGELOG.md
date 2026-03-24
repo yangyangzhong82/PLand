@@ -19,6 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - 重构配置文件结构 @engsr6982
 
+### 🛠️ 开发者相关
+
+新增事件:
+
+- `PlayerLeaseLandEvent` - 玩家租赁领地事件
+- `PlayerRenewLandEvent` - 玩家续租领地事件
+- `LandStateChangedEvent` - 领地状态变更事件
+- `LandRecycleEvent` - 领地被回收事件
+
 ## [0.18.2] - 2026-03-01
 
 ### ✨ 新增功能
