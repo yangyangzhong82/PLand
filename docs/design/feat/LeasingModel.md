@@ -180,6 +180,14 @@ pland admin lease to_bought [id] # 租赁领地转为购买领地
 pland admin lease to_leased <days> [id] # 将购买领地转为租赁领地
 ```
 
+### `constraints.leaseOnlyRanges` 强制租赁区域
+
+对应禁止创建领地区域，设定的范围将仅接受租赁领地，禁止买断制领地
+
+> 如果仅租赁区域有历史遗留领地，遗留领地不受此配置约束
+
+> 如果租赁未启用，却配置了仅租赁区域，将降级为“禁止创建领地区域”
+
 ## 待定
 
 1. 支持 `rentDiscount` 配置(key: 最小天数, value: 折扣率)? 长租折扣?
@@ -196,38 +204,6 @@ pland admin lease to_leased <days> [id] # 将购买领地转为租赁领地
            // ... 以此类推
            "365": 0.7, // 租赁365天，租金打7折
            // 约束此配置的 key 必须 < maxPeriod ?
-         },
-       },
-     },
-   }
-   ```
-
-2. 强制租赁区域?
-   - 目前有禁止创建领地区域，相对应，是否有强制租赁区域?
-
-   ```jsonc
-   {
-     "business": {
-       "leasing": {
-         "forcedLeasingRanges": {
-           // 主世界
-           "0": [
-             {
-               "name": "主城商业街",
-               "aabb": {
-                 "min": {
-                   "x": -100,
-                   "y": 0,
-                   "z": -100,
-                 },
-                 "max": {
-                   "x": 100,
-                   "y": 256,
-                   "z": 100,
-                 },
-               },
-             },
-           ],
          },
        },
      },

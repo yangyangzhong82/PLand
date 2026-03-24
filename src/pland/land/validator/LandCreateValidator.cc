@@ -28,31 +28,41 @@ namespace land {
 
 ll::Expected<>
 LandCreateValidator::validateCreateOrdinaryLand(LandRegistry& registry, Player& player, std::shared_ptr<Land> land) {
-    if (auto res = isPlayerLandCountLimitExceeded(registry, player.getUuid()); !res) {
+    if (auto res = ensurePlayerLandCountNotExceeded(registry, player.getUuid()); !res) {
         return res;
     }
-    if (auto res = isLandRangeLegal(land->getAABB(), land->getDimensionId(), land->is3D()); !res) {
+    if (auto res = ensureLandRangeIsLegal(land->getAABB(), land->getDimensionId(), land->is3D()); !res) {
         return res;
     }
-    if (auto res = isLandInForbiddenRange(land->getAABB(), land->getDimensionId()); !res) {
+    if (auto res = ensureLandNotInForbiddenRange(land->getAABB(), land->getDimensionId()); !res) {
         return res;
     }
-    if (auto res = isOrdinaryLandRangeConflict(registry, land); !res) {
+    if (auto res = ensureNoLandRangeConflict(registry, land); !res) {
         return res;
+    }
+    if (!land->isLeased()) { // 非租赁领地，确保领地范围不在仅租赁范围内
+        if (auto res = ensureLandNotInLeaseOnlyRange(land->getAABB(), land->getDimensionId()); !res) {
+            return res;
+        }
     }
     return {};
 }
 
 ll::Expected<>
 LandCreateValidator::validateChangeLandRange(LandRegistry& registry, std::shared_ptr<Land> land, LandAABB newRange) {
-    if (auto res = isLandRangeLegal(newRange, land->getDimensionId(), land->is3D()); !res) {
+    if (auto res = ensureLandRangeIsLegal(newRange, land->getDimensionId(), land->is3D()); !res) {
         return res;
     }
-    if (auto res = isLandInForbiddenRange(newRange, land->getDimensionId()); !res) {
+    if (auto res = ensureLandNotInForbiddenRange(newRange, land->getDimensionId()); !res) {
         return res;
     }
-    if (auto res = isOrdinaryLandRangeConflict(registry, land, newRange); !res) {
+    if (auto res = ensureNoLandRangeConflict(registry, land, newRange); !res) {
         return res;
+    }
+    if (!land->isLeased()) { // 非租赁领地，确保新范围不在仅租赁范围内
+        if (auto res = ensureLandNotInLeaseOnlyRange(newRange, land->getDimensionId()); !res) {
+            return res;
+        }
     }
     return {};
 }
@@ -64,20 +74,20 @@ ll::Expected<> LandCreateValidator::validateCreateSubLand(
     LandRegistry&                  registry,
     service::LandHierarchyService& service
 ) {
-    if (auto res = isPlayerLandCountLimitExceeded(registry, player.getUuid()); !res) {
+    if (auto res = ensurePlayerLandCountNotExceeded(registry, player.getUuid()); !res) {
         return res;
     }
-    if (auto res = isLandRangeLegal(subRange, land->getDimensionId(), true); !res) {
+    if (auto res = ensureLandRangeIsLegal(subRange, land->getDimensionId(), true); !res) {
         return res;
     }
-    if (auto res = isSubLandPositionLegal(service, land, subRange); !res) {
+    if (auto res = ensureSubLandPositionIsLegal(service, land, subRange); !res) {
         return res;
     }
     return {};
 }
 
 
-ll::Expected<> LandCreateValidator::isPlayerLandCountLimitExceeded(LandRegistry& registry, mce::UUID const& uuids) {
+ll::Expected<> LandCreateValidator::ensurePlayerLandCountNotExceeded(LandRegistry& registry, mce::UUID const& uuids) {
     auto count = static_cast<int>(registry.getLands(uuids).size());
 
     auto const& conf = ConfigProvider::getConstraintsConfig();
@@ -89,7 +99,7 @@ ll::Expected<> LandCreateValidator::isPlayerLandCountLimitExceeded(LandRegistry&
     return {};
 }
 
-ll::Expected<> LandCreateValidator::isLandInForbiddenRange(LandAABB const& range, LandDimid dimid) {
+ll::Expected<> LandCreateValidator::ensureLandNotInForbiddenRange(LandAABB const& range, LandDimid dimid) {
     auto const& conf = ConfigProvider::getConstraintsConfig();
     for (auto const& forbiddenRange : conf.forbiddenRanges) {
         if (forbiddenRange.dimensionId == dimid && LandAABB::isCollision(forbiddenRange.aabb, range)) {
@@ -99,7 +109,17 @@ ll::Expected<> LandCreateValidator::isLandInForbiddenRange(LandAABB const& range
     return {};
 }
 
-ll::Expected<> LandCreateValidator::isLandRangeLegal(LandAABB const& range, LandDimid dimid, bool is3D) {
+ll::Expected<> LandCreateValidator::ensureLandNotInLeaseOnlyRange(LandAABB const& range, LandDimid dimid) {
+    auto const& conf = ConfigProvider::getConstraintsConfig();
+    for (auto const& leaseOnlyRange : conf.leaseOnlyRanges) {
+        if (leaseOnlyRange.dimensionId == dimid && LandAABB::isCollision(leaseOnlyRange.aabb, range)) {
+            return makeError<LandInLeaseOnlyRangeContext>(range, leaseOnlyRange.aabb);
+        }
+    }
+    return {};
+}
+
+ll::Expected<> LandCreateValidator::ensureLandRangeIsLegal(LandAABB const& range, LandDimid dimid, bool is3D) {
     auto const& conf = ConfigProvider::getConstraintsConfig().size;
 
     auto const length = range.getBlockCountX();
@@ -146,7 +166,7 @@ ll::Expected<> LandCreateValidator::isLandRangeLegal(LandAABB const& range, Land
 }
 
 
-ll::Expected<> LandCreateValidator::isOrdinaryLandRangeConflict(
+ll::Expected<> LandCreateValidator::ensureNoLandRangeConflict(
     LandRegistry&                registry,
     std::shared_ptr<Land> const& land,
     std::optional<LandAABB>      newRange
@@ -179,7 +199,7 @@ ll::Expected<> LandCreateValidator::isOrdinaryLandRangeConflict(
     return {};
 }
 
-ll::Expected<> LandCreateValidator::isSubLandPositionLegal(
+ll::Expected<> LandCreateValidator::ensureSubLandPositionIsLegal(
     service::LandHierarchyService& hierarchyService,
     std::shared_ptr<Land> const&   land,
     LandAABB const&                subRange
@@ -259,6 +279,23 @@ std::string LandCreateValidator::LandInForbiddenRangeContext::translateError(std
         localeCode,
         range.toString(),
         forbiddenRange.toString()
+    );
+}
+
+
+LandCreateValidator::LandInLeaseOnlyRangeContext::LandInLeaseOnlyRangeContext(
+    LandAABB const& range,
+    LandAABB const& leaseOnlyRange
+)
+: ErrorContext(ErrorCode::LandInLeaseOnlyRange),
+  range(range),
+  leaseOnlyRange(leaseOnlyRange) {}
+
+std::string LandCreateValidator::LandInLeaseOnlyRangeContext::translateError(std::string const& localeCode) const {
+    return "领地范围在仅租赁区域内，当前范围: {0}, 租赁区域: {1}"_trl(
+        localeCode,
+        range.toString(),
+        leaseOnlyRange.toString()
     );
 }
 

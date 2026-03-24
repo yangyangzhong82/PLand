@@ -207,7 +207,7 @@ ll::Expected<> LandManagementService::handleChangeRange(
 
 
 ll::Expected<> LandManagementService::ensurePlayerLandCountLimit(mce::UUID const& uuid) const {
-    return LandCreateValidator::isPlayerLandCountLimitExceeded(impl->mRegistry, uuid);
+    return LandCreateValidator::ensurePlayerLandCountNotExceeded(impl->mRegistry, uuid);
 }
 ll::Expected<>
 LandManagementService::setLandTeleportPos(Player& player, std::shared_ptr<Land> const& land, Vec3 point) {

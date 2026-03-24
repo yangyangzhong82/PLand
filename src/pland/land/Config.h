@@ -74,6 +74,8 @@ struct ConfigData {
 
         std::vector<ForbiddenRange> forbiddenRanges; // 禁止创建领地的范围
 
+        std::vector<ForbiddenRange> leaseOnlyRanges; // 仅允许租赁的领地范围
+
     } constraints;
 
     struct BusinessConfig {

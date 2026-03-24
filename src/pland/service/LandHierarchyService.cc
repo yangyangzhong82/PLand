@@ -307,10 +307,10 @@ LandHierarchyService::ensureSubLandLegal(std::shared_ptr<Land> const& parent, st
     if (!parent->isBought() || !sub->isBought()) {
         return UNEXPECTED_UNSUPPORTED_LEASED_ERR();
     }
-    if (auto expected = LandCreateValidator::isLandRangeLegal(sub->getAABB(), sub->getDimensionId(), true); !expected) {
+    if (auto expected = LandCreateValidator::ensureLandRangeIsLegal(sub->getAABB(), sub->getDimensionId(), true); !expected) {
         return expected;
     }
-    if (auto expected = LandCreateValidator::isSubLandPositionLegal(*this, parent, sub->getAABB()); !expected) {
+    if (auto expected = LandCreateValidator::ensureSubLandPositionIsLegal(*this, parent, sub->getAABB()); !expected) {
         return expected;
     }
     if (parent->getDimensionId() != sub->getDimensionId()) {
